@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using KSP;
 using UnityEngine;
+using System.Collections;
 
 namespace StageRecovery
 {
@@ -103,26 +104,26 @@ namespace StageRecovery
                     bool isParachute = false;
                     if (ModuleNames.Contains("ModuleParachute"))
                     {
-                        //Debug.Log("[SR] Found parachute module on " + p.partInfo.name);
                         ModuleParachute mp = (ModuleParachute)p.modules.First(mod => mod.moduleName == "ModuleParachute").moduleRef;
                         dragCoeff += p.mass * mp.fullyDeployedDrag;
                         isParachute = true;
                     }
                     if (ModuleNames.Contains("RealChuteModule"))
                     {
-                        //Debug.Log("[SR] Found realchute module on " + p.partInfo.name);
-                        PartModule realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule").moduleRef;
+                        PartModule realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule").moduleRef;//p.partRef.Modules["RealChuteModule"];
                         Type rCType = realChute.GetType();
                         if ((object)realChute != null)
                         {
-                            System.Reflection.MemberInfo member = rCType.GetMember("deployedDiameter")[0];
-                            float area = (float)GetMemberInfoValue(member, realChute);
-                            area = Mathf.PI * Mathf.Pow(area / 2, 2); //Determine the area manually since the "deployedArea" parameter no longer exists in RC
-                            Debug.Log("Chute area: " + area);
+                            System.Reflection.MemberInfo chuteModule = rCType.GetMember("parachutes")[0];
+                            object chutes = GetMemberInfoValue(chuteModule, realChute);
+                            Type chuteType = chutes.GetType().GetGenericArguments()[0];
+                            var pList = (IList)chutes;
 
-                            member = rCType.GetMember("material")[0];
-                            string mat = (string)GetMemberInfoValue(member, realChute);
-                            Debug.Log("Material is " + mat);
+                            System.Reflection.MemberInfo member = chuteType.GetMember("deployedArea")[0];
+                            float area = (float)GetMemberInfoValue(member, pList[0]);
+
+                            member = chuteType.GetMember("material")[0];
+                            string mat = (string)GetMemberInfoValue(member, pList[0]);
 
                             Type matLibraryType = AssemblyLoader.loadedAssemblies
                                 .SelectMany(a => a.assembly.GetExportedTypes())
@@ -133,7 +134,6 @@ namespace StageRecovery
                             object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
 
                             float dragC = (float)GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
-                            Debug.Log("dragC: " + dragC);
                             isParachute = true;
                             realChuteInUse = true;
                             totalDrag += (1 * 100 * dragC * area / 2000f);
@@ -161,8 +161,7 @@ namespace StageRecovery
                 }
                 if (Vt < 10.0)
                 {
-                    //Debug.Log("[SR] Recovered parts from " + v.vesselName);
-                    AddFunds(GetRecoveryValueForParachutes(v.protoVessel));
+                    DoRecovery(v);
                     //Fire success event
                 }
                 else
@@ -171,6 +170,47 @@ namespace StageRecovery
                 }
             }
         }
+
+        public void DoRecovery(Vessel v)
+        {
+            AddFunds(GetRecoveryValueForParachutes(v.protoVessel));
+            if (Settings.instance.RecoverKerbals)
+            {
+                foreach (ProtoCrewMember pcm in v.protoVessel.GetVesselCrew())
+                {
+                    Debug.Log("[SR] Recovering crewmember " + pcm.name);
+                    pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                }
+            }
+            if (Settings.instance.RecoverScience)
+            {
+                RecoverScience(v);
+            }
+        }
+
+        public void RecoverScience(Vessel v)
+        {
+            foreach (ProtoPartSnapshot p in v.protoVessel.protoPartSnapshots)
+            {
+                foreach (ProtoPartModuleSnapshot pm in p.modules)
+                {
+                    ConfigNode node = pm.moduleValues;
+                    if (node.HasNode("ScienceData"))
+                    {
+                        foreach (ConfigNode subjectNode in node.GetNodes("ScienceData"))
+                        {
+                            ScienceSubject subject = new ScienceSubject(subjectNode);
+                            float amt = float.Parse(subjectNode.GetValue("data"));
+                            Debug.Log("[SR] Recovering Science. Title: " + subject.title + ". Value: " + amt);
+                            float science = ResearchAndDevelopment.Instance.SubmitScienceData(amt, subject, 1f);
+                            Debug.Log("[SR] Science: " + science);
+                        }
+                    }
+                }
+            }
+        }
+
+
     }
 
     public class Settings
@@ -178,6 +218,7 @@ namespace StageRecovery
         public static Settings instance;
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         [Persistent] public float RecoveryModifier;
+        [Persistent] public bool RecoverScience, RecoverKerbals;
 
         public Settings()
         {
