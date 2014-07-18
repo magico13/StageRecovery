@@ -31,6 +31,8 @@ namespace StageRecovery
                 eventAdded = true;
             }
             Settings.instance.Load();
+            if (Settings.instance.RecoveryModifier > 1) Settings.instance.RecoveryModifier = 1;
+            if (Settings.instance.RecoveryModifier < 0) Settings.instance.RecoveryModifier = 0;
             Settings.instance.Save();
         }
 
@@ -184,7 +186,7 @@ namespace StageRecovery
             }
             if (Settings.instance.RecoverScience)
             {
-                RecoverScience(v);
+               // RecoverScience(v);
             }
         }
 
