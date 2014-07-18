@@ -47,7 +47,7 @@ namespace StageRecovery
         {
             double distanceFromKSC = SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(pv.latitude, pv.longitude));
             double maxDist = SpaceCenter.Instance.cb.Radius * Math.PI;
-            float recoveryPercent = 0.75f * Mathf.Lerp(0.98f, 0.1f, (float)(distanceFromKSC / maxDist));
+            float recoveryPercent = Settings.instance.RecoveryModifier * Mathf.Lerp(0.98f, 0.1f, (float)(distanceFromKSC / maxDist));
             float totalReturn = 0;
             foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
             {
