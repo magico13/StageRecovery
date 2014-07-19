@@ -46,22 +46,62 @@ namespace StageRecovery
             return (Funding.Instance.Funds += toAdd);
         }
 
-        public float GetRecoveryValueForParachutes(ProtoVessel pv)
+        public float GetRecoveryValueForParachutes(ProtoVessel pv, StringBuilder msg)
         {
+            //StringBuilder msg = new StringBuilder();
+            Dictionary<string, int> PartsRecovered = new Dictionary<string, int>();
+            Dictionary<string, float> Costs = new Dictionary<string, float>();
+            float FuelReturns = 0, DryReturns = 0;
+            bool probeCoreAttached = false;
+            foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
+            {
+                if (pps.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew == 0)) != null)
+                {
+                    Debug.Log("[SR] Probe Core found!");
+                    probeCoreAttached = true;
+                    break;
+                }
+            }
+            float RecoveryMod = probeCoreAttached ? 1.0f : Settings.instance.RecoveryModifier;
             double distanceFromKSC = SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(pv.latitude, pv.longitude));
             double maxDist = SpaceCenter.Instance.cb.Radius * Math.PI;
-            float recoveryPercent = Settings.instance.RecoveryModifier * Mathf.Lerp(0.98f, 0.1f, (float)(distanceFromKSC / maxDist));
+            float recoveryPercent = RecoveryMod * Mathf.Lerp(0.98f, 0.1f, (float)(distanceFromKSC / maxDist));
             float totalReturn = 0;
             foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
             {
                 float dryCost, fuelCost;
                 totalReturn += ShipConstruction.GetPartCosts(pps, pps.partInfo, out dryCost, out fuelCost);
+                FuelReturns += fuelCost*recoveryPercent;
+                DryReturns += dryCost*recoveryPercent;
+                if (!PartsRecovered.ContainsKey(pps.partInfo.name))
+                {
+                    PartsRecovered.Add(pps.partInfo.title, 1);
+                    Costs.Add(pps.partInfo.title, dryCost*recoveryPercent);
+                }
+                else
+                {
+                    ++PartsRecovered[pps.partInfo.title];
+                }
+
             }
             float totalBeforeReturn = (float)Math.Round(totalReturn, 2);
             totalReturn *= recoveryPercent;
             totalReturn = (float)Math.Round(totalReturn, 2);
             Debug.Log("[SR] '"+pv.vesselName+"' being recovered by SR. Percent returned: " + 100 * recoveryPercent + "%. Distance from KSC: " + Math.Round(distanceFromKSC / 1000, 2) + " km");
             Debug.Log("[SR] Funds being returned: " + totalReturn + "/" + totalBeforeReturn);
+
+
+            msg.AppendLine("Stage '" + pv.vesselName + "' recovered " + Math.Round(distanceFromKSC / 1000, 2) + " km from KSC");
+            msg.AppendLine("Parts recovered:");
+            for (int i = 0; i < PartsRecovered.Count; i++ )
+            {
+                msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i)+": "+(PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i)));
+            }
+            msg.AppendLine("Recovery percentage: " + Math.Round(100 * recoveryPercent, 1) + "%");
+            msg.AppendLine("Total refunded for parts: " + DryReturns);
+            msg.AppendLine("Total refunded for fuel: " + FuelReturns);
+            msg.AppendLine("Total refunds: " + totalReturn);
+            
             return totalReturn;
         }
 
@@ -112,33 +152,28 @@ namespace StageRecovery
                     }
                     if (ModuleNames.Contains("RealChuteModule"))
                     {
-                        PartModule realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule").moduleRef;//p.partRef.Modules["RealChuteModule"];
-                        Type rCType = realChute.GetType();
-                        if ((object)realChute != null)
+                        ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
+                        if ((object)realChute != null) //Some of this was adopted from DebRefund, as Vendan's method of handling multiple parachutes is better than what I had.
                         {
-                            System.Reflection.MemberInfo chuteModule = rCType.GetMember("parachutes")[0];
-                            object chutes = GetMemberInfoValue(chuteModule, realChute);
-                            Type chuteType = chutes.GetType().GetGenericArguments()[0];
-                            var pList = (IList)chutes;
-
-                            System.Reflection.MemberInfo member = chuteType.GetMember("deployedArea")[0];
-                            float area = (float)GetMemberInfoValue(member, pList[0]);
-
-                            member = chuteType.GetMember("material")[0];
-                            string mat = (string)GetMemberInfoValue(member, pList[0]);
-
                             Type matLibraryType = AssemblyLoader.loadedAssemblies
                                 .SelectMany(a => a.assembly.GetExportedTypes())
                                 .SingleOrDefault(t => t.FullName == "RealChute.Libraries.MaterialsLibrary");
 
-                            System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
-                            object MatLibraryInstance = matLibraryType.GetProperty("instance").GetValue(null, null);
-                            object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
+                            ConfigNode[] parchutes = realChute.moduleValues.GetNodes("PARACHUTE");
+                            foreach (ConfigNode chute in parchutes)
+                            {
+                                float area = float.Parse(chute.GetValue("deployedDiameter"));
+                                area = (float)(Math.Pow(area / 2, 2) * Math.PI);
+                                string mat = chute.GetValue("material");
+                                System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
+                                object MatLibraryInstance = matLibraryType.GetProperty("instance").GetValue(null, null);
+                                object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
+                                float dragC = (float)GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
+                                totalDrag += (1 * 100 * dragC * area / 2000f);
 
-                            float dragC = (float)GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
+                            }
                             isParachute = true;
                             realChuteInUse = true;
-                            totalDrag += (1 * 100 * dragC * area / 2000f);
                         }
                     }
                     if (!isParachute)
@@ -163,35 +198,72 @@ namespace StageRecovery
                 }
                 if (Vt < 10.0)
                 {
-                    DoRecovery(v);
+                    StringBuilder msg = new StringBuilder();
+                    DoRecovery(v, msg);
+                    msg.AppendLine("\nAdditional Information:");
+                    if (realChuteInUse)
+                        msg.AppendLine("RealChute Module used. Drag:Mass ratio of " + Math.Round(totalDrag / totalMass, 2) + " (>8 needed)");
+                    else
+                        msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " ( <10 needed)");
+                    MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
+                    MessageSystem.Instance.AddMessage(m);
                     //Fire success event
                 }
                 else
                 {
+                    if (Settings.instance.ShowFailureMessages)
+                    {
+                        StringBuilder msg = new StringBuilder();
+                        msg.AppendLine("Stage '" + v.protoVessel.vesselName + "' was destroyed!");
+                        if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
+                        {
+                            float totalCost = 0;
+                            foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+                            {
+                                float dry, wet;
+                                totalCost += ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet);
+                            }
+                            msg.AppendLine("It was valued at " + totalCost + " Funds.");
+                        }
+                        msg.AppendLine("\nAdditional Information:");
+                        if (realChuteInUse)
+                            msg.AppendLine("RealChute Module used. Drag:Mass ratio of " + Math.Round(totalDrag / totalMass, 2) + " (>8 needed)");
+                        else
+                            msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " ( <10 needed)");
+
+                        MessageSystem.Message m = new MessageSystem.Message("Stage Destroyed", msg.ToString(), MessageSystemButton.MessageButtonColor.RED, MessageSystemButton.ButtonIcons.MESSAGE);
+                        MessageSystem.Instance.AddMessage(m);
+                    }
                     //Fire failure event
                 }
             }
         }
 
-        public void DoRecovery(Vessel v)
+        public void DoRecovery(Vessel v, StringBuilder msg)
         {
-            AddFunds(GetRecoveryValueForParachutes(v.protoVessel));
-            if (Settings.instance.RecoverKerbals)
+            if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
+                AddFunds(GetRecoveryValueForParachutes(v.protoVessel, msg));
+            if (Settings.instance.RecoverKerbals && v.protoVessel.GetVesselCrew().Count > 0)
             {
+                msg.AppendLine("\nRecovered Kerbals:");
                 foreach (ProtoCrewMember pcm in v.protoVessel.GetVesselCrew())
                 {
                     Debug.Log("[SR] Recovering crewmember " + pcm.name);
                     pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                    msg.AppendLine(pcm.name);
                 }
             }
-            if (Settings.instance.RecoverScience)
+            if (Settings.instance.RecoverScience && (HighLogic.CurrentGame.Mode == Game.Modes.CAREER || HighLogic.CurrentGame.Mode == Game.Modes.SCIENCE_SANDBOX))
             {
-               // RecoverScience(v);
+                float returned = RecoverScience(v);
+                if (returned > 0)
+                    msg.AppendLine("\nScience Recovered: "+returned);
             }
         }
 
-        public void RecoverScience(Vessel v)
+        public float RecoverScience(Vessel v)
         {
+            float totalScience = 0;
             foreach (ProtoPartSnapshot p in v.protoVessel.protoPartSnapshots)
             {
                 foreach (ProtoPartModuleSnapshot pm in p.modules)
@@ -201,15 +273,15 @@ namespace StageRecovery
                     {
                         foreach (ConfigNode subjectNode in node.GetNodes("ScienceData"))
                         {
-                            ScienceSubject subject = new ScienceSubject(subjectNode);
+                            ScienceSubject subject = ResearchAndDevelopment.GetSubjectByID(subjectNode.GetValue("subjectID"));
                             float amt = float.Parse(subjectNode.GetValue("data"));
-                            Debug.Log("[SR] Recovering Science. Title: " + subject.title + ". Value: " + amt);
                             float science = ResearchAndDevelopment.Instance.SubmitScienceData(amt, subject, 1f);
-                            Debug.Log("[SR] Science: " + science);
+                            totalScience += science;
                         }
                     }
                 }
             }
+            return totalScience;
         }
 
 
@@ -220,11 +292,14 @@ namespace StageRecovery
         public static Settings instance;
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         [Persistent] public float RecoveryModifier;
-        [Persistent] public bool RecoverScience, RecoverKerbals;
+        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages;
 
         public Settings()
         {
             RecoveryModifier = 0.75f;
+            RecoverKerbals = false;
+            RecoverScience = false;
+            ShowFailureMessages = true;
             instance = this;
         }
 
