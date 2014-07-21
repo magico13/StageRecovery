@@ -73,7 +73,7 @@ namespace StageRecovery
                 totalReturn += ShipConstruction.GetPartCosts(pps, pps.partInfo, out dryCost, out fuelCost);
                 FuelReturns += fuelCost*recoveryPercent;
                 DryReturns += dryCost*recoveryPercent;
-                if (!PartsRecovered.ContainsKey(pps.partInfo.name))
+                if (!PartsRecovered.ContainsKey(pps.partInfo.title))
                 {
                     PartsRecovered.Add(pps.partInfo.title, 1);
                     Costs.Add(pps.partInfo.title, dryCost*recoveryPercent);
