@@ -7,9 +7,17 @@ using KSP;
 
 namespace StageRecovery
 {
-    class APIManager
+    public class APIManager
     {
-        public static APIManager instance = new APIManager();
+        private static APIManager instance_ = null;
+        public static APIManager instance
+        {
+            get
+            {
+                if (instance_ == null) instance_ = new APIManager();
+                return instance_;
+            }
+        }
 
         public RecoveryEvent RecoverySuccessEvent = new RecoveryEvent();
         public RecoveryEvent RecoveryFailureEvent = new RecoveryEvent();
@@ -18,7 +26,7 @@ namespace StageRecovery
     }
     
    
-    class RecoveryEvent
+    public class RecoveryEvent
     {
         private List<Action<Vessel, Dictionary<string, int>>> listeningMethods = new List<Action<Vessel,Dictionary<string,int>>>();
 
