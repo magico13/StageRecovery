@@ -46,23 +46,24 @@ namespace StageRecovery
             return (Funding.Instance.Funds += toAdd);
         }
 
-        public float GetRecoveryValueForParachutes(ProtoVessel pv, StringBuilder msg)
+        public float GetRecoveryValueForParachutes(Vessel v, StringBuilder msg)
         {
+            ProtoVessel pv = v.protoVessel;
             //StringBuilder msg = new StringBuilder();
             Dictionary<string, int> PartsRecovered = new Dictionary<string, int>();
             Dictionary<string, float> Costs = new Dictionary<string, float>();
             float FuelReturns = 0, DryReturns = 0;
-            bool probeCoreAttached = false;
+            bool stageControllable = false;
             foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
             {
-                if (pps.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew == 0)) != null)
+                if (pps.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew <= pps.protoModuleCrew.Count)) != null)
                 {
-                    Debug.Log("[SR] Probe Core found!");
-                    probeCoreAttached = true;
+                    Debug.Log("[SR] Stage is controlled!");
+                    stageControllable = true;
                     break;
                 }
             }
-            float RecoveryMod = probeCoreAttached ? 1.0f : Settings.instance.RecoveryModifier;
+            float RecoveryMod = stageControllable ? 1.0f : Settings.instance.RecoveryModifier;
             double distanceFromKSC = SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(pv.latitude, pv.longitude));
             double maxDist = SpaceCenter.Instance.cb.Radius * Math.PI;
             float recoveryPercent = RecoveryMod * Mathf.Lerp(0.98f, 0.1f, (float)(distanceFromKSC / maxDist));
@@ -105,7 +106,7 @@ namespace StageRecovery
             return totalReturn;
         }
 
-        public object GetMemberInfoValue(System.Reflection.MemberInfo member, object sourceObject)
+        public static object GetMemberInfoValue(System.Reflection.MemberInfo member, object sourceObject)
         {
             object newVal;
             if (member is System.Reflection.FieldInfo)
@@ -196,6 +197,7 @@ namespace StageRecovery
                         Vt = 0;
                     }
                 }
+                Dictionary<string, int> RecoveredPartsForEvent = RecoveredPartsFromVessel(v);
                 if (Vt < 10.0)
                 {
                     StringBuilder msg = new StringBuilder();
@@ -208,6 +210,7 @@ namespace StageRecovery
                     MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
                     MessageSystem.Instance.AddMessage(m);
                     //Fire success event
+                    APIManager.instance.RecoverySuccessEvent.Fire(v, RecoveredPartsForEvent);
                 }
                 else
                 {
@@ -235,6 +238,7 @@ namespace StageRecovery
                         MessageSystem.Instance.AddMessage(m);
                     }
                     //Fire failure event
+                    APIManager.instance.RecoveryFailureEvent.Fire(v, RecoveredPartsForEvent);
                 }
             }
         }
@@ -242,7 +246,7 @@ namespace StageRecovery
         public void DoRecovery(Vessel v, StringBuilder msg)
         {
             if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
-                AddFunds(GetRecoveryValueForParachutes(v.protoVessel, msg));
+                AddFunds(GetRecoveryValueForParachutes(v, msg));
             if (Settings.instance.RecoverKerbals && v.protoVessel.GetVesselCrew().Count > 0)
             {
                 msg.AppendLine("\nRecovered Kerbals:");
@@ -259,6 +263,24 @@ namespace StageRecovery
                 if (returned > 0)
                     msg.AppendLine("\nScience Recovered: "+returned);
             }
+        }
+
+        public Dictionary<string, int> RecoveredPartsFromVessel(Vessel v)
+        {
+            Dictionary<string, int> ret = new Dictionary<string, int>();
+            foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+            {
+                if (!ret.ContainsKey(pps.partInfo.name))
+                {
+                    ret.Add(pps.partInfo.name, 1);
+                }
+                else
+                {
+                    ++ret[pps.partInfo.name];
+                }
+            }
+
+            return ret;
         }
 
         public float RecoverScience(Vessel v)
