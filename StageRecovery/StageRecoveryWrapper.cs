@@ -59,7 +59,7 @@ namespace StageRecovery
          * be invoked with the Vessel and a Dictionary containing part names and quantities */
         public static void AddRecoverySuccessEvent(Action<Vessel, Dictionary<string, int>> method)
         {
-            object successList = StageRecovery.GetMemberInfoValue(SRType.GetMember("RecoverySuccessEvent")[0], Instance);
+            object successList = SRType.GetField("RecoverySuccessEvent").GetValue(Instance);
             System.Reflection.MethodInfo addMethod = successList.GetType().GetMethod("Add");
             addMethod.Invoke(successList, new object[] { method });
         }
@@ -67,7 +67,7 @@ namespace StageRecovery
         /* Removes a listener from the Recovery Success Event */
         public static void RemoveRecoverySuccessEvent(Action<Vessel, Dictionary<string, int>> method)
         {
-            object successList = StageRecovery.GetMemberInfoValue(SRType.GetMember("RecoverySuccessEvent")[0], Instance);
+            object successList = SRType.GetField("RecoverySuccessEvent").GetValue(Instance);
             System.Reflection.MethodInfo removeMethod = successList.GetType().GetMethod("Remove");
             removeMethod.Invoke(successList, new object[] { method });
         }
@@ -76,7 +76,7 @@ namespace StageRecovery
          * with the Vessel and a Dictionary containing part names and quantities */
         public static void AddRecoveryFailureEvent(Action<Vessel, Dictionary<string, int>> method)
         {
-            object failList = StageRecovery.GetMemberInfoValue(SRType.GetMember("RecoveryFailureEvent")[0], Instance);
+            object failList = SRType.GetField("RecoveryFailureEvent").GetValue(Instance);
             System.Reflection.MethodInfo addMethod = failList.GetType().GetMethod("Add");
             addMethod.Invoke(failList, new object[] { method });
         }
@@ -84,7 +84,7 @@ namespace StageRecovery
         /* Removes a listener from the Recovery Failure Event */
         public static void RemoveRecoveryFailureEvent(Action<Vessel, Dictionary<string, int>> method)
         {
-            object failList = StageRecovery.GetMemberInfoValue(SRType.GetMember("RecoveryFailureEvent")[0], Instance);
+            object failList = SRType.GetField("RecoveryFailureEvent").GetValue(Instance);
             System.Reflection.MethodInfo removeMethod = failList.GetType().GetMethod("Remove");
             removeMethod.Invoke(failList, new object[] { method });
         }
