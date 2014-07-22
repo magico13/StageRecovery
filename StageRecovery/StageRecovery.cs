@@ -106,7 +106,7 @@ namespace StageRecovery
             return totalReturn;
         }
 
-        public static object GetMemberInfoValue(System.Reflection.MemberInfo member, object sourceObject)
+        public object GetMemberInfoValue(System.Reflection.MemberInfo member, object sourceObject)
         {
             object newVal;
             if (member is System.Reflection.FieldInfo)

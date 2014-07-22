@@ -32,21 +32,21 @@ namespace StageRecovery
 
         public void Add(Action<Vessel, Dictionary<string, int>> method)
         {
-            Debug.Log("[SR] Adding method");
+            //Debug.Log("[SR] Adding method");
             if (!listeningMethods.Contains(method))
                 listeningMethods.Add(method);
         }
 
         public void Remove(Action<Vessel, Dictionary<string, int>> method)
         {
-            Debug.Log("[SR] Removing method");
+            //Debug.Log("[SR] Removing method");
             if (listeningMethods.Contains(method))
                 listeningMethods.Remove(method);
         }
 
         public void Fire(Vessel vessel, Dictionary<string, int> recoveredParts)
         {
-            Debug.Log("[SR] Firing");
+            //Debug.Log("[SR] Firing");
             foreach (Action<Vessel, Dictionary<string, int>> method in listeningMethods)
                 method.Invoke(vessel, recoveredParts);
         }
