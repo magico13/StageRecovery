@@ -198,9 +198,9 @@ namespace StageRecovery
                     }
                 }
                 Dictionary<string, int> RecoveredPartsForEvent = RecoveredPartsFromVessel(v);
+                StringBuilder msg = new StringBuilder();
                 if (Vt < 10.0)
                 {
-                    StringBuilder msg = new StringBuilder();
                     DoRecovery(v, msg);
                     msg.AppendLine("\nAdditional Information:");
                     if (realChuteInUse)
@@ -216,8 +216,14 @@ namespace StageRecovery
                 {
                     if (Settings.instance.ShowFailureMessages)
                     {
-                        StringBuilder msg = new StringBuilder();
                         msg.AppendLine("Stage '" + v.protoVessel.vesselName + "' was destroyed!");
+                        {
+                            msg.AppendLine("Stage contained these parts:");
+                            for (int i = 0; i < RecoveredPartsForEvent.Count; i++)
+                            {
+                                msg.AppendLine(RecoveredPartsForEvent.Values.ElementAt(i) + " x " + RecoveredPartsForEvent.Keys.ElementAt(i));
+                            }
+                        }
                         if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
                         {
                             float totalCost = 0;
@@ -247,6 +253,16 @@ namespace StageRecovery
         {
             if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
                 AddFunds(GetRecoveryValueForParachutes(v, msg));
+            else
+            {
+                msg.AppendLine("Stage contains these parts:");
+                Dictionary<string, int> PartsRecovered = RecoveredPartsFromVessel(v);
+                for (int i = 0; i < PartsRecovered.Count; i++)
+                {
+                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i));
+                }
+            }
+
             if (Settings.instance.RecoverKerbals && v.protoVessel.GetVesselCrew().Count > 0)
             {
                 msg.AppendLine("\nRecovered Kerbals:");
