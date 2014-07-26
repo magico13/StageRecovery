@@ -136,6 +136,26 @@ namespace StageRecovery
 
                 if (v.protoVessel == null)
                     return;
+
+                bool DeadlyReentryInstalled = AssemblyLoader.loadedAssemblies
+                        .Select(a => a.assembly.GetExportedTypes())
+                        .SelectMany(t => t)
+                        .FirstOrDefault(t => t.FullName == "DeadlyReentry.ReentryPhysics") != null;
+
+                if (DeadlyReentryInstalled)
+                {
+                    //Debug.Log("[SR] Deadly Reentry found");
+                }
+
+                bool velocityExceeded = false;
+                if (DeadlyReentryInstalled && Settings.instance.DeadlyReentryMaxVelocity > 0 && v.obt_speed > Settings.instance.DeadlyReentryMaxVelocity)
+                {
+                    velocityExceeded = true;
+                    Debug.Log("[SR] DR velocity exceeded");
+                }
+
+
+
                 foreach (ProtoPartSnapshot p in v.protoVessel.protoPartSnapshots)
                 {
                     List<string> ModuleNames = new List<string>();
@@ -177,6 +197,22 @@ namespace StageRecovery
                             realChuteInUse = true;
                         }
                     }
+                    if (velocityExceeded && ModuleNames.Contains("ModuleHeatShield"))
+                    {
+                        ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleHeatShield");
+                        String ablativeType = heatShield.moduleValues.GetValue("ablative");
+                        if (ablativeType == "AblativeShielding")
+                        {
+                            float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == ablativeType).resourceValues.GetValue("amount"));
+                            float maxShield = float.Parse(p.resources.Find(r => r.resourceName == ablativeType).resourceValues.GetValue("maxAmount"));
+                            if (shieldRemaining > 0.5 * maxShield)
+                                velocityExceeded = false;
+                        }
+                        else
+                            velocityExceeded = false;
+                        Debug.Log("[SR] Heat Shield found");
+
+                    }
                     if (!isParachute)
                     {
                         dragCoeff += p.mass * 0.2;
@@ -199,16 +235,19 @@ namespace StageRecovery
                 }
                 Dictionary<string, int> RecoveredPartsForEvent = RecoveredPartsFromVessel(v);
                 StringBuilder msg = new StringBuilder();
-                if (Vt < 10.0)
+                if (Vt < 10.0 && !velocityExceeded)
                 {
                     DoRecovery(v, msg);
                     msg.AppendLine("\nAdditional Information:");
                     if (realChuteInUse)
                         msg.AppendLine("RealChute Module used. Drag:Mass ratio of " + Math.Round(totalDrag / totalMass, 2) + " (>8 needed)");
                     else
-                        msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " ( <10 needed)");
-                    MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
-                    MessageSystem.Instance.AddMessage(m);
+                        msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than 10 needed)");
+                    if (Settings.instance.ShowSuccessMessages)
+                    {
+                        MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
+                        MessageSystem.Instance.AddMessage(m);
+                    }
                     //Fire success event
                     APIManager.instance.RecoverySuccessEvent.Fire(v, RecoveredPartsForEvent);
                 }
@@ -238,7 +277,9 @@ namespace StageRecovery
                         if (realChuteInUse)
                             msg.AppendLine("RealChute Module used. Drag:Mass ratio of " + Math.Round(totalDrag / totalMass, 2) + " (>8 needed)");
                         else
-                            msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " ( <10 needed)");
+                            msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than 10 needed)");
+                        if (velocityExceeded)
+                            msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + v.obt_speed + " m/s.");
 
                         MessageSystem.Message m = new MessageSystem.Message("Stage Destroyed", msg.ToString(), MessageSystemButton.MessageButtonColor.RED, MessageSystemButton.ButtonIcons.MESSAGE);
                         MessageSystem.Instance.AddMessage(m);
@@ -329,8 +370,8 @@ namespace StageRecovery
     {
         public static Settings instance;
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
-        [Persistent] public float RecoveryModifier;
-        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages;
+        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity;
+        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages;
 
         public Settings()
         {
@@ -338,6 +379,8 @@ namespace StageRecovery
             RecoverKerbals = false;
             RecoverScience = false;
             ShowFailureMessages = true;
+            ShowSuccessMessages = true;
+            DeadlyReentryMaxVelocity = 2250f;
             instance = this;
         }
 
