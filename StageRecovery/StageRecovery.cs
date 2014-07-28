@@ -72,6 +72,9 @@ namespace StageRecovery
             {
                 float dryCost, fuelCost;
                 totalReturn += ShipConstruction.GetPartCosts(pps, pps.partInfo, out dryCost, out fuelCost);
+                dryCost = dryCost < 0 ? 0 : dryCost;
+                fuelCost = fuelCost < 0 ? 0 : fuelCost;
+
                 FuelReturns += fuelCost*recoveryPercent;
                 DryReturns += dryCost*recoveryPercent;
                 if (!PartsRecovered.ContainsKey(pps.partInfo.title))
@@ -147,14 +150,14 @@ namespace StageRecovery
                     //Debug.Log("[SR] Deadly Reentry found");
                 }
 
-                bool velocityExceeded = false;
+                float burnChance = 0f;
                 if (DeadlyReentryInstalled && Settings.instance.DeadlyReentryMaxVelocity > 0 && v.obt_speed > Settings.instance.DeadlyReentryMaxVelocity)
                 {
-                    velocityExceeded = true;
-                    Debug.Log("[SR] DR velocity exceeded");
+                    burnChance = (float)(2 * ((v.obt_speed / Settings.instance.DeadlyReentryMaxVelocity) - 1));
+                    Debug.Log("[SR] DR velocity exceeded. Chance of burning up: "+burnChance);
                 }
 
-
+                float totalHeatShield = 0f, maxHeatShield = 0f;
 
                 foreach (ProtoPartSnapshot p in v.protoVessel.protoPartSnapshots)
                 {
@@ -197,7 +200,7 @@ namespace StageRecovery
                             realChuteInUse = true;
                         }
                     }
-                    if (velocityExceeded && ModuleNames.Contains("ModuleHeatShield"))
+                    if (burnChance > 0 && ModuleNames.Contains("ModuleHeatShield"))
                     {
                         ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleHeatShield");
                         String ablativeType = heatShield.moduleValues.GetValue("ablative");
@@ -205,11 +208,13 @@ namespace StageRecovery
                         {
                             float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == ablativeType).resourceValues.GetValue("amount"));
                             float maxShield = float.Parse(p.resources.Find(r => r.resourceName == ablativeType).resourceValues.GetValue("maxAmount"));
-                            if (shieldRemaining > 0.5 * maxShield)
-                                velocityExceeded = false;
+                            totalHeatShield += shieldRemaining;
+                            maxHeatShield += maxShield;
                         }
-                        else
-                            velocityExceeded = false;
+                        else //Non-ablative shielding. Just set it to "not destroyed" for the time being
+                        {
+                            burnChance = 0f;
+                        }
                         Debug.Log("[SR] Heat Shield found");
 
                     }
@@ -218,6 +223,17 @@ namespace StageRecovery
                         dragCoeff += p.mass * 0.2;
                     }
                 }
+
+                bool burnIt = false;
+                if (burnChance > 0)
+                {
+                    if (maxHeatShield > 0)
+                        burnChance -= (totalHeatShield / maxHeatShield);
+                    System.Random rand = new System.Random();
+                    burnIt = (rand.NextDouble() <= burnChance);
+                    Debug.Log("[SR] Burn chance: " + burnChance + " burning? " + burnIt);
+                }
+
                 double Vt = 9999;
                 if (!realChuteInUse)
                 {
@@ -235,7 +251,7 @@ namespace StageRecovery
                 }
                 Dictionary<string, int> RecoveredPartsForEvent = RecoveredPartsFromVessel(v);
                 StringBuilder msg = new StringBuilder();
-                if (Vt < 10.0 && !velocityExceeded)
+                if (Vt < 10.0 && !burnIt)
                 {
                     DoRecovery(v, msg);
                     msg.AppendLine("\nAdditional Information:");
@@ -269,7 +285,7 @@ namespace StageRecovery
                             foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
                             {
                                 float dry, wet;
-                                totalCost += ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet);
+                                totalCost += Math.Max(ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet), 0);
                             }
                             msg.AppendLine("It was valued at " + totalCost + " Funds.");
                         }
@@ -278,7 +294,7 @@ namespace StageRecovery
                             msg.AppendLine("RealChute Module used. Drag:Mass ratio of " + Math.Round(totalDrag / totalMass, 2) + " (>8 needed)");
                         else
                             msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than 10 needed)");
-                        if (velocityExceeded)
+                        if (burnIt)
                             msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + v.obt_speed + " m/s.");
 
                         MessageSystem.Message m = new MessageSystem.Message("Stage Destroyed", msg.ToString(), MessageSystemButton.MessageButtonColor.RED, MessageSystemButton.ButtonIcons.MESSAGE);
