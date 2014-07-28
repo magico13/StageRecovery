@@ -15,7 +15,25 @@ namespace StageRecovery
 
         public void Awake()
         {
+            if (Settings.instance == null)
+                Settings.instance = new Settings();
+            RenderingManager.AddToPostDrawQueue(0, OnDraw);
+        }
 
+        private void OnDraw()
+        {
+            Settings.instance.gui.SetGUIPositions(OnWindow);
+        }
+
+        private void OnWindow(int windowID)
+        {
+            Settings.instance.gui.DrawGUIs(windowID);
+        }
+
+        public void OnDestroy()
+        {
+            if (Settings.instance.gui.SRButtonStock != null)
+                ApplicationLauncher.Instance.RemoveModApplication(Settings.instance.gui.SRButtonStock);
         }
 
         public void Start()
@@ -27,7 +45,8 @@ namespace StageRecovery
             {
                 Debug.Log("[SR] Adding event!");
                 GameEvents.onVesselDestroy.Add(VesselDestroyEvent);
-                Settings.instance = new Settings();
+                GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
+                //Settings.instance = new Settings();
                 eventAdded = true;
             }
             Settings.instance.Load();
@@ -380,40 +399,6 @@ namespace StageRecovery
         }
 
 
-    }
-
-    public class Settings
-    {
-        public static Settings instance;
-        protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
-        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity;
-        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages;
-
-        public Settings()
-        {
-            RecoveryModifier = 0.75f;
-            RecoverKerbals = false;
-            RecoverScience = false;
-            ShowFailureMessages = true;
-            ShowSuccessMessages = true;
-            DeadlyReentryMaxVelocity = 2250f;
-            instance = this;
-        }
-
-        public void Load()
-        {
-            if (System.IO.File.Exists(filePath))
-            {
-                ConfigNode cnToLoad = ConfigNode.Load(filePath);
-                ConfigNode.LoadObjectFromConfig(this, cnToLoad);
-            }
-        }
-
-        public void Save()
-        {
-            ConfigNode cnTemp = ConfigNode.CreateConfigFromObject(this, new ConfigNode());
-            cnTemp.Save(filePath);
-        }
     }
 }
 

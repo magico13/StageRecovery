@@ -34,6 +34,9 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>..\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -47,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APIManager.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="StageRecovery.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StageRecoveryWrapper.cs" />
