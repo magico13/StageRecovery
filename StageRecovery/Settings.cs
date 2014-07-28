@@ -11,7 +11,7 @@ namespace StageRecovery
         public static Settings instance;
         public SettingsGUI gui = new SettingsGUI();
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
-        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity;
+        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity;
         [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages;
 
         public Settings()
@@ -22,6 +22,7 @@ namespace StageRecovery
             ShowFailureMessages = true;
             ShowSuccessMessages = true;
             DeadlyReentryMaxVelocity = 2250f;
+            CutoffVelocity = 10f;
            // instance = this;
         }
 
@@ -48,7 +49,8 @@ namespace StageRecovery
         private static int windowWidth = 200;
         public Rect mainWindowRect = new Rect(0, 0, windowWidth, 1);
 
-        private string recMod, DRMaxVel;
+        private string DRMaxVel;
+        private float recMod, cutoff;
         private bool recoverSci, recoverKerb, showFail, showSuccess;
 
 
@@ -97,7 +99,8 @@ namespace StageRecovery
 
         public void ShowSettings()
         {
-            recMod = Settings.instance.RecoveryModifier.ToString();
+            recMod = Settings.instance.RecoveryModifier;
+            cutoff = Settings.instance.CutoffVelocity;
             DRMaxVel = Settings.instance.DeadlyReentryMaxVelocity.ToString();
             recoverSci = Settings.instance.RecoverScience;
             recoverKerb = Settings.instance.RecoverKerbals;
@@ -109,10 +112,16 @@ namespace StageRecovery
         private void DrawMainGUI(int windowID)
         {
             GUILayout.BeginVertical();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Recovery Modifier");
-            recMod = GUILayout.TextField(recMod, 4);
-            GUILayout.EndHorizontal();
+            
+            GUILayout.Label("Recovery Modifier: "+Math.Round(100*recMod)+"%");
+            //recMod = GUILayout.TextField(recMod, 4);
+            recMod = GUILayout.HorizontalSlider(recMod, 0, 1);
+            recMod = (float)Math.Round(recMod, 2);
+
+            GUILayout.Label("Cutoff Velocity: " + cutoff + "m/s");
+            cutoff = GUILayout.HorizontalSlider(cutoff, 2, 12);
+            cutoff = (float)Math.Round(cutoff, 1);
+
             GUILayout.BeginHorizontal();
             GUILayout.Label("DR Velocity");
             DRMaxVel = GUILayout.TextField(DRMaxVel, 6);
@@ -125,8 +134,10 @@ namespace StageRecovery
 
             if (GUILayout.Button("Save"))
             {
-                if (!float.TryParse(recMod, out Settings.instance.RecoveryModifier))
-                    Settings.instance.RecoveryModifier = 0.75f;
+               /* if (!float.TryParse(recMod, out Settings.instance.RecoveryModifier))
+                    Settings.instance.RecoveryModifier = 0.75f;*/
+                Settings.instance.RecoveryModifier = recMod;
+                Settings.instance.CutoffVelocity = cutoff;
                 if (!float.TryParse(DRMaxVel, out Settings.instance.DeadlyReentryMaxVelocity))
                     Settings.instance.DeadlyReentryMaxVelocity = 2000f;
                 Settings.instance.RecoverScience = recoverSci;

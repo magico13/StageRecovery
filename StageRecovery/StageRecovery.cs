@@ -149,8 +149,8 @@ namespace StageRecovery
                 double totalMass = 0;
                 double dragCoeff = 0;
                 bool realChuteInUse = false;
-
-                float totalDrag = 0;
+                float RCParameter = 0f;
+                //float totalDrag = 0;
 
                 if (!v.packed)
                     foreach (Part p in v.Parts)
@@ -164,20 +164,15 @@ namespace StageRecovery
                         .SelectMany(t => t)
                         .FirstOrDefault(t => t.FullName == "DeadlyReentry.ReentryPhysics") != null;
 
-                if (DeadlyReentryInstalled)
-                {
-                    //Debug.Log("[SR] Deadly Reentry found");
-                }
-
                 float burnChance = 0f;
                 if (DeadlyReentryInstalled && Settings.instance.DeadlyReentryMaxVelocity > 0 && v.obt_speed > Settings.instance.DeadlyReentryMaxVelocity)
                 {
                     burnChance = (float)(2 * ((v.obt_speed / Settings.instance.DeadlyReentryMaxVelocity) - 1));
-                    Debug.Log("[SR] DR velocity exceeded. Chance of burning up: "+burnChance);
+                    Debug.Log("[SR] DR velocity exceeded (" + v.obt_speed + "/" + Settings.instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
                 }
 
                 float totalHeatShield = 0f, maxHeatShield = 0f;
-
+                
                 foreach (ProtoPartSnapshot p in v.protoVessel.protoPartSnapshots)
                 {
                     List<string> ModuleNames = new List<string>();
@@ -205,14 +200,15 @@ namespace StageRecovery
                             ConfigNode[] parchutes = realChute.moduleValues.GetNodes("PARACHUTE");
                             foreach (ConfigNode chute in parchutes)
                             {
-                                float area = float.Parse(chute.GetValue("deployedDiameter"));
-                                area = (float)(Math.Pow(area / 2, 2) * Math.PI);
+                                float diameter = float.Parse(chute.GetValue("deployedDiameter"));
+                                //area = (float)(Math.Pow(area / 2, 2) * Math.PI);
                                 string mat = chute.GetValue("material");
                                 System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
                                 object MatLibraryInstance = matLibraryType.GetProperty("instance").GetValue(null, null);
                                 object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
                                 float dragC = (float)GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
-                                totalDrag += (1 * 100 * dragC * area / 2000f);
+                                RCParameter += dragC * (float)Math.Pow(diameter, 2);
+                                //totalDrag += (1 * 100 * dragC * area / 2000f);
 
                             }
                             isParachute = true;
@@ -239,7 +235,10 @@ namespace StageRecovery
                     }
                     if (!isParachute)
                     {
-                        dragCoeff += p.mass * 0.2;
+                        if (p.partRef != null)
+                            dragCoeff += p.mass * p.partRef.maximum_drag;
+                        else
+                            dragCoeff += p.mass * 0.2;
                     }
                 }
 
@@ -249,35 +248,33 @@ namespace StageRecovery
                     if (maxHeatShield > 0)
                         burnChance -= (totalHeatShield / maxHeatShield);
                     System.Random rand = new System.Random();
-                    burnIt = (rand.NextDouble() <= burnChance);
-                    Debug.Log("[SR] Burn chance: " + burnChance + " burning? " + burnIt);
+                    double choice = rand.NextDouble();
+                    burnIt = (choice <= burnChance);
+                    Debug.Log("[SR] Burn chance: " + burnChance + " rand: " + choice + " burning? " + burnIt);
                 }
 
-                double Vt = 9999;
+                double Vt = double.MaxValue;
                 if (!realChuteInUse)
                 {
                     dragCoeff = dragCoeff / (totalMass);
-                    Vt = Math.Sqrt(250 * 6.674e-11 * 5.2915793e22 / (((600000) ^ 2) * 1.22309485 * dragCoeff)) / 1000;
+                    Vt = Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff));
                     Debug.Log("[SR] Using Stock Module! Drag: " + dragCoeff + " Vt: " + Vt);
                 }
                 else
                 {
-                    Debug.Log("[SR] Using RealChute Module! Drag/Mass ratio: " + (totalDrag / totalMass));
-                    if ((totalDrag / totalMass) >= 8)
-                    {
-                        Vt = 0;
-                    }
+                    Vt = (800 * totalMass * 9.8) / (1.223 * Math.PI) * Math.Pow(RCParameter, -1);
+                    Debug.Log("[SR] Using RealChute Module! Vt: " + Vt);
                 }
                 Dictionary<string, int> RecoveredPartsForEvent = RecoveredPartsFromVessel(v);
                 StringBuilder msg = new StringBuilder();
-                if (Vt < 10.0 && !burnIt)
+                if (Vt < Settings.instance.CutoffVelocity && !burnIt)
                 {
                     DoRecovery(v, msg);
                     msg.AppendLine("\nAdditional Information:");
                     if (realChuteInUse)
-                        msg.AppendLine("RealChute Module used. Drag:Mass ratio of " + Math.Round(totalDrag / totalMass, 2) + " (>8 needed)");
+                        msg.AppendLine("RealChute Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.CutoffVelocity + " needed)");
                     else
-                        msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than 10 needed)");
+                        msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than "+Settings.instance.CutoffVelocity+" needed)");
                     if (Settings.instance.ShowSuccessMessages)
                     {
                         MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
@@ -310,9 +307,9 @@ namespace StageRecovery
                         }
                         msg.AppendLine("\nAdditional Information:");
                         if (realChuteInUse)
-                            msg.AppendLine("RealChute Module used. Drag:Mass ratio of " + Math.Round(totalDrag / totalMass, 2) + " (>8 needed)");
+                            msg.AppendLine("RealChute Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.CutoffVelocity + " needed)");
                         else
-                            msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than 10 needed)");
+                            msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.CutoffVelocity + " needed)");
                         if (burnIt)
                             msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + v.obt_speed + " m/s.");
 
