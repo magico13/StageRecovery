@@ -21,7 +21,7 @@ namespace StageRecovery
             RecoverScience = true;
             ShowFailureMessages = true;
             ShowSuccessMessages = true;
-            DeadlyReentryMaxVelocity = 2250f;
+            DeadlyReentryMaxVelocity = 2000f;
             CutoffVelocity = 10f;
            // instance = this;
         }
