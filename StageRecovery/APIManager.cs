@@ -28,27 +28,27 @@ namespace StageRecovery
    
     public class RecoveryEvent
     {
-        private List<Action<Vessel, Dictionary<string, int>>> listeningMethods = new List<Action<Vessel,Dictionary<string,int>>>();
+        private List<Action<Vessel, float[], string>> listeningMethods = new List<Action<Vessel, float[], string>>();
 
-        public void Add(Action<Vessel, Dictionary<string, int>> method)
+        public void Add(Action<Vessel, float[], string> method)
         {
             //Debug.Log("[SR] Adding method");
             if (!listeningMethods.Contains(method))
                 listeningMethods.Add(method);
         }
 
-        public void Remove(Action<Vessel, Dictionary<string, int>> method)
+        public void Remove(Action<Vessel, float[], string> method)
         {
             //Debug.Log("[SR] Removing method");
             if (listeningMethods.Contains(method))
                 listeningMethods.Remove(method);
         }
 
-        public void Fire(Vessel vessel, Dictionary<string, int> recoveredParts)
+        public void Fire(Vessel vessel, float[] infoArray, string reason)
         {
             //Debug.Log("[SR] Firing");
-            foreach (Action<Vessel, Dictionary<string, int>> method in listeningMethods)
-                method.Invoke(vessel, recoveredParts);
+            foreach (Action<Vessel, float[], string> method in listeningMethods)
+                method.Invoke(vessel, infoArray, reason);
         }
     }
 }

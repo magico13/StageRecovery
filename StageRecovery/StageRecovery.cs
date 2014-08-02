@@ -13,6 +13,12 @@ namespace StageRecovery
     {
         private static bool eventAdded = false;
 
+        internal StageRecovery()
+        {
+            if (ToolbarManager.ToolbarAvailable)
+                Settings.instance.gui.AddToolbarButton();
+        }
+
         public void Awake()
         {
             if (Settings.instance == null)
@@ -34,6 +40,8 @@ namespace StageRecovery
         {
             if (Settings.instance.gui.SRButtonStock != null)
                 ApplicationLauncher.Instance.RemoveModApplication(Settings.instance.gui.SRButtonStock);
+            if (Settings.instance.gui.SRToolbarButton != null)
+                Settings.instance.gui.SRToolbarButton.Destroy();
         }
 
         public void Start()
@@ -45,7 +53,8 @@ namespace StageRecovery
             {
                 Debug.Log("[SR] Adding event!");
                 GameEvents.onVesselDestroy.Add(VesselDestroyEvent);
-                GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
+                if (!ToolbarManager.ToolbarAvailable)
+                    GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
                 //Settings.instance = new Settings();
                 eventAdded = true;
             }
@@ -55,8 +64,6 @@ namespace StageRecovery
             Settings.instance.Save();
         }
 
-        
-
         public double AddFunds(double toAdd)
         {
             if (HighLogic.CurrentGame.Mode != Game.Modes.CAREER)
@@ -65,27 +72,35 @@ namespace StageRecovery
             return (Funding.Instance.Funds += toAdd);
         }
 
-        public float GetRecoveryValueForParachutes(Vessel v, StringBuilder msg)
+        public float GetRecoveryValueForParachutes(Vessel v, StringBuilder msg, float Vt)
         {
             ProtoVessel pv = v.protoVessel;
             //StringBuilder msg = new StringBuilder();
             Dictionary<string, int> PartsRecovered = new Dictionary<string, int>();
             Dictionary<string, float> Costs = new Dictionary<string, float>();
             float FuelReturns = 0, DryReturns = 0;
-            bool stageControllable = false;
-            foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
+            float RecoveryMod = 0;
+            if (Settings.instance.FlatRateModel)
             {
-                if (pps.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew <= pps.protoModuleCrew.Count)) != null)
+                bool stageControllable = false;
+                foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
                 {
-                    Debug.Log("[SR] Stage is controlled!");
-                    stageControllable = true;
-                    break;
+                    if (pps.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew <= pps.protoModuleCrew.Count)) != null)
+                    {
+                        Debug.Log("[SR] Stage is controlled!");
+                        stageControllable = true;
+                        break;
+                    }
                 }
+
+                RecoveryMod = stageControllable ? 1.0f : Settings.instance.RecoveryModifier;
             }
-            float RecoveryMod = stageControllable ? 1.0f : Settings.instance.RecoveryModifier;
+            else
+                RecoveryMod = GetVariableRecoveryValue(Vt);
             double distanceFromKSC = SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(pv.latitude, pv.longitude));
             double maxDist = SpaceCenter.Instance.cb.Radius * Math.PI;
-            float recoveryPercent = RecoveryMod * Mathf.Lerp(0.98f, 0.1f, (float)(distanceFromKSC / maxDist));
+            float distancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(distanceFromKSC / maxDist));
+            float recoveryPercent = RecoveryMod * distancePercent;
             float totalReturn = 0;
             foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
             {
@@ -120,7 +135,7 @@ namespace StageRecovery
             {
                 msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i)+": "+(PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i)));
             }
-            msg.AppendLine("Recovery percentage: " + Math.Round(100 * recoveryPercent, 1) + "%");
+            msg.AppendLine("Recovery percentage: " + Math.Round(100 * recoveryPercent, 1) + "% (" + Math.Round(100 * distancePercent, 1) + "% distance, " + Math.Round(100 * RecoveryMod, 1)+"% damage)");
             msg.AppendLine("Total refunded for parts: " + DryReturns);
             msg.AppendLine("Total refunded for fuel: " + FuelReturns);
             msg.AppendLine("Total refunds: " + totalReturn);
@@ -226,9 +241,10 @@ namespace StageRecovery
                             totalHeatShield += shieldRemaining;
                             maxHeatShield += maxShield;
                         }
-                        else //Non-ablative shielding. Just set it to "not destroyed" for the time being
+                        else //Non-ablative shielding. Add a semi-random amount of shielding.
                         {
-                            burnChance = 0f;
+                            totalHeatShield += 400;
+                            maxHeatShield += 400;
                         }
                         Debug.Log("[SR] Heat Shield found");
 
@@ -267,21 +283,33 @@ namespace StageRecovery
                 }
                 Dictionary<string, int> RecoveredPartsForEvent = RecoveredPartsFromVessel(v);
                 StringBuilder msg = new StringBuilder();
-                if (Vt < Settings.instance.CutoffVelocity && !burnIt)
+                if (((Settings.instance.FlatRateModel && Vt < Settings.instance.CutoffVelocity) || 
+                    (!Settings.instance.FlatRateModel && Vt < Settings.instance.HighCut)) && !burnIt)
                 {
-                    DoRecovery(v, msg);
+                    DoRecovery(v, msg, (float)Vt);
                     msg.AppendLine("\nAdditional Information:");
                     if (realChuteInUse)
-                        msg.AppendLine("RealChute Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.CutoffVelocity + " needed)");
+                        msg.AppendLine("RealChute Module used.");
                     else
-                        msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than "+Settings.instance.CutoffVelocity+" needed)");
+                        msg.AppendLine("Stock Module used.");
+                    if (Settings.instance.FlatRateModel)
+                        msg.AppendLine("Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.CutoffVelocity + " needed)");
+                    else
+                        msg.AppendLine("Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.HighCut + " needed)");
                     if (Settings.instance.ShowSuccessMessages)
                     {
                         MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
                         MessageSystem.Instance.AddMessage(m);
                     }
+
+                    float recoveryValue = 0;
+                    if (Settings.instance.FlatRateModel && Vt < Settings.instance.CutoffVelocity)
+                        recoveryValue = 1;
+                    else
+                        recoveryValue = GetVariableRecoveryValue((float)Vt);
+                    float[] infoArray = new float[] { recoveryValue, fundsRecovered, scienceRecovered };
                     //Fire success event
-                    APIManager.instance.RecoverySuccessEvent.Fire(v, RecoveredPartsForEvent);
+                    APIManager.instance.RecoverySuccessEvent.Fire(v, infoArray, "SUCCESS");
                 }
                 else
                 {
@@ -307,25 +335,37 @@ namespace StageRecovery
                         }
                         msg.AppendLine("\nAdditional Information:");
                         if (realChuteInUse)
-                            msg.AppendLine("RealChute Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.CutoffVelocity + " needed)");
+                            msg.AppendLine("RealChute Module used.");
                         else
-                            msg.AppendLine("Stock Module used. Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.CutoffVelocity + " needed)");
+                            msg.AppendLine("Stock Module used.");
+                        if (Settings.instance.FlatRateModel)
+                            msg.AppendLine("Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.CutoffVelocity + " needed)");
+                        else
+                            msg.AppendLine("Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.HighCut + " needed)");
+
                         if (burnIt)
                             msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + v.obt_speed + " m/s.");
 
                         MessageSystem.Message m = new MessageSystem.Message("Stage Destroyed", msg.ToString(), MessageSystemButton.MessageButtonColor.RED, MessageSystemButton.ButtonIcons.MESSAGE);
                         MessageSystem.Instance.AddMessage(m);
                     }
+
+                    string reasonForFailure = burnIt ? "BURNUP" : "SPEED";
+                    float[] infoArray = new float[] { 0, 0, 0 };
                     //Fire failure event
-                    APIManager.instance.RecoveryFailureEvent.Fire(v, RecoveredPartsForEvent);
+                    APIManager.instance.RecoveryFailureEvent.Fire(v, infoArray, reasonForFailure);
                 }
             }
         }
 
-        public void DoRecovery(Vessel v, StringBuilder msg)
+        private float fundsRecovered, scienceRecovered;
+        public void DoRecovery(Vessel v, StringBuilder msg, float Vt)
         {
             if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
-                AddFunds(GetRecoveryValueForParachutes(v, msg));
+            {
+                fundsRecovered = GetRecoveryValueForParachutes(v, msg, Vt);
+                AddFunds(fundsRecovered);
+            }
             else
             {
                 msg.AppendLine("Stage contains these parts:");
@@ -351,6 +391,7 @@ namespace StageRecovery
                 float returned = RecoverScience(v);
                 if (returned > 0)
                     msg.AppendLine("\nScience Recovered: "+returned);
+                scienceRecovered = returned;
             }
         }
 
@@ -393,6 +434,19 @@ namespace StageRecovery
                 }
             }
             return totalScience;
+        }
+
+        public float GetVariableRecoveryValue(float v)
+        {
+            float x0 = Settings.instance.LowCut;
+            float x1 = Settings.instance.HighCut;
+            if (v < x0) return 100;
+            if (v > x1) return 0;
+            float a = (float)(-100 / (Math.Pow(x1, 2) - 2 * x0 * x1 + Math.Pow(x0, 2)));
+            float b = -2 * a * x0;
+            float c = (float)(a * Math.Pow(x0, 2) + 100);
+            float ret = (float)(a * Math.Pow(v, 2) + b * v + c)/100f;
+            return ret;
         }
 
 
