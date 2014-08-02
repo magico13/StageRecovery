@@ -105,9 +105,11 @@ namespace StageRecovery
             foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
             {
                 float dryCost, fuelCost;
-                totalReturn += ShipConstruction.GetPartCosts(pps, pps.partInfo, out dryCost, out fuelCost);
+                //totalReturn += 
+                ShipConstruction.GetPartCosts(pps, pps.partInfo, out dryCost, out fuelCost);
                 dryCost = dryCost < 0 ? 0 : dryCost;
                 fuelCost = fuelCost < 0 ? 0 : fuelCost;
+                totalReturn = dryCost + fuelCost;
 
                 FuelReturns += fuelCost*recoveryPercent;
                 DryReturns += dryCost*recoveryPercent;
