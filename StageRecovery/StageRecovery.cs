@@ -442,7 +442,7 @@ namespace StageRecovery
         {
             float x0 = Settings.instance.LowCut;
             float x1 = Settings.instance.HighCut;
-            if (v < x0) return 100;
+            if (v < x0) return 1;
             if (v > x1) return 0;
             float a = (float)(-100 / (Math.Pow(x1, 2) - 2 * x0 * x1 + Math.Pow(x0, 2)));
             float b = -2 * a * x0;
