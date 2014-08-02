@@ -109,7 +109,7 @@ namespace StageRecovery
                 ShipConstruction.GetPartCosts(pps, pps.partInfo, out dryCost, out fuelCost);
                 dryCost = dryCost < 0 ? 0 : dryCost;
                 fuelCost = fuelCost < 0 ? 0 : fuelCost;
-                totalReturn = dryCost + fuelCost;
+                totalReturn += dryCost + fuelCost;
 
                 FuelReturns += fuelCost*recoveryPercent;
                 DryReturns += dryCost*recoveryPercent;
