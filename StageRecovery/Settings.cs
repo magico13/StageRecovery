@@ -19,7 +19,9 @@ namespace StageRecovery
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut;
         [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel;
 
-        //The instantiater for the settings class. It sets the values to default (which are then replaced when Load() is called)
+        public List<RecoveryItem> RecoveredStages, DestroyedStages;
+
+        //The constructor for the settings class. It sets the values to default (which are then replaced when Load() is called)
         public Settings()
         {
             RecoveryModifier = 0.75f;
@@ -32,6 +34,9 @@ namespace StageRecovery
             FlatRateModel = false;
             LowCut = 6f;
             HighCut = 12f;
+
+            RecoveredStages = new List<RecoveryItem>();
+            DestroyedStages = new List<RecoveryItem>();
         }
 
         //Loads the settings from the file
@@ -50,11 +55,20 @@ namespace StageRecovery
             ConfigNode cnTemp = ConfigNode.CreateConfigFromObject(this, new ConfigNode());
             cnTemp.Save(filePath);
         }
+
+        public void ClearStageLists()
+        {
+            RecoveredStages.Clear();
+            DestroyedStages.Clear();
+            gui.flightGUI.NullifySelected();
+        }
     }
 
     //This class controls all the GUI elements for the in-game settings menu
     public class SettingsGUI
     {
+        public FlightGUI flightGUI = new FlightGUI();
+
         //The window is only shown when this is true
         private bool showWindow = false;
 
@@ -81,13 +95,13 @@ namespace StageRecovery
             if (ApplicationLauncher.Ready && (SRButtonStock == null || !ApplicationLauncher.Instance.Contains(SRButtonStock, out vis))) //Add Stock button
             {
                 SRButtonStock = ApplicationLauncher.Instance.AddModApplication(
-                    ShowSettings,
+                    ShowWindow,
                     hideAll,
                     DummyVoid,
                     DummyVoid,
                     DummyVoid,
                     DummyVoid,
-                    ApplicationLauncher.AppScenes.SPACECENTER,
+                    (ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT),
                     GameDatabase.Instance.GetTexture("StageRecovery/icon", false));
             }
         }
@@ -98,9 +112,9 @@ namespace StageRecovery
         public void AddToolbarButton()
         {
             SRToolbarButton = ToolbarManager.Instance.add("StageRecovery", "MainButton");
-            SRToolbarButton.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER);
+            SRToolbarButton.Visibility = new GameScenesVisibility(new GameScenes[] {GameScenes.SPACECENTER, GameScenes.FLIGHT});
             SRToolbarButton.TexturePath = "StageRecovery/icon_blizzy";
-            SRToolbarButton.ToolTip = "StageRecovery Settings";
+            SRToolbarButton.ToolTip = "StageRecovery";
             SRToolbarButton.OnClick += ((e) =>
             {
                 onClick();
@@ -110,28 +124,40 @@ namespace StageRecovery
         //This method is used when the toolbar button is clicked. It alternates between showing the window and hiding it.
         public void onClick()
         {
-            if (showWindow)
+            if (showWindow || flightGUI.showFlightGUI)
                 hideAll();
             else
+                ShowWindow();
+        }
+
+        //This shows the correct window depending on the current scene
+        public void ShowWindow()
+        {
+            if (HighLogic.LoadedSceneIsFlight)
+                flightGUI.showFlightGUI = true;
+            else if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
                 ShowSettings();
         }
 
         //Does stuff to draw the window.
         public void SetGUIPositions(GUI.WindowFunction OnWindow)
         {
-            if (showWindow) mainWindowRect = GUILayout.Window(8940, mainWindowRect, DrawMainGUI, "Stage Recovery", HighLogic.Skin.window);
+            if (showWindow) mainWindowRect = GUILayout.Window(8940, mainWindowRect, DrawSettingsGUI, "Stage Recovery", HighLogic.Skin.window);
+            if (flightGUI.showFlightGUI) flightGUI.flightWindowRect = GUILayout.Window(8940, flightGUI.flightWindowRect, flightGUI.DrawFlightGUI, "Stage Recovery", HighLogic.Skin.window);
         }
 
         //More drawing window stuff. I only half understand this. It just works.
         public void DrawGUIs(int windowID)
         {
-            if (showWindow) DrawMainGUI(windowID);
+            if (showWindow) DrawSettingsGUI(windowID);
+            if (flightGUI.showFlightGUI) flightGUI.DrawFlightGUI(windowID);
         }
 
         //Hide all the windows. We only have one so this isn't super helpful, but alas.
         public void hideAll()
         {
             showWindow = false;
+            flightGUI.showFlightGUI = false;
         }
 
         //Resets the windows. Hides them and resets the Rect object. Not really needed, but it's here
@@ -139,6 +165,7 @@ namespace StageRecovery
         {
             hideAll();
             mainWindowRect = new Rect(0, 0, windowWidth, 1);
+            flightGUI.flightWindowRect = new Rect((Screen.width - 768) / 2, (Screen.height - 540) / 2, 768, 540);
         }
 
         //This function will show the settings window and copy the current settings into their holders
@@ -158,7 +185,7 @@ namespace StageRecovery
         }
 
         //The function that actually draws all the gui elements. I use GUILayout for doing everything because it's easy to use.
-        private void DrawMainGUI(int windowID)
+        private void DrawSettingsGUI(int windowID)
         {
             //We start by begining a vertical segment. All new elements will be placed below the previous one.
             GUILayout.BeginVertical();

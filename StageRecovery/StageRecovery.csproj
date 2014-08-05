@@ -50,6 +50,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APIManager.cs" />
+    <Compile Include="FlightGUI.cs" />
+    <Compile Include="RecoveryItem.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="StageRecovery.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
