@@ -101,7 +101,7 @@ namespace StageRecovery
                     DummyVoid,
                     DummyVoid,
                     DummyVoid,
-                    (ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT),
+                    (ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB),
                     GameDatabase.Instance.GetTexture("StageRecovery/icon", false));
             }
         }
@@ -112,7 +112,7 @@ namespace StageRecovery
         public void AddToolbarButton()
         {
             SRToolbarButton = ToolbarManager.Instance.add("StageRecovery", "MainButton");
-            SRToolbarButton.Visibility = new GameScenesVisibility(new GameScenes[] {GameScenes.SPACECENTER, GameScenes.FLIGHT});
+            SRToolbarButton.Visibility = new GameScenesVisibility(new GameScenes[] {GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR, GameScenes.SPH});
             SRToolbarButton.TexturePath = "StageRecovery/icon_blizzy";
             SRToolbarButton.ToolTip = "StageRecovery";
             SRToolbarButton.OnClick += ((e) =>
@@ -137,6 +137,8 @@ namespace StageRecovery
                 flightGUI.showFlightGUI = true;
             else if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
                 ShowSettings();
+            else if (HighLogic.LoadedSceneIsEditor)
+                EditorCalc();
         }
 
         //Does stuff to draw the window.
@@ -269,7 +271,109 @@ namespace StageRecovery
                 GUI.DragWindow();
         }
 
-        
+        public void EditorCalc()
+        {
+            float Vt = DetermineVtEditor();
+            StringBuilder msg = new StringBuilder();
+            bool recovered = false;
+            if (Settings.instance.FlatRateModel)
+                recovered = Vt < Settings.instance.CutoffVelocity;
+            else
+                recovered = Vt < Settings.instance.HighCut;
+
+            if (recovered) msg.AppendLine("Status: Recovered");
+            else msg.AppendLine("Status: Destroyed");
+
+            float recoveryPercent = 0;
+            if (recovered && Settings.instance.FlatRateModel) recoveryPercent = 1;
+            else if (recovered && !Settings.instance.FlatRateModel) recoveryPercent = RecoveryItem.GetVariableRecoveryValue(Vt);
+
+            msg.AppendLine("Terminal velocity: " + Math.Round(Vt, 1) + " m/s");
+            msg.AppendLine("Percent recovered: " + Math.Round(100 * recoveryPercent, 2) + "%");
+
+            MessageSystemButton.MessageButtonColor color = recovered ? MessageSystemButton.MessageButtonColor.BLUE : MessageSystemButton.MessageButtonColor.RED;
+            MessageSystem.Message m = new MessageSystem.Message("StageRecovery Editor Help", msg.ToString(), color, MessageSystemButton.ButtonIcons.MESSAGE);
+            MessageSystem.Instance.AddMessage(m);
+
+            if (SRButtonStock != null) SRButtonStock.SetFalse();
+        }
+
+        public float DetermineVtEditor()
+        {
+            float Vt = float.MaxValue;
+            List<Part> parts = EditorLogic.fetch.ship.Parts;
+            bool realChuteInUse = false;
+            float totalMass = 0;
+            float dragCoeff = 0;
+            float RCParameter = 0;
+            foreach (Part part in parts)
+            {
+                totalMass += part.mass;
+                totalMass += part.GetResourceMass();
+                bool hasRealChute = part.Modules.Contains("RealChuteModule");
+                bool hasChute = part.Modules.Contains("ModuleParachute");
+                if (hasRealChute) realChuteInUse = true;
+
+                if (hasRealChute)
+                {
+                    PartModule realChute = part.Modules["RealChuteModule"];
+                    ConfigNode rcNode = new ConfigNode();
+                    realChute.Save(rcNode);
+
+                    //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
+                    Type matLibraryType = AssemblyLoader.loadedAssemblies
+                        .SelectMany(a => a.assembly.GetExportedTypes())
+                        .SingleOrDefault(t => t.FullName == "RealChute.Libraries.MaterialsLibrary");
+
+                    //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
+                    //We get that from the PPMS 
+                    ConfigNode[] parachutes = rcNode.GetNodes("PARACHUTE");
+                    //We then act on each individual parachute in the module
+                    foreach (ConfigNode chute in parachutes)
+                    {
+                        //First off, the diameter of the parachute. From that we can (later) determine the Vt, assuming a circular chute
+                        float diameter = float.Parse(chute.GetValue("deployedDiameter"));
+                        //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
+                        string mat = chute.GetValue("material");
+                        //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
+                        System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
+                        //In order to invoke the method, we need to grab the active instance of the material library
+                        object MatLibraryInstance = matLibraryType.GetProperty("instance").GetValue(null, null);
+                        //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
+                        object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
+                        //With that material object we can extract the dragCoefficient using the helper function above.
+                        float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
+                        //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
+                        //But it works perfectly for mutiple identical parachutes (the normal case)
+                        RCParameter += dragC * (float)Math.Pow(diameter, 2);
+                    }
+                }
+                else if (hasChute)
+                {
+                    ModuleParachute mp = (ModuleParachute)part.Modules["ModuleParachute"];
+                    dragCoeff += part.mass * mp.fullyDeployedDrag;
+                }
+                else
+                {
+                    dragCoeff += part.mass * part.maximum_drag;
+                }
+            }
+            if (!realChuteInUse)
+            {
+                //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
+                //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
+                dragCoeff = dragCoeff / (totalMass);
+                //Calculate Vt by what the wiki says
+                Vt = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+            }
+            //Otherwise we're using RealChutes and we have a bit different of a calculation
+            else
+            {
+                //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
+                Vt = (float)Math.Sqrt(((8000 * totalMass * 9.8) / (1.223 * Math.PI) * Math.Pow(RCParameter, -1)));
+            }
+            return Vt;
+        }
 
     }
 }

@@ -157,7 +157,7 @@ namespace StageRecovery
             else
             {
                 //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                v = (float)((800 * totalMass * 9.8) / (1.223 * Math.PI) * Math.Pow(RCParameter, -1));
+                v = (float)Math.Sqrt((800 * totalMass * 9.8) / (1.223 * Math.PI) * Math.Pow(RCParameter, -1));
                 //More log messages! Using RC and the Vt.
                 //Debug.Log("[SR] Using RealChute Module! Vt: " + Vt);
             }
@@ -502,7 +502,7 @@ namespace StageRecovery
 
         //When using the variable recovery rate we determine the rate from a negative curvature quadratic with y=100 at velocity=lowCut and y=0 at vel=highCut.
         //No other zeroes are in that range. Check this github issue for an example and some more details: https://github.com/magico13/StageRecovery/issues/1
-        public float GetVariableRecoveryValue(float v)
+        public static float GetVariableRecoveryValue(float v)
         {
             //We're following ax^2+bx+c=recovery
             //We know that -b/2a=LowCut since that's the only location where the derivative of the quadratic is 0 (the max)
