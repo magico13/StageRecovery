@@ -273,7 +273,7 @@ namespace StageRecovery
 
         public void EditorCalc()
         {
-            float Vt = DetermineVtEditor();
+            float Vt = DetermineVtEditor(false);
             StringBuilder msg = new StringBuilder();
             bool recovered = false;
             if (Settings.instance.FlatRateModel)
@@ -281,6 +281,7 @@ namespace StageRecovery
             else
                 recovered = Vt < Settings.instance.HighCut;
 
+            msg.AppendLine("-- Current Fuel Values --");
             if (recovered) msg.AppendLine("Status: Recovered");
             else msg.AppendLine("Status: Destroyed");
 
@@ -291,14 +292,35 @@ namespace StageRecovery
             msg.AppendLine("Terminal velocity: " + Math.Round(Vt, 1) + " m/s");
             msg.AppendLine("Percent recovered: " + Math.Round(100 * recoveryPercent, 2) + "%");
 
+            float fullVt = Vt;
+            Vt = DetermineVtEditor(true);
+            if (fullVt != Vt)
+            {
+                msg.AppendLine("\n-- Empty Values --");
+                recovered = false;
+                if (Settings.instance.FlatRateModel)
+                    recovered = Vt < Settings.instance.CutoffVelocity;
+                else
+                    recovered = Vt < Settings.instance.HighCut;
+
+                if (recovered) msg.AppendLine("Status: Recovered");
+                else msg.AppendLine("Status: Destroyed");
+
+                recoveryPercent = 0;
+                if (recovered && Settings.instance.FlatRateModel) recoveryPercent = 1;
+                else if (recovered && !Settings.instance.FlatRateModel) recoveryPercent = RecoveryItem.GetVariableRecoveryValue(Vt);
+
+                msg.AppendLine("Terminal velocity: " + Math.Round(Vt, 1) + " m/s");
+                msg.AppendLine("Percent recovered: " + Math.Round(100 * recoveryPercent, 2) + "%");
+            }
             MessageSystemButton.MessageButtonColor color = recovered ? MessageSystemButton.MessageButtonColor.BLUE : MessageSystemButton.MessageButtonColor.RED;
             MessageSystem.Message m = new MessageSystem.Message("StageRecovery Editor Help", msg.ToString(), color, MessageSystemButton.ButtonIcons.MESSAGE);
             MessageSystem.Instance.AddMessage(m);
-
+            
             if (SRButtonStock != null) SRButtonStock.SetFalse();
         }
 
-        public float DetermineVtEditor()
+        public float DetermineVtEditor(bool empty)
         {
             float Vt = float.MaxValue;
             List<Part> parts = EditorLogic.fetch.ship.Parts;
@@ -309,7 +331,7 @@ namespace StageRecovery
             foreach (Part part in parts)
             {
                 totalMass += part.mass;
-                totalMass += part.GetResourceMass();
+                if (!empty) totalMass += part.GetResourceMass();
                 bool hasRealChute = part.Modules.Contains("RealChuteModule");
                 bool hasChute = part.Modules.Contains("ModuleParachute");
                 if (hasRealChute) realChuteInUse = true;

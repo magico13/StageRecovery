@@ -45,6 +45,8 @@ namespace StageRecovery
             StageName = vessel.vesselName;
             //Determine what the terminal velocity should be
             Vt = DetermineTerminalVelocity();
+            //if (Vt > (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut))
+                Vt = TryPoweredRecovery();//Try to perform a powered landing
             //Determine if the stage should be burned up
             burnedUp = DetermineIfBurnedUp();
             //Set the Recovery Percentages
@@ -77,6 +79,8 @@ namespace StageRecovery
                 }
                 //Add the part mass to the total.
                 totalMass += p.mass;
+                //Add resource masses
+                totalMass += GetResourceMass(p.resources);
                 //Assume the part isn't a parachute until proven a parachute
                 bool isParachute = false;
                 //For instance, by having the ModuleParachute module
@@ -157,13 +161,161 @@ namespace StageRecovery
             else
             {
                 //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                v = (float)Math.Sqrt((800 * totalMass * 9.8) / (1.223 * Math.PI) * Math.Pow(RCParameter, -1));
+                v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI) * Math.Pow(RCParameter, -1));
                 //More log messages! Using RC and the Vt.
                 //Debug.Log("[SR] Using RealChute Module! Vt: " + Vt);
             }
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
             return v;
         }
+
+        private float GetResourceMass(List<ProtoPartResourceSnapshot> resources)
+        {
+            double mass = 0;
+            foreach (ProtoPartResourceSnapshot resource in resources)
+            {
+                ConfigNode RCN = resource.resourceValues;
+                double amount = double.Parse(RCN.GetValue("amount"));
+                mass += amount * resource.resourceRef.info.density;
+            }
+            return (float)mass;
+        }
+
+        private float TryPoweredRecovery()
+        {
+            Debug.Log("[SR] Trying powered recovery");
+            //ISP references: http://forum.kerbalspaceprogram.com/threads/34315-How-Do-I-calculate-Delta-V-on-more-than-one-engine
+            float finalVelocity = Vt;
+            float totalMass = 0;
+            List<ModuleEngines> engines = new List<ModuleEngines>();
+            List<ModuleEngines> jets = new List<ModuleEngines>();
+            List<ModuleEnginesFX> enginesFX = new List<ModuleEnginesFX>();
+            List<ModuleEnginesFX> jetsFX = new List<ModuleEnginesFX>();
+            double netISP = 0;
+            double totalThrust = 0;
+            Dictionary<string, double> resources = new Dictionary<string, double>();
+            Dictionary<string, double> rMasses = new Dictionary<string, double>();
+            bool stageControllable = false;
+            foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+            {
+                //Search through the Modules on the part for one called ModuleCommand and check if the crew count in the part is greater than or equal to the minimum required for control
+                if (!stageControllable && p.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew <= p.protoModuleCrew.Count)) != null)
+                {
+                    //Congrats, the stage is controlled! We can stop looking now.
+                    stageControllable = true;
+                }
+                totalMass += p.mass;
+                totalMass += GetResourceMass(p.resources);
+                foreach (ProtoPartModuleSnapshot ppms in p.modules)
+                {
+                    if (ppms.moduleName == "ModuleEngines")
+                    {
+                        ModuleEngines engine = (ModuleEngines)ppms.moduleRef;
+                        engine.Load(ppms.moduleValues);
+                        if (engine.isEnabled)
+                        {
+                            engines.Add(engine);
+                        }
+                    }
+                    if (ppms.moduleName == "ModuleEnginesFX")
+                    {
+                        ModuleEnginesFX engine = (ModuleEnginesFX)ppms.moduleRef;
+                        engine.Load(ppms.moduleValues);
+                        if (engine.isEnabled)
+                        {
+                            enginesFX.Add(engine);
+                        }
+                    }
+                }
+                foreach (ProtoPartResourceSnapshot rsc in p.resources)
+                {
+                    double amt = double.Parse(rsc.resourceValues.GetValue("amount"));
+                    Debug.Log("[SR] Adding " + amt + " of " + rsc.resourceName + ". density: " + rsc.resourceRef.info.density);
+                    if (!resources.ContainsKey(rsc.resourceName))
+                    {
+                        resources.Add(rsc.resourceName, amt);
+                        rMasses.Add(rsc.resourceName, amt * rsc.resourceRef.info.density);
+                    }
+                    else
+                    {
+                        resources[rsc.resourceName] += amt;
+                        rMasses[rsc.resourceName] += (amt * rsc.resourceRef.info.density);
+                    }
+                }
+
+            }
+            List<String> propsUsed = new List<string>();
+            //So, I'm not positive jets really need to be done differently. Though they could go further than normal rockets because of gliding.
+            if (stageControllable && (engines.Count > 0 || enginesFX.Count > 0))
+            {
+                Debug.Log("[SR] Controlled and has engines");
+                //Engine landing
+                double totalMassDry = totalMass;
+                foreach (ModuleEngines e in engines)
+                {
+                    totalThrust += e.maxThrust;
+                    netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
+                }
+                foreach (ModuleEnginesFX e in enginesFX)
+                {
+                    totalThrust += e.maxThrust;
+                    netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
+                }
+                Debug.Log("[SR] TWR: "+(totalThrust / (totalMass*9.81)));
+                if (totalThrust < (totalMass * 9.81)) //Need greater than 1 TWR to land
+                    return finalVelocity;
+                netISP = totalThrust / netISP;
+                Debug.Log("[SR] ISP: "+netISP);
+                if (engines.Count > 0)
+                {
+                    Debug.Log("[PR] engine not null");
+                    foreach (Propellant prop in engines[0].propellants)
+                    {
+                        Debug.Log("[PR] Requires " + prop.name);
+                        if (rMasses.ContainsKey(prop.name) && !(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
+                        {
+                            totalMassDry -= rMasses[prop.name];
+                            propsUsed.Add(prop.name);
+                            Debug.Log("[PR] Found " + prop.name);
+                        }
+                    }
+                }
+                else if (enginesFX.Count > 0)
+                {
+                    Debug.Log("[PR] engineFX not null");
+                    foreach (Propellant prop in enginesFX[0].propellants)
+                    {
+                        Debug.Log("[PR] Requires " + prop.name);
+                        if (rMasses.ContainsKey(prop.name) && !(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
+                        {
+                            totalMassDry -= rMasses[prop.name];
+                            propsUsed.Add(prop.name);
+                            Debug.Log("[PR] Found " + prop.name);
+                        }
+                    }
+                }
+                Debug.Log("[SR] Mass(wet): " + totalMass + " Mass(dry): "+totalMassDry);
+                double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMassDry);
+                Debug.Log("[SR] dV: "+totaldV);
+                finalVelocity -= (float)(totaldV / 2.5);
+                Debug.Log("[SR] final velocity: "+finalVelocity);
+            }
+            float cutoff = Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut;
+            if (finalVelocity < cutoff) //If we're recovering it, remove all the used fuel (temporarily all of it)
+            {
+                foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                    foreach (ProtoPartResourceSnapshot r in p.resources)
+                        if (propsUsed.Contains(r.resourceName))
+                        {
+                            r.resourceValues.SetValue("amount", "0");
+                            if (r.resourceRef != null)
+                                r.resourceRef.amount = 0;
+                        }
+            }
+
+            return finalVelocity;
+        }
+
 
         //This determines whether the Stage is destroyed by reentry heating (through a non-scientific method)
         //Note: Does not always return the same value because of the Random. Check if burnedUp is true instead!
