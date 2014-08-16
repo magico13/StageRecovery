@@ -17,7 +17,7 @@ namespace StageRecovery
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut;
-        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel;
+        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
 
@@ -34,6 +34,7 @@ namespace StageRecovery
             FlatRateModel = false;
             LowCut = 6f;
             HighCut = 12f;
+            PoweredRecovery = true;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
@@ -84,7 +85,7 @@ namespace StageRecovery
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
-        private bool recoverSci, recoverKerb, showFail, showSuccess, flatRate;
+        private bool recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery;
 
         //The stock button. Used if Blizzy's toolbar isn't installed.
         public ApplicationLauncherButton SRButtonStock = null;
@@ -183,6 +184,7 @@ namespace StageRecovery
             flatRate = Settings.instance.FlatRateModel;
             lowCut = Settings.instance.LowCut;
             highCut = Settings.instance.HighCut;
+            poweredRecovery = Settings.instance.PoweredRecovery;
             showWindow = true;
         }
 
@@ -239,6 +241,7 @@ namespace StageRecovery
             recoverKerb = GUILayout.Toggle(recoverKerb, "Recover Kerbals");
             showFail = GUILayout.Toggle(showFail, "Failure Messages");
             showSuccess = GUILayout.Toggle(showSuccess, "Success Messages");
+            poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");
 
             //We then provide a single button to save the settings. The window can be closed by clicking on the toolbar button, which cancels any changes
             if (GUILayout.Button("Save"))
@@ -258,6 +261,7 @@ namespace StageRecovery
                 Settings.instance.RecoverKerbals = recoverKerb;
                 Settings.instance.ShowFailureMessages = showFail;
                 Settings.instance.ShowSuccessMessages = showSuccess;
+                Settings.instance.PoweredRecovery = poweredRecovery;
                 //Finally we save the settings to the file
                 Settings.instance.Save();
             }

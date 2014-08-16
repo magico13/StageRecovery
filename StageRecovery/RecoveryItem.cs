@@ -25,7 +25,7 @@ namespace StageRecovery
         public float Vt = 0f;
         public List<string> ScienceExperiments = new List<string>();
         public float ScienceRecovered = 0;
-        public List<string> KerbalsRecovered = new List<string>();
+        public List<string> KerbalsOnboard = new List<string>();
         public Dictionary<string, int> PartsRecovered = new Dictionary<string, int>();
         public Dictionary<string, float> Costs = new Dictionary<string, float>();
         public float FundsOriginal = 0, FundsReturned = 0, DryReturns = 0, FuelReturns = 0;
@@ -45,7 +45,7 @@ namespace StageRecovery
             StageName = vessel.vesselName;
             //Determine what the terminal velocity should be
             Vt = DetermineTerminalVelocity();
-            //if (Vt > (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut))
+            if (Vt > (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut) && Settings.instance.PoweredRecovery)
                 Vt = TryPoweredRecovery();//Try to perform a powered landing
             //Determine if the stage should be burned up
             burnedUp = DetermineIfBurnedUp();
@@ -57,8 +57,8 @@ namespace StageRecovery
             if (recovered && Settings.instance.RecoverScience)
                 ScienceRecovered = RecoverScience();
             //Recover Kerbals if we're allowed
-            if (recovered && Settings.instance.RecoverKerbals)
-                KerbalsRecovered = RecoverKerbals();
+            //if (recovered && Settings.instance.RecoverKerbals)
+            KerbalsOnboard = RecoverKerbals();
         }
 
         //This function/method/thing calculates the terminal velocity of the Stage
@@ -524,7 +524,8 @@ namespace StageRecovery
                 foreach (ProtoCrewMember pcm in vessel.protoVessel.GetVesselCrew())
                 {
                     //Yeah, that's all it takes to recover a kerbal. Set them to Available from Assigned
-                    pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                    if (recovered && Settings.instance.RecoverKerbals)
+                        pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
                     kerbals.Add(pcm.name);
                 }
             }
@@ -583,10 +584,10 @@ namespace StageRecovery
                 msg.AppendLine("Total refunded for fuel: " + FuelReturns);
                 msg.AppendLine("Total refunds: " + FundsReturned);
 
-                if (KerbalsRecovered.Count > 0)
+                if (KerbalsOnboard.Count > 0)
                 {
                     msg.AppendLine("\nKerbals recovered:");
-                    foreach (string kerbal in KerbalsRecovered)
+                    foreach (string kerbal in KerbalsOnboard)
                         msg.AppendLine(kerbal);
                 }
                 if (ScienceExperiments.Count > 0)

@@ -27,6 +27,11 @@ namespace StageRecovery
             //Create a new Settings instance if one doesn't exist
             if (Settings.instance == null)
                 Settings.instance = new Settings();
+
+            //If we're in the MainMenu, don't do anything
+            if (HighLogic.LoadedScene == GameScenes.MAINMENU)
+                return;
+
             //Needed to start doing things with GUIs
             RenderingManager.AddToPostDrawQueue(0, OnDraw);
         }

@@ -108,12 +108,12 @@ namespace StageRecovery
 
         private void DrawCrewInfo()
         {
-            GUILayout.Label("Crew Returned:");
-            if (selectedStage.KerbalsRecovered.Count == 0)
+            GUILayout.Label("Crew OnBoard:");
+            if (selectedStage.KerbalsOnboard.Count == 0)
                 GUILayout.Label("None");
             else
             {
-                foreach (string kerbal in selectedStage.KerbalsRecovered)
+                foreach (string kerbal in selectedStage.KerbalsOnboard)
                 {
                     GUILayout.Label(kerbal);
                 }
