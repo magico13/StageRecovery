@@ -86,11 +86,10 @@ namespace StageRecovery
                 //For instance, by having the ModuleParachute module
                 if (ModuleNames.Contains("ModuleParachute"))
                 {
-                    //Cast the module as a ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute
-                    //We need the PartModule (aka, moduleRef), not the ProtoPartModuleSnapshot. This could probably be done a different way with the PPMS
-                    ModuleParachute mp = (ModuleParachute)p.modules.First(mod => mod.moduleName == "ModuleParachute").moduleRef;
+                    //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
+                    ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
                     //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
-                    dragCoeff += p.mass * mp.fullyDeployedDrag;
+                    dragCoeff += p.mass * float.Parse(ppms.moduleValues.GetValue("fullyDeployedDrag"));
                     //This is most definitely a parachute part
                     isParachute = true;
                 }
@@ -212,7 +211,7 @@ namespace StageRecovery
                     {
                         ModuleEngines engine = (ModuleEngines)ppms.moduleRef;
                         engine.Load(ppms.moduleValues);
-                        if (engine.isEnabled)
+                        if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)//Don't use SRBs
                         {
                             engines.Add(engine);
                         }
@@ -221,7 +220,7 @@ namespace StageRecovery
                     {
                         ModuleEnginesFX engine = (ModuleEnginesFX)ppms.moduleRef;
                         engine.Load(ppms.moduleValues);
-                        if (engine.isEnabled)
+                        if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)
                         {
                             enginesFX.Add(engine);
                         }
@@ -268,10 +267,10 @@ namespace StageRecovery
                 Debug.Log("[SR] ISP: "+netISP);
                 if (engines.Count > 0)
                 {
-                    Debug.Log("[PR] engine not null");
+                    Debug.Log("[SR] engine not null");
                     foreach (Propellant prop in engines[0].propellants)
                     {
-                        Debug.Log("[PR] Requires " + prop.name);
+                        Debug.Log("[SR] Requires " + prop.name);
                         if (rMasses.ContainsKey(prop.name) && !(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
                         {
                             totalMassDry -= rMasses[prop.name];

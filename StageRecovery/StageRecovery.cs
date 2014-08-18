@@ -14,23 +14,26 @@ namespace StageRecovery
         //Flag that says whether the VesselDestroyEvent has been added, so we don't accidentally add it twice.
         private static bool eventAdded = false;
 
+        //List of scenes where we shouldn't run the mod. I toyed with runOnce, but couldn't get it working
+        private static List<GameScenes> forbiddenScenes = new List<GameScenes> { GameScenes.LOADING, GameScenes.LOADINGBUFFER, GameScenes.CREDITS, GameScenes.MAINMENU, GameScenes.SETTINGS };
+
         //Needed to instantiate the Blizzy Toolbar button
         internal StageRecovery()
         {
-            if (ToolbarManager.ToolbarAvailable)
+            if (ToolbarManager.ToolbarAvailable && Settings.instance != null)
                 Settings.instance.gui.AddToolbarButton();
         }
 
         //Fired when the mod loads each scene
         public void Awake()
         {
+            //If we're in the MainMenu, don't do anything
+            if (forbiddenScenes.Contains(HighLogic.LoadedScene))
+                return;
+
             //Create a new Settings instance if one doesn't exist
             if (Settings.instance == null)
                 Settings.instance = new Settings();
-
-            //If we're in the MainMenu, don't do anything
-            if (HighLogic.LoadedScene == GameScenes.MAINMENU)
-                return;
 
             //Needed to start doing things with GUIs
             RenderingManager.AddToPostDrawQueue(0, OnDraw);
@@ -62,10 +65,11 @@ namespace StageRecovery
         //Fired when the mod loads each scene
         public void Start()
         {
-            Settings.instance.gui.hideAll();
+            if (Settings.instance != null)
+                Settings.instance.gui.hideAll();
 
             //If we're in the MainMenu, don't do anything
-            if (HighLogic.LoadedScene == GameScenes.MAINMENU)
+            if (forbiddenScenes.Contains(HighLogic.LoadedScene))
                 return;
 
             //If the event hasn't been added yet, run this code (adds the event and the stock button)

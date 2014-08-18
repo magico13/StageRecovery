@@ -108,7 +108,7 @@ namespace StageRecovery
 
         private void DrawCrewInfo()
         {
-            GUILayout.Label("Crew OnBoard:");
+            GUILayout.Label("Crew Onboard:");
             if (selectedStage.KerbalsOnboard.Count == 0)
                 GUILayout.Label("None");
             else
