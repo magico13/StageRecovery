@@ -20,7 +20,7 @@ namespace StageRecovery
                     return Vt < Settings.instance.HighCut;
             }
         }
-        public bool burnedUp;
+        public bool burnedUp, poweredRecovery;
         public string StageName, ParachuteModule;
         public float Vt = 0f;
         public List<string> ScienceExperiments = new List<string>();
@@ -32,6 +32,7 @@ namespace StageRecovery
         public float KSCDistance = 0;
         public float RecoveryPercent = 0, DistancePercent = 0, SpeedPercent = 0;
         public string ReasonForFailure { get { if (recovered) return "SUCCESS"; if (burnedUp) return "BURNUP"; return "SPEED"; } }
+        public Dictionary<string, float> fuelUsed = new Dictionary<string, float>();
 
         //Creates a new RecoveryItem and calculates everything corresponding to it.
         public RecoveryItem(Vessel stage)
@@ -45,8 +46,11 @@ namespace StageRecovery
             StageName = vessel.vesselName;
             //Determine what the terminal velocity should be
             Vt = DetermineTerminalVelocity();
+            //Try to perform a powered landing
+            float vt_old = Vt;
             if (Vt > (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut) && Settings.instance.PoweredRecovery)
-                Vt = TryPoweredRecovery();//Try to perform a powered landing
+                Vt = TryPoweredRecovery();
+            poweredRecovery = (Vt < vt_old);
             //Determine if the stage should be burned up
             burnedUp = DetermineIfBurnedUp();
             //Set the Recovery Percentages
@@ -62,7 +66,7 @@ namespace StageRecovery
         }
 
         //This function/method/thing calculates the terminal velocity of the Stage
-        private float DetermineTerminalVelocity() //TODO: Add powered recovery to this
+        private float DetermineTerminalVelocity()
         {
             float v = 0;
             float totalMass = 0;
@@ -88,8 +92,15 @@ namespace StageRecovery
                 {
                     //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
                     ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
+                    float drag = 500;
+                    if (ppms.moduleRef != null)
+                    {
+                        ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
+                        mp.Load(ppms.moduleValues);
+                        drag = mp.fullyDeployedDrag;
+                    }
                     //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
-                    dragCoeff += p.mass * float.Parse(ppms.moduleValues.GetValue("fullyDeployedDrag"));
+                    dragCoeff += p.mass * drag;
                     //This is most definitely a parachute part
                     isParachute = true;
                 }
@@ -138,7 +149,7 @@ namespace StageRecovery
                 //If the part isn't a parachute (no ModuleParachute or RealChuteModule)
                 if (!isParachute)
                 {
-                    //If the part reference isn't null, find the maximum drag paramater. Multiply that by the mass (KSP has stupid aerodynamics)
+                    //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
                     if (p.partRef != null)
                         dragCoeff += p.mass * p.partRef.maximum_drag;
                     //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
@@ -165,6 +176,7 @@ namespace StageRecovery
                 //Debug.Log("[SR] Using RealChute Module! Vt: " + Vt);
             }
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
+            Debug.Log("Vt: " + v);
             return v;
         }
 
@@ -175,7 +187,8 @@ namespace StageRecovery
             {
                 ConfigNode RCN = resource.resourceValues;
                 double amount = double.Parse(RCN.GetValue("amount"));
-                mass += amount * resource.resourceRef.info.density;
+                PartResourceDefinition RD = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
+                mass += amount * RD.density;
             }
             return (float)mass;
         }
@@ -203,6 +216,8 @@ namespace StageRecovery
                     //Congrats, the stage is controlled! We can stop looking now.
                     stageControllable = true;
                 }
+                Debug.Log("part mass: " + p.mass);
+                Debug.Log("resource mass: " + GetResourceMass(p.resources));
                 totalMass += p.mass;
                 totalMass += GetResourceMass(p.resources);
                 foreach (ProtoPartModuleSnapshot ppms in p.modules)
@@ -210,6 +225,8 @@ namespace StageRecovery
                     if (ppms.moduleName == "ModuleEngines")
                     {
                         ModuleEngines engine = (ModuleEngines)ppms.moduleRef;
+                       /* if (engine == null)
+                            continue;*/
                         engine.Load(ppms.moduleValues);
                         if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)//Don't use SRBs
                         {
@@ -219,6 +236,8 @@ namespace StageRecovery
                     if (ppms.moduleName == "ModuleEnginesFX")
                     {
                         ModuleEnginesFX engine = (ModuleEnginesFX)ppms.moduleRef;
+                       /* if (engine == null)
+                            continue;*/
                         engine.Load(ppms.moduleValues);
                         if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)
                         {
@@ -229,21 +248,21 @@ namespace StageRecovery
                 foreach (ProtoPartResourceSnapshot rsc in p.resources)
                 {
                     double amt = double.Parse(rsc.resourceValues.GetValue("amount"));
-                    Debug.Log("[SR] Adding " + amt + " of " + rsc.resourceName + ". density: " + rsc.resourceRef.info.density);
+                    //Debug.Log("[SR] Adding " + amt + " of " + rsc.resourceName + ". density: " + rsc.resourceRef.info.density);
                     if (!resources.ContainsKey(rsc.resourceName))
                     {
                         resources.Add(rsc.resourceName, amt);
-                        rMasses.Add(rsc.resourceName, amt * rsc.resourceRef.info.density);
+                        rMasses.Add(rsc.resourceName, amt * PartResourceLibrary.Instance.GetDefinition(rsc.resourceName).density);
                     }
                     else
                     {
                         resources[rsc.resourceName] += amt;
-                        rMasses[rsc.resourceName] += (amt * rsc.resourceRef.info.density);
+                        rMasses[rsc.resourceName] += (amt * PartResourceLibrary.Instance.GetDefinition(rsc.resourceName).density);
                     }
                 }
 
             }
-            List<String> propsUsed = new List<string>();
+            Dictionary<string, float> propsUsed = new Dictionary<string, float>();
             //So, I'm not positive jets really need to be done differently. Though they could go further than normal rockets because of gliding.
             if (stageControllable && (engines.Count > 0 || enginesFX.Count > 0))
             {
@@ -260,11 +279,13 @@ namespace StageRecovery
                     totalThrust += e.maxThrust;
                     netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
                 }
-                Debug.Log("[SR] TWR: "+(totalThrust / (totalMass*9.81)));
+                Debug.Log(totalThrust);
+                Debug.Log(totalMass);
+                Debug.Log("[SR] TWR: " + (totalThrust / (totalMass * 9.81)));
                 if (totalThrust < (totalMass * 9.81)) //Need greater than 1 TWR to land
                     return finalVelocity;
                 netISP = totalThrust / netISP;
-                Debug.Log("[SR] ISP: "+netISP);
+                Debug.Log("[SR] ISP: " + netISP);
                 if (engines.Count > 0)
                 {
                     Debug.Log("[SR] engine not null");
@@ -273,45 +294,225 @@ namespace StageRecovery
                         Debug.Log("[SR] Requires " + prop.name);
                         if (rMasses.ContainsKey(prop.name) && !(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
                         {
-                            totalMassDry -= rMasses[prop.name];
-                            propsUsed.Add(prop.name);
-                            Debug.Log("[PR] Found " + prop.name);
+                            //totalMassDry -= rMasses[prop.name];
+                            if (!propsUsed.ContainsKey(prop.name))
+                                propsUsed.Add(prop.name, prop.ratio);
+                            Debug.Log("[SR] Found " + prop.name);
                         }
                     }
                 }
                 else if (enginesFX.Count > 0)
                 {
-                    Debug.Log("[PR] engineFX not null");
+                    Debug.Log("[SR] engineFX not null");
                     foreach (Propellant prop in enginesFX[0].propellants)
                     {
-                        Debug.Log("[PR] Requires " + prop.name);
+                        Debug.Log("[SR] Requires " + prop.name);
                         if (rMasses.ContainsKey(prop.name) && !(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
                         {
-                            totalMassDry -= rMasses[prop.name];
-                            propsUsed.Add(prop.name);
-                            Debug.Log("[PR] Found " + prop.name);
+                            //totalMassDry -= rMasses[prop.name];
+                            if (!propsUsed.ContainsKey(prop.name))
+                                propsUsed.Add(prop.name, prop.ratio);
+                            Debug.Log("[SR] Found " + prop.name);
                         }
                     }
                 }
-                Debug.Log("[SR] Mass(wet): " + totalMass + " Mass(dry): "+totalMassDry);
-                double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMassDry);
-                Debug.Log("[SR] dV: "+totaldV);
-                finalVelocity -= (float)(totaldV / 2.5);
-                Debug.Log("[SR] final velocity: "+finalVelocity);
-            }
-            float cutoff = Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut;
-            if (finalVelocity < cutoff) //If we're recovering it, remove all the used fuel (temporarily all of it)
-            {
-                foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
-                    foreach (ProtoPartResourceSnapshot r in p.resources)
-                        if (propsUsed.Contains(r.resourceName))
+                foreach (KeyValuePair<string, float> entry in propsUsed)
+                {
+                    totalMassDry -= rMasses[entry.Key];
+                }
+                float cutoff = Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut;
+                Debug.Log("dv required: " + (2.5 * (finalVelocity - cutoff + 2)));
+                Debug.Log("dv avail: " + netISP * 9.81 * Math.Log(totalMass / totalMassDry));
+                double finalMassRequired = totalMass * Math.Exp(-(2.5 * (finalVelocity-cutoff+2)) / (9.81 * netISP));
+                double massRequired = totalMass - finalMassRequired;
+                Debug.Log("finalMassRequired: " + finalMassRequired);
+                Debug.Log("massRequired: " + massRequired);
+                Debug.Log("massAvailable: " + (totalMass - totalMassDry));
+                if (totalMassDry + massRequired > totalMass)
+                {
+                    double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMassDry);
+                    //Debug.Log("dV: " + totaldV);
+                    finalVelocity -= (float)(totaldV / 2.5);
+                    foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                        foreach (ProtoPartResourceSnapshot r in p.resources)
+                            if (propsUsed.ContainsKey(r.resourceName))
+                            {
+                                if (!fuelUsed.ContainsKey(r.resourceName))
+                                    fuelUsed.Add(r.resourceName, float.Parse(r.resourceValues.GetValue("amount")));
+                                else
+                                    fuelUsed[r.resourceName] += float.Parse(r.resourceValues.GetValue("amount"));
+                                r.resourceValues.SetValue("amount", "0");
+                                if (r.resourceRef != null)
+                                    r.resourceRef.amount = 0;
+                            }
+                }
+                else //Remove fuel
+                {
+                    int numOfProps = propsUsed.Count;
+                    Debug.Log("Number of props is "+numOfProps);
+                    if (numOfProps == 0)
+                        finalVelocity = cutoff-2;
+                    else if (numOfProps == 1) //Jet engines (well, IntakeAir, but we ignore that. So only LiquidFuel)
+                    {
+                        float density = PartResourceLibrary.Instance.GetDefinition(propsUsed.Keys.ElementAt(0)).density;
+                        float amount = (float)(massRequired / density);
+                        Debug.Log("amount: " + amount);
+                        float massRemoved = 0;
+                        foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                            foreach (ProtoPartResourceSnapshot r in p.resources)
+                                if (propsUsed.ContainsKey(r.resourceName))
+                                {
+                                    float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
+                                    Debug.Log("amount in part: "+amountInPart);
+                                    if (amountInPart > amount)
+                                    {
+                                        massRemoved += amount * density;
+                                        amountInPart -= amount;
+                                        amount = 0;
+                                    }
+                                    else
+                                    {
+                                        massRemoved += amountInPart * density;
+                                        amount -= amountInPart;
+                                        amountInPart = 0;
+                                    }
+                                    r.resourceValues.SetValue("amount", amountInPart.ToString());
+                                    if (r.resourceRef != null)
+                                        r.resourceRef.amount = amountInPart;
+                                }
+                        Debug.Log("massRemoved: " + massRemoved);
+                        if (massRemoved >= massRequired)
                         {
-                            r.resourceValues.SetValue("amount", "0");
-                            if (r.resourceRef != null)
-                                r.resourceRef.amount = 0;
+                            finalVelocity = cutoff - 2;
                         }
-            }
+                        else
+                        {
+                            double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMass - massRemoved);
+                            finalVelocity -= (float)(totaldV / 2.5);
+                        }
+                        fuelUsed.Add(propsUsed.Keys.ElementAt(0), massRemoved/density);
+                    }
+                    else if (numOfProps == 2) //LFO engines
+                    {
+                        float[] amount = new float[2];
+                        float[] density = new float[2];
+                        density[0] = PartResourceLibrary.Instance.GetDefinition(propsUsed.Keys.ElementAt(0)).density;
+                        density[1] = PartResourceLibrary.Instance.GetDefinition(propsUsed.Keys.ElementAt(1)).density;
+                        amount[0] = (float)(massRequired / (density[0] + density[1] * (propsUsed.Values.ElementAt(0) / propsUsed.Values.ElementAt(1))));
+                        amount[1] = (propsUsed.Values.ElementAt(0) / propsUsed.Values.ElementAt(1)) * amount[0];
+                        float[] preamount = new float[] {amount[0], amount[1]};
+                        Debug.Log("amount0: " + amount[0]);
+                        Debug.Log("amount1: " + amount[1]);
+                        float massRemoved = 0;
+                        foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                            foreach (ProtoPartResourceSnapshot r in p.resources)
+                                if (propsUsed.ContainsKey(r.resourceName))
+                                {
+                                    int index = propsUsed.Keys.ToList().IndexOf(r.resourceName);
+                                    float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
+                                    if (amountInPart > amount[index])
+                                    {
+                                        massRemoved += amount[index] * density[index];
+                                        amountInPart -= amount[index];
+                                        amount[index] = 0;
+                                    }
+                                    else
+                                    {
+                                        massRemoved += amountInPart * density[index];
+                                        amount[index] -= amountInPart;
+                                        amountInPart = 0;
+                                    }
+                                    r.resourceValues.SetValue("amount", amountInPart.ToString());
+                                    if (r.resourceRef != null)
+                                        r.resourceRef.amount = amountInPart;
+                                }
+                        Debug.Log("massRemoved: " + massRemoved);
+                        if (massRemoved >= massRequired)
+                        {
+                            finalVelocity = cutoff - 2;
+                        }
+                        else
+                        {
+                            double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMass - massRemoved);
+                            finalVelocity -= (float)(totaldV / 2.5);
+                        }
+                        fuelUsed.Add(propsUsed.Keys.ElementAt(0), preamount[0]-amount[0]);
+                        fuelUsed.Add(propsUsed.Keys.ElementAt(1), preamount[1]-amount[1]);
+                    }
+                    /*  else if (numOfProps == 3) //nothing stock that I know
+                      {
 
+                      }*/
+                    else //simulate
+                    {
+                        //remove one ratio unit of each propellant from the total until we run out of propellant mass or we reach the mass required.
+                        Debug.Log("Let's try simulating, shall we");
+                        Dictionary<string, float> amount = new Dictionary<string, float>();
+                        foreach (KeyValuePair<string, float> entry in propsUsed)
+                                if (!amount.ContainsKey(entry.Key))
+                                    amount.Add(entry.Key, 0f);
+                        float massRemoved = 0;
+                        bool outOfResources = false;
+                        //Start simulation
+                        while (massRemoved < massRequired && !outOfResources)
+                        {
+                            massRemoved = 0;
+                            foreach (KeyValuePair<string, float> entry in propsUsed)
+                            {
+                                float density = PartResourceLibrary.Instance.GetDefinition(entry.Key).density;
+                                if (!rMasses.ContainsKey(entry.Key))
+                                {
+                                    outOfResources = true;
+                                    break;
+                                }
+                                double massOfPropRemaining = rMasses[entry.Key] - (amount[entry.Key] * density);
+                              //  Debug.Log("mass of remaining " + entry.Key + " : " + massOfPropRemaining);
+                              //  Debug.Log("ratio: " + entry.Value);
+                                if (massOfPropRemaining/density > entry.Value)
+                                    amount[entry.Key] += entry.Value;
+                                else
+                                    amount[entry.Key] += (float)massOfPropRemaining / density;
+                                massRemoved += amount[entry.Key] * density;
+                                if ((rMasses[entry.Key] - (amount[entry.Key] * density)) <= 0)
+                                    outOfResources = true;
+                            }
+                         //   Debug.Log("massRemoved: " + massRemoved);
+                        }
+                        foreach (KeyValuePair<string, float> entry in amount)
+                            fuelUsed.Add(entry.Key, entry.Value);
+                        foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                            foreach (ProtoPartResourceSnapshot r in p.resources)
+                                if (propsUsed.ContainsKey(r.resourceName))
+                                {
+                                    float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
+                                    if (amountInPart > amount[r.resourceName])
+                                    {
+                                        amountInPart -= amount[r.resourceName];
+                                        amount[r.resourceName] = 0;
+                                    }
+                                    else
+                                    {
+                                        amount[r.resourceName] -= amountInPart;
+                                        amountInPart = 0;
+                                    }
+                                    r.resourceValues.SetValue("amount", amountInPart.ToString());
+                                    if (r.resourceRef != null)
+                                        r.resourceRef.amount = amountInPart;
+                                }
+                        Debug.Log("massRemoved Final: " + massRemoved);
+                        if (massRemoved >= massRequired)
+                        {
+                            finalVelocity = cutoff - 2;
+                        }
+                        else
+                        {
+                            double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMass - massRemoved);
+                            finalVelocity -= (float)(totaldV / 2.5);
+                        }
+                    }
+                }
+            }
+            Debug.Log("finalvelocity: " + finalVelocity);
             return finalVelocity;
         }
 

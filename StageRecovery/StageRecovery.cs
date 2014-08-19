@@ -54,6 +54,10 @@ namespace StageRecovery
         //When the scene changes and the mod destroyed
         public void OnDestroy()
         {
+            //If we're in the MainMenu, don't do anything
+            if (forbiddenScenes.Contains(HighLogic.LoadedScene) || Settings.instance == null || Settings.instance.gui == null)
+                return;
+
             //Remove the button from the stock toolbar
             if (Settings.instance.gui.SRButtonStock != null)
                 ApplicationLauncher.Instance.RemoveModApplication(Settings.instance.gui.SRButtonStock);

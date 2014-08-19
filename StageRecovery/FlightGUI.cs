@@ -157,6 +157,16 @@ namespace StageRecovery
                 GUILayout.Label("\nStage burned up on reentry!");
                 GUILayout.Label("Orbital Velocity: " + selectedStage.vessel.obt_velocity);
             }
+
+            if (selectedStage.poweredRecovery)
+            {
+                GUILayout.Label("\nPowered recovery was attempted.");
+                GUILayout.Label("Fuel consumed:");
+                foreach (KeyValuePair<string, float> fuel in selectedStage.fuelUsed)
+                {
+                    GUILayout.Label(fuel.Key + " : " + fuel.Value + " units");
+                }
+            }
         }
     }
 }
