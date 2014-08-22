@@ -73,89 +73,97 @@ namespace StageRecovery
             float dragCoeff = 0;
             float RCParameter = 0;
             bool realChuteInUse = false;
-            foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+            try
             {
-                //Make a list of all the Module Names for easy checking later. This can be avoided, but is convenient.
-                List<string> ModuleNames = new List<string>();
-                foreach (ProtoPartModuleSnapshot ppms in p.modules)
+                foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                 {
-                    ModuleNames.Add(ppms.moduleName);
-                }
-                //Add the part mass to the total.
-                totalMass += p.mass;
-                //Add resource masses
-                totalMass += GetResourceMass(p.resources);
-                //Assume the part isn't a parachute until proven a parachute
-                bool isParachute = false;
-                //For instance, by having the ModuleParachute module
-                if (ModuleNames.Contains("ModuleParachute"))
-                {
-                    //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
-                    ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
-                    float drag = 500;
-                    if (ppms.moduleRef != null)
+                    //Make a list of all the Module Names for easy checking later. This can be avoided, but is convenient.
+                    List<string> ModuleNames = new List<string>();
+                    foreach (ProtoPartModuleSnapshot ppms in p.modules)
                     {
-                        ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
-                        mp.Load(ppms.moduleValues);
-                        drag = mp.fullyDeployedDrag;
+                        ModuleNames.Add(ppms.moduleName);
                     }
-                    //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
-                    dragCoeff += p.mass * drag;
-                    //This is most definitely a parachute part
-                    isParachute = true;
-                }
-                //If the part has the RealChuteModule, we have to do some tricks to access it
-                if (ModuleNames.Contains("RealChuteModule"))
-                {
-                    //First off, get the PPMS since we'll need that
-                    ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
-                    //Assuming that's not somehow null, then we continue
-                    if ((object)realChute != null) //Some of this was adopted from DebRefund, as Vendan's method of handling multiple parachutes is better than what I had.
+                    //Add the part mass to the total.
+                    totalMass += p.mass;
+                    //Add resource masses
+                    totalMass += GetResourceMass(p.resources);
+                    //Assume the part isn't a parachute until proven a parachute
+                    bool isParachute = false;
+                    //For instance, by having the ModuleParachute module
+                    if (ModuleNames.Contains("ModuleParachute"))
                     {
-                        //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
-                        Type matLibraryType = AssemblyLoader.loadedAssemblies
-                            .SelectMany(a => a.assembly.GetExportedTypes())
-                            .SingleOrDefault(t => t.FullName == "RealChute.Libraries.MaterialsLibrary");
-
-                        //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
-                        //We get that from the PPMS 
-                        ConfigNode[] parachutes = realChute.moduleValues.GetNodes("PARACHUTE");
-                        //We then act on each individual parachute in the module
-                        foreach (ConfigNode chute in parachutes)
+                        //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
+                        ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
+                        float drag = 500;
+                        if (ppms.moduleRef != null)
                         {
-                            //First off, the diameter of the parachute. From that we can (later) determine the Vt, assuming a circular chute
-                            float diameter = float.Parse(chute.GetValue("deployedDiameter"));
-                            //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
-                            string mat = chute.GetValue("material");
-                            //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
-                            System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
-                            //In order to invoke the method, we need to grab the active instance of the material library
-                            object MatLibraryInstance = matLibraryType.GetProperty("instance").GetValue(null, null);
-                            //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
-                            object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
-                            //With that material object we can extract the dragCoefficient using the helper function above.
-                            float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
-                            //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
-                            //But it works perfectly for mutiple identical parachutes (the normal case)
-                            RCParameter += dragC * (float)Math.Pow(diameter, 2);
-
+                            ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
+                            mp.Load(ppms.moduleValues);
+                            drag = mp.fullyDeployedDrag;
                         }
-                        //This is a parachute also
+                        //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
+                        dragCoeff += p.mass * drag;
+                        //This is most definitely a parachute part
                         isParachute = true;
-                        //It's existence means that RealChute is installed and in use on the craft (you could have it installed and use stock chutes, so we only check if it's on the craft)
-                        realChuteInUse = true;
+                    }
+                    //If the part has the RealChuteModule, we have to do some tricks to access it
+                    if (ModuleNames.Contains("RealChuteModule"))
+                    {
+                        //First off, get the PPMS since we'll need that
+                        ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
+                        //Assuming that's not somehow null, then we continue
+                        if ((object)realChute != null) //Some of this was adopted from DebRefund, as Vendan's method of handling multiple parachutes is better than what I had.
+                        {
+                            //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
+                            Type matLibraryType = AssemblyLoader.loadedAssemblies
+                                .SelectMany(a => a.assembly.GetExportedTypes())
+                                .SingleOrDefault(t => t.FullName == "RealChute.Libraries.MaterialsLibrary");
+
+                            //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
+                            //We get that from the PPMS 
+                            ConfigNode[] parachutes = realChute.moduleValues.GetNodes("PARACHUTE");
+                            //We then act on each individual parachute in the module
+                            foreach (ConfigNode chute in parachutes)
+                            {
+                                //First off, the diameter of the parachute. From that we can (later) determine the Vt, assuming a circular chute
+                                float diameter = float.Parse(chute.GetValue("deployedDiameter"));
+                                //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
+                                string mat = chute.GetValue("material");
+                                //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
+                                System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
+                                //In order to invoke the method, we need to grab the active instance of the material library
+                                object MatLibraryInstance = matLibraryType.GetProperty("instance").GetValue(null, null);
+                                //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
+                                object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
+                                //With that material object we can extract the dragCoefficient using the helper function above.
+                                float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
+                                //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
+                                //But it works perfectly for mutiple identical parachutes (the normal case)
+                                RCParameter += dragC * (float)Math.Pow(diameter, 2);
+
+                            }
+                            //This is a parachute also
+                            isParachute = true;
+                            //It's existence means that RealChute is installed and in use on the craft (you could have it installed and use stock chutes, so we only check if it's on the craft)
+                            realChuteInUse = true;
+                        }
+                    }
+                    //If the part isn't a parachute (no ModuleParachute or RealChuteModule)
+                    if (!isParachute)
+                    {
+                        //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
+                        if (p.partRef != null)
+                            dragCoeff += p.mass * p.partRef.maximum_drag;
+                        //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
+                        else
+                            dragCoeff += p.mass * 0.2f;
                     }
                 }
-                //If the part isn't a parachute (no ModuleParachute or RealChuteModule)
-                if (!isParachute)
-                {
-                    //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
-                    if (p.partRef != null)
-                        dragCoeff += p.mass * p.partRef.maximum_drag;
-                    //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
-                    else
-                        dragCoeff += p.mass * 0.2f;
-                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[SR] Error occured while trying to determine terminal velocity.");
+                Debug.LogException(e);
             }
             if (!realChuteInUse)
             {
@@ -176,20 +184,27 @@ namespace StageRecovery
                 //Debug.Log("[SR] Using RealChute Module! Vt: " + Vt);
             }
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
-            Debug.Log("Vt: " + v);
+            Debug.Log("[SR] Vt: " + v);
             return v;
         }
 
+        //This method will calculate the total mass of the provided resources, typically those in a part.
         private float GetResourceMass(List<ProtoPartResourceSnapshot> resources)
         {
             double mass = 0;
+            //Loop through the available resources
             foreach (ProtoPartResourceSnapshot resource in resources)
             {
+                //Get the ConfigNode which contains the resource information (amount, name, etc)
                 ConfigNode RCN = resource.resourceValues;
+                //Extract the amount information
                 double amount = double.Parse(RCN.GetValue("amount"));
+                //Using the name of the resource, find it in the PartResourceLibrary
                 PartResourceDefinition RD = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
+                //The mass of that resource is the amount times the density
                 mass += amount * RD.density;
             }
+            //Return the total mass
             return (float)mass;
         }
 
@@ -197,6 +212,7 @@ namespace StageRecovery
         {
             Debug.Log("[SR] Trying powered recovery");
             //ISP references: http://forum.kerbalspaceprogram.com/threads/34315-How-Do-I-calculate-Delta-V-on-more-than-one-engine
+            //Thanks to Malkuth, of Mission Controller Extended, for the base of this code.
             float finalVelocity = Vt;
             float totalMass = 0;
             List<ModuleEngines> engines = new List<ModuleEngines>();
@@ -208,65 +224,67 @@ namespace StageRecovery
             Dictionary<string, double> resources = new Dictionary<string, double>();
             Dictionary<string, double> rMasses = new Dictionary<string, double>();
             bool stageControllable = false;
-            foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+            try
             {
-                //Search through the Modules on the part for one called ModuleCommand and check if the crew count in the part is greater than or equal to the minimum required for control
-                if (!stageControllable && p.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew <= p.protoModuleCrew.Count)) != null)
+                foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                 {
-                    //Congrats, the stage is controlled! We can stop looking now.
-                    stageControllable = true;
-                }
-                Debug.Log("part mass: " + p.mass);
-                Debug.Log("resource mass: " + GetResourceMass(p.resources));
-                totalMass += p.mass;
-                totalMass += GetResourceMass(p.resources);
-                foreach (ProtoPartModuleSnapshot ppms in p.modules)
-                {
-                    if (ppms.moduleName == "ModuleEngines")
+                    //Search through the Modules on the part for one called ModuleCommand and check if the crew count in the part is greater than or equal to the minimum required for control
+                    if (!stageControllable && p.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew <= p.protoModuleCrew.Count)) != null)
                     {
-                        ModuleEngines engine = (ModuleEngines)ppms.moduleRef;
-                       /* if (engine == null)
-                            continue;*/
-                        engine.Load(ppms.moduleValues);
-                        if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)//Don't use SRBs
+                        //Congrats, the stage is controlled! We can stop looking now.
+                        stageControllable = true;
+                    }
+                    totalMass += p.mass;
+                    totalMass += GetResourceMass(p.resources);
+                    foreach (ProtoPartModuleSnapshot ppms in p.modules)
+                    {
+                        if (ppms.moduleName == "ModuleEngines")
                         {
-                            engines.Add(engine);
+                            ModuleEngines engine = (ModuleEngines)ppms.moduleRef;
+                            engine.Load(ppms.moduleValues);
+                            if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)//Don't use SRBs
+                            {
+                                engines.Add(engine);
+                            }
+                        }
+                        if (ppms.moduleName == "ModuleEnginesFX")
+                        {
+                            ModuleEnginesFX engine = (ModuleEnginesFX)ppms.moduleRef;
+                            engine.Load(ppms.moduleValues);
+                            if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)
+                            {
+                                enginesFX.Add(engine);
+                            }
                         }
                     }
-                    if (ppms.moduleName == "ModuleEnginesFX")
+                    foreach (ProtoPartResourceSnapshot rsc in p.resources)
                     {
-                        ModuleEnginesFX engine = (ModuleEnginesFX)ppms.moduleRef;
-                       /* if (engine == null)
-                            continue;*/
-                        engine.Load(ppms.moduleValues);
-                        if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)
+                        double amt = double.Parse(rsc.resourceValues.GetValue("amount"));
+                        //Debug.Log("[SR] Adding " + amt + " of " + rsc.resourceName + ". density: " + rsc.resourceRef.info.density);
+                        if (!resources.ContainsKey(rsc.resourceName))
                         {
-                            enginesFX.Add(engine);
+                            resources.Add(rsc.resourceName, amt);
+                            rMasses.Add(rsc.resourceName, amt * PartResourceLibrary.Instance.GetDefinition(rsc.resourceName).density);
+                        }
+                        else
+                        {
+                            resources[rsc.resourceName] += amt;
+                            rMasses[rsc.resourceName] += (amt * PartResourceLibrary.Instance.GetDefinition(rsc.resourceName).density);
                         }
                     }
-                }
-                foreach (ProtoPartResourceSnapshot rsc in p.resources)
-                {
-                    double amt = double.Parse(rsc.resourceValues.GetValue("amount"));
-                    //Debug.Log("[SR] Adding " + amt + " of " + rsc.resourceName + ". density: " + rsc.resourceRef.info.density);
-                    if (!resources.ContainsKey(rsc.resourceName))
-                    {
-                        resources.Add(rsc.resourceName, amt);
-                        rMasses.Add(rsc.resourceName, amt * PartResourceLibrary.Instance.GetDefinition(rsc.resourceName).density);
-                    }
-                    else
-                    {
-                        resources[rsc.resourceName] += amt;
-                        rMasses[rsc.resourceName] += (amt * PartResourceLibrary.Instance.GetDefinition(rsc.resourceName).density);
-                    }
-                }
 
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[SR] Error occurred while attempting powered recovery.");
+                Debug.LogException(e);
             }
             Dictionary<string, float> propsUsed = new Dictionary<string, float>();
             //So, I'm not positive jets really need to be done differently. Though they could go further than normal rockets because of gliding.
             if (stageControllable && (engines.Count > 0 || enginesFX.Count > 0))
             {
-                Debug.Log("[SR] Controlled and has engines");
+                //Debug.Log("[SR] Controlled and has engines");
                 //Engine landing
                 double totalMassDry = totalMass;
                 foreach (ModuleEngines e in engines)
@@ -279,40 +297,40 @@ namespace StageRecovery
                     totalThrust += e.maxThrust;
                     netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
                 }
-                Debug.Log(totalThrust);
-                Debug.Log(totalMass);
-                Debug.Log("[SR] TWR: " + (totalThrust / (totalMass * 9.81)));
+                //Debug.Log(totalThrust);
+                //Debug.Log(totalMass);
+                //Debug.Log("[SR] TWR: " + (totalThrust / (totalMass * 9.81)));
                 if (totalThrust < (totalMass * 9.81)) //Need greater than 1 TWR to land
                     return finalVelocity;
                 netISP = totalThrust / netISP;
                 Debug.Log("[SR] ISP: " + netISP);
                 if (engines.Count > 0)
                 {
-                    Debug.Log("[SR] engine not null");
+                   // Debug.Log("[SR] engine not null");
                     foreach (Propellant prop in engines[0].propellants)
                     {
-                        Debug.Log("[SR] Requires " + prop.name);
+                        //Debug.Log("[SR] Requires " + prop.name);
                         if (rMasses.ContainsKey(prop.name) && !(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
                         {
                             //totalMassDry -= rMasses[prop.name];
                             if (!propsUsed.ContainsKey(prop.name))
                                 propsUsed.Add(prop.name, prop.ratio);
-                            Debug.Log("[SR] Found " + prop.name);
+                           // Debug.Log("[SR] Found " + prop.name);
                         }
                     }
                 }
                 else if (enginesFX.Count > 0)
                 {
-                    Debug.Log("[SR] engineFX not null");
+                   // Debug.Log("[SR] engineFX not null");
                     foreach (Propellant prop in enginesFX[0].propellants)
                     {
-                        Debug.Log("[SR] Requires " + prop.name);
+                        //Debug.Log("[SR] Requires " + prop.name);
                         if (rMasses.ContainsKey(prop.name) && !(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
                         {
                             //totalMassDry -= rMasses[prop.name];
                             if (!propsUsed.ContainsKey(prop.name))
                                 propsUsed.Add(prop.name, prop.ratio);
-                            Debug.Log("[SR] Found " + prop.name);
+                            //Debug.Log("[SR] Found " + prop.name);
                         }
                     }
                 }
@@ -321,13 +339,13 @@ namespace StageRecovery
                     totalMassDry -= rMasses[entry.Key];
                 }
                 float cutoff = Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut;
-                Debug.Log("dv required: " + (2.5 * (finalVelocity - cutoff + 2)));
-                Debug.Log("dv avail: " + netISP * 9.81 * Math.Log(totalMass / totalMassDry));
+                //Debug.Log("dv required: " + (2.5 * (finalVelocity - cutoff + 2)));
+               // Debug.Log("dv avail: " + netISP * 9.81 * Math.Log(totalMass / totalMassDry));
                 double finalMassRequired = totalMass * Math.Exp(-(2.5 * (finalVelocity-cutoff+2)) / (9.81 * netISP));
                 double massRequired = totalMass - finalMassRequired;
-                Debug.Log("finalMassRequired: " + finalMassRequired);
-                Debug.Log("massRequired: " + massRequired);
-                Debug.Log("massAvailable: " + (totalMass - totalMassDry));
+               // Debug.Log("finalMassRequired: " + finalMassRequired);
+               // Debug.Log("massRequired: " + massRequired);
+               // Debug.Log("massAvailable: " + (totalMass - totalMassDry));
                 if (totalMassDry + massRequired > totalMass)
                 {
                     double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMassDry);
@@ -349,21 +367,21 @@ namespace StageRecovery
                 else //Remove fuel
                 {
                     int numOfProps = propsUsed.Count;
-                    Debug.Log("Number of props is "+numOfProps);
+                  //  Debug.Log("Number of props is "+numOfProps);
                     if (numOfProps == 0)
                         finalVelocity = cutoff-2;
                     else if (numOfProps == 1) //Jet engines (well, IntakeAir, but we ignore that. So only LiquidFuel)
                     {
                         float density = PartResourceLibrary.Instance.GetDefinition(propsUsed.Keys.ElementAt(0)).density;
                         float amount = (float)(massRequired / density);
-                        Debug.Log("amount: " + amount);
+                     //   Debug.Log("amount: " + amount);
                         float massRemoved = 0;
                         foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                             foreach (ProtoPartResourceSnapshot r in p.resources)
                                 if (propsUsed.ContainsKey(r.resourceName))
                                 {
                                     float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
-                                    Debug.Log("amount in part: "+amountInPart);
+                               //     Debug.Log("amount in part: "+amountInPart);
                                     if (amountInPart > amount)
                                     {
                                         massRemoved += amount * density;
@@ -380,7 +398,7 @@ namespace StageRecovery
                                     if (r.resourceRef != null)
                                         r.resourceRef.amount = amountInPart;
                                 }
-                        Debug.Log("massRemoved: " + massRemoved);
+                      //  Debug.Log("massRemoved: " + massRemoved);
                         if (massRemoved >= massRequired)
                         {
                             finalVelocity = cutoff - 2;
@@ -401,8 +419,8 @@ namespace StageRecovery
                         amount[0] = (float)(massRequired / (density[0] + density[1] * (propsUsed.Values.ElementAt(0) / propsUsed.Values.ElementAt(1))));
                         amount[1] = (propsUsed.Values.ElementAt(0) / propsUsed.Values.ElementAt(1)) * amount[0];
                         float[] preamount = new float[] {amount[0], amount[1]};
-                        Debug.Log("amount0: " + amount[0]);
-                        Debug.Log("amount1: " + amount[1]);
+                    //    Debug.Log("amount0: " + amount[0]);
+                    //    Debug.Log("amount1: " + amount[1]);
                         float massRemoved = 0;
                         foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                             foreach (ProtoPartResourceSnapshot r in p.resources)
@@ -426,7 +444,7 @@ namespace StageRecovery
                                     if (r.resourceRef != null)
                                         r.resourceRef.amount = amountInPart;
                                 }
-                        Debug.Log("massRemoved: " + massRemoved);
+                     //   Debug.Log("massRemoved: " + massRemoved);
                         if (massRemoved >= massRequired)
                         {
                             finalVelocity = cutoff - 2;
@@ -499,7 +517,7 @@ namespace StageRecovery
                                     if (r.resourceRef != null)
                                         r.resourceRef.amount = amountInPart;
                                 }
-                        Debug.Log("massRemoved Final: " + massRemoved);
+                      //  Debug.Log("massRemoved Final: " + massRemoved);
                         if (massRemoved >= massRequired)
                         {
                             finalVelocity = cutoff - 2;
@@ -512,7 +530,7 @@ namespace StageRecovery
                     }
                 }
             }
-            Debug.Log("finalvelocity: " + finalVelocity);
+            Debug.Log("[SR] Final Vt: " + finalVelocity);
             return finalVelocity;
         }
 
