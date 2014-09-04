@@ -688,7 +688,7 @@ namespace StageRecovery
 
             }
             //Add refunds for the stage
-            if (FundsReturned > 0)
+            if (FundsReturned > 0 && recovered)
                 StageRecovery.AddFunds(FundsReturned);
         }
 

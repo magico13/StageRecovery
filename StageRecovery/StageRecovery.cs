@@ -135,8 +135,8 @@ namespace StageRecovery
 
             //Our criteria for even attempting recovery. Broken down: vessel exists, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is less than 35km,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)
-            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && v.altitude < 35000 &&
-               (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL) && !v.isEVA)
+            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && Math.Exp(-v.altitude / (v.mainBody.atmosphereScaleHeight*1000)) >= 0.009 &&
+               (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL) && !v.isEVA && v.altitude > 100)
             {
                 //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
                 RecoveryItem Stage = new RecoveryItem(v);

@@ -155,7 +155,7 @@ namespace StageRecovery
             if (selectedStage.burnedUp)
             {
                 GUILayout.Label("\nStage burned up on reentry!");
-                GUILayout.Label("Orbital Velocity: " + selectedStage.vessel.obt_velocity);
+                GUILayout.Label("Orbital Velocity: " + selectedStage.vessel.obt_speed);
             }
 
             if (selectedStage.poweredRecovery)
