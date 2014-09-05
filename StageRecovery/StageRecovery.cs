@@ -139,7 +139,6 @@ namespace StageRecovery
         //The main show. The VesselDestroyEvent is activated whenever KSP destroys a vessel. We only care about it in a specific set of circumstances
         private void VesselDestroyEvent(Vessel v)
         {
-            //TODO: Don't check during scene change!
             if (!sceneChangeComplete)
                 return;
 

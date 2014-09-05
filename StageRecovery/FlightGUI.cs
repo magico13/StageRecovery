@@ -10,7 +10,7 @@ namespace StageRecovery
     {
         public bool showFlightGUI = false;
 
-        public Rect flightWindowRect = new Rect((Screen.width-768)/2, (Screen.height-540)/2, 768, 540);
+        public Rect flightWindowRect = new Rect((Screen.width-600)/2, (Screen.height-480)/2, 240, 480);
 
         private int firstToolbarIndex = 0, infoBarIndex = 0;
         private Vector2 stagesScroll, infoScroll;
@@ -18,12 +18,12 @@ namespace StageRecovery
         public void DrawFlightGUI(int windowID)
         {
             GUILayout.BeginVertical();
+            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical(GUILayout.Width(230));
             int temp = firstToolbarIndex;
             firstToolbarIndex = GUILayout.Toolbar(firstToolbarIndex, new string[] { "Recovered", "Destroyed" });
             if (temp != firstToolbarIndex) NullifySelected();
 
-            GUILayout.BeginHorizontal();
-            GUILayout.BeginVertical(GUILayout.Width(192));
             GUILayout.Label((firstToolbarIndex == 0 ? "Recovered" : "Destroyed") + " Stages:");
             stagesScroll = GUILayout.BeginScrollView(stagesScroll, HighLogic.Skin.textArea);
 
@@ -49,10 +49,11 @@ namespace StageRecovery
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
 
-            GUILayout.BeginVertical(HighLogic.Skin.textArea);
-            infoBarIndex = GUILayout.Toolbar(infoBarIndex, new string[] { "Parts", "Crew", "Science", "Info" });
             if (selectedStage != null)
             {
+                if (flightWindowRect.width != 600) flightWindowRect.width = 600;
+                GUILayout.BeginVertical(HighLogic.Skin.textArea);
+                infoBarIndex = GUILayout.Toolbar(infoBarIndex, new string[] { "Parts", "Crew", "Science", "Info" });
                 GUILayout.Label("Stage name: " + selectedStage.StageName);
                 GUILayout.Label("Status: " + (selectedStage.recovered ? "RECOVERED" : "DESTROYED"));
                 infoScroll = GUILayout.BeginScrollView(infoScroll);
@@ -64,15 +65,18 @@ namespace StageRecovery
                     case 3: DrawAdvancedInfo(); break;
                 }
                 GUILayout.EndScrollView();
+                GUILayout.EndVertical();
             }
             else
             {
-                GUILayout.Label("Select a Stage from the list on the left.");
-                GUILayout.Label("", GUILayout.ExpandHeight(true));
+                if (flightWindowRect.width != 240) flightWindowRect.width = 240;
             }
-            GUILayout.EndVertical();
+            
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
+
+            if (!Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2))
+                GUI.DragWindow();
         }
 
         public void NullifySelected()
