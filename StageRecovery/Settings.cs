@@ -69,7 +69,7 @@ namespace StageRecovery
 
     public class IgnoreList
     {
-        List<string> ignore = new List<string> {"fairing", "escape system"};
+        public List<string> ignore = new List<string> {"fairing", "escape system"};
         string filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/ignore.txt";
         public void Load()
         {
@@ -109,12 +109,13 @@ namespace StageRecovery
         public FlightGUI flightGUI = new FlightGUI();
 
         //The window is only shown when this is true
-        private bool showWindow = false;
+        private bool showWindow, showBlacklist;
 
         //The width of the window, for easy changing later if need be
         private static int windowWidth = 200;
         //The main Rect object that the window occupies
         public Rect mainWindowRect = new Rect(0, 0, windowWidth, 1);
+        public Rect blacklistRect = new Rect(0, 0, 360, 1);
 
         //Temporary holders for the settings. They are only copied to the settings when the Save button is pressed.
         //Floats, ints, and other numbers are best represented as strings until the settings are saved (then you parse them)
@@ -124,6 +125,8 @@ namespace StageRecovery
         private float recMod, cutoff, lowCut, highCut;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
         private bool recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery;
+
+        private Vector2 scrollPos;
 
         //The stock button. Used if Blizzy's toolbar isn't installed.
         public ApplicationLauncherButton SRButtonStock = null;
@@ -183,8 +186,9 @@ namespace StageRecovery
         //Does stuff to draw the window.
         public void SetGUIPositions(GUI.WindowFunction OnWindow)
         {
-            if (showWindow) mainWindowRect = GUILayout.Window(8940, mainWindowRect, DrawSettingsGUI, "Stage Recovery", HighLogic.Skin.window);
-            if (flightGUI.showFlightGUI) flightGUI.flightWindowRect = GUILayout.Window(8940, flightGUI.flightWindowRect, flightGUI.DrawFlightGUI, "Stage Recovery", HighLogic.Skin.window);
+            if (showWindow) mainWindowRect = GUILayout.Window(8940, mainWindowRect, DrawSettingsGUI, "StageRecovery", HighLogic.Skin.window);
+            if (flightGUI.showFlightGUI) flightGUI.flightWindowRect = GUILayout.Window(8940, flightGUI.flightWindowRect, flightGUI.DrawFlightGUI, "StageRecovery", HighLogic.Skin.window);
+            if (showBlacklist) blacklistRect = GUILayout.Window(8941, blacklistRect, DrawBlacklistGUI, "Ignore List", HighLogic.Skin.window);
         }
 
         //More drawing window stuff. I only half understand this. It just works.
@@ -192,6 +196,7 @@ namespace StageRecovery
         {
             if (showWindow) DrawSettingsGUI(windowID);
             if (flightGUI.showFlightGUI) flightGUI.DrawFlightGUI(windowID);
+            if (showBlacklist) DrawBlacklistGUI(windowID);
         }
 
         //Hide all the windows. We only have one so this isn't super helpful, but alas.
@@ -199,6 +204,7 @@ namespace StageRecovery
         {
             showWindow = false;
             flightGUI.showFlightGUI = false;
+            showBlacklist = false;
         }
 
         //Resets the windows. Hides them and resets the Rect object. Not really needed, but it's here
@@ -207,6 +213,50 @@ namespace StageRecovery
             hideAll();
             mainWindowRect = new Rect(0, 0, windowWidth, 1);
             flightGUI.flightWindowRect = new Rect((Screen.width - 768) / 2, (Screen.height - 540) / 2, 768, 540);
+            blacklistRect = new Rect(0, 0, 360, 1);
+        }
+
+        private string tempListItem = "";
+        private void DrawBlacklistGUI(int windowID)
+        {
+            GUILayout.BeginVertical();
+            scrollPos = GUILayout.BeginScrollView(scrollPos, HighLogic.Skin.textArea, GUILayout.Height(Screen.height / 4));
+            foreach (string s in Settings.instance.BlackList.ignore)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(s);
+                if (GUILayout.Button("Remove", GUILayout.ExpandWidth(false)))
+                {
+                    Settings.instance.BlackList.Remove(s);
+                    break;
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
+            GUILayout.BeginHorizontal();
+            tempListItem = GUILayout.TextField(tempListItem);
+            if (GUILayout.Button("Add", GUILayout.ExpandWidth(false)))
+            {
+                Settings.instance.BlackList.Add(tempListItem);
+                tempListItem = "";
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Save"))
+            {
+                Settings.instance.BlackList.Save();
+                showBlacklist = false;
+            }
+            if (GUILayout.Button("Cancel"))
+            {
+                Settings.instance.BlackList.Load();
+                showBlacklist = false;
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+
+            if (!Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2))
+                GUI.DragWindow();
         }
 
         //This function will show the settings window and copy the current settings into their holders
@@ -280,6 +330,11 @@ namespace StageRecovery
             showFail = GUILayout.Toggle(showFail, "Failure Messages");
             showSuccess = GUILayout.Toggle(showSuccess, "Success Messages");
             poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");
+
+            if (GUILayout.Button("Edit Ignore List"))
+            {
+                showBlacklist = true;
+            }
 
             //We then provide a single button to save the settings. The window can be closed by clicking on the toolbar button, which cancels any changes
             if (GUILayout.Button("Save"))
