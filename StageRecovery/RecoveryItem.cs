@@ -370,7 +370,46 @@ namespace StageRecovery
                   //  Debug.Log("Number of props is "+numOfProps);
                     if (numOfProps == 0)
                         finalVelocity = cutoff-2;
-                    else if (numOfProps == 1) //Jet engines (well, IntakeAir, but we ignore that. So only LiquidFuel)
+                    else
+                    {
+                        Dictionary<string, float> propAmounts = new Dictionary<string, float>();
+                        float DnRnSum = 0;
+                        foreach (KeyValuePair<string, float> entry in propsUsed)
+                        {
+                            DnRnSum += entry.Value * PartResourceLibrary.Instance.GetDefinition(entry.Key).density;
+                        }
+                        foreach (KeyValuePair<string, float> entry in propsUsed)
+                        {
+                            float amt = (float)massRequired * entry.Value / DnRnSum;
+                            propAmounts.Add(entry.Key, amt);
+                        }
+
+                        //NOTE: This won't work properly if there isn't enough of each resource. Preload the resource list, determine which fuel is the limiting reagent, then take amounts based on that.
+                        //Then remove proper fuel amounts, tracking mass removed for dV calculation.
+                        foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                            foreach (ProtoPartResourceSnapshot r in p.resources)
+                                if (propsUsed.ContainsKey(r.resourceName))
+                                {
+                                    float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
+                                    if (amountInPart > propAmounts[r.resourceName])
+                                    {
+                                        amountInPart -= propAmounts[r.resourceName];
+                                        propAmounts[r.resourceName] = 0;
+                                    }
+                                    else
+                                    {
+                                        propAmounts[r.resourceName] -= amountInPart;
+                                        amountInPart = 0;
+                                    }
+                                    r.resourceValues.SetValue("amount", amountInPart.ToString());
+                                    if (r.resourceRef != null)
+                                        r.resourceRef.amount = amountInPart;
+                                }
+                    }
+
+
+
+                    /*else if (numOfProps == 1) //Jet engines (well, IntakeAir, but we ignore that. So only LiquidFuel)
                     {
                         float density = PartResourceLibrary.Instance.GetDefinition(propsUsed.Keys.ElementAt(0)).density;
                         float amount = (float)(massRequired / density);
@@ -457,10 +496,6 @@ namespace StageRecovery
                         fuelUsed.Add(propsUsed.Keys.ElementAt(0), preamount[0]-amount[0]);
                         fuelUsed.Add(propsUsed.Keys.ElementAt(1), preamount[1]-amount[1]);
                     }
-                    /*  else if (numOfProps == 3) //nothing stock that I know
-                      {
-
-                      }*/
                     else //simulate
                     {
                         //remove one ratio unit of each propellant from the total until we run out of propellant mass or we reach the mass required.
@@ -527,7 +562,7 @@ namespace StageRecovery
                             double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMass - massRemoved);
                             finalVelocity -= (float)(totaldV / 2.5);
                         }
-                    }
+                    }*/
                 }
             }
             Debug.Log("[SR] Final Vt: " + finalVelocity);
