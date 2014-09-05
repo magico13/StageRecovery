@@ -20,6 +20,8 @@ namespace StageRecovery
         [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
+        public IgnoreList BlackList = new IgnoreList();
+
 
         //The constructor for the settings class. It sets the values to default (which are then replaced when Load() is called)
         public Settings()
@@ -62,6 +64,42 @@ namespace StageRecovery
             RecoveredStages.Clear();
             DestroyedStages.Clear();
             gui.flightGUI.NullifySelected();
+        }
+    }
+
+    public class IgnoreList
+    {
+        List<string> ignore = new List<string> {"fairing", "escape system"};
+        string filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/ignore.txt";
+        public void Load()
+        {
+            if (System.IO.File.Exists(filePath))
+            {
+                ignore = System.IO.File.ReadAllLines(filePath).ToList();
+            }
+        }
+
+        public void Save()
+        {
+            System.IO.File.WriteAllLines(filePath, ignore.ToArray());
+        }
+
+        public bool Contains(string item)
+        {
+            if (ignore.Count == 0) Load();
+            return ignore.FirstOrDefault(s => item.ToLower().Contains(s)) != null;
+        }
+
+        public void Add(string item)
+        {
+            if (!ignore.Contains(item.ToLower()))
+                ignore.Add(item.ToLower());
+        }
+
+        public void Remove(string item)
+        {
+            if (ignore.Contains(item.ToLower()))
+                ignore.Remove(item.ToLower());
         }
     }
 

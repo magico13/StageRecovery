@@ -13,6 +13,7 @@ namespace StageRecovery
     {
         //Flag that says whether the VesselDestroyEvent has been added, so we don't accidentally add it twice.
         private static bool eventAdded = false;
+        private static bool sceneChangeComplete = false;
 
         //List of scenes where we shouldn't run the mod. I toyed with runOnce, but couldn't get it working
         private static List<GameScenes> forbiddenScenes = new List<GameScenes> { GameScenes.LOADING, GameScenes.LOADINGBUFFER, GameScenes.CREDITS, GameScenes.MAINMENU, GameScenes.SETTINGS };
@@ -79,6 +80,7 @@ namespace StageRecovery
             //If the event hasn't been added yet, run this code (adds the event and the stock button)
             if (!eventAdded)
             {
+                GameEvents.onGameSceneLoadRequested.Add(GameSceneLoadEvent);
                 //Add the VesselDestroyEvent to the listeners
                 GameEvents.onVesselDestroy.Add(VesselDestroyEvent);
                 //If Blizzy's toolbar isn't available, use the stock one
@@ -95,11 +97,23 @@ namespace StageRecovery
             //Save the settings file (in case it doesn't exist yet). I suppose this is somewhat unnecessary if the file exists
             Settings.instance.Save();
 
+            //Load and resave the BlackList. The save ensures that the file will be created if it doesn't exist.
+            Settings.instance.BlackList.Load();
+            Settings.instance.BlackList.Save();
+
             if (!HighLogic.LoadedSceneIsFlight)
             {
                 Settings.instance.ClearStageLists();
             }
+
+            sceneChangeComplete = true;
         }
+
+        public void GameSceneLoadEvent(GameScenes newScene)
+        {
+            sceneChangeComplete = false;
+        }
+
 
         //Small function to add funds to the game and write a log message about it.
         //Returns the new total.
@@ -125,6 +139,10 @@ namespace StageRecovery
         //The main show. The VesselDestroyEvent is activated whenever KSP destroys a vessel. We only care about it in a specific set of circumstances
         private void VesselDestroyEvent(Vessel v)
         {
+            //TODO: Don't check during scene change!
+            if (!sceneChangeComplete)
+                return;
+
             //If FlightGlobals is null, just return. We can't do anything
             if (FlightGlobals.fetch == null)
                 return;
@@ -138,6 +156,16 @@ namespace StageRecovery
             if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && Math.Exp(-v.altitude / (v.mainBody.atmosphereScaleHeight*1000)) >= 0.009 &&
                (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL) && !v.isEVA && v.altitude > 100)
             {
+                bool OnlyBlacklistedItems = true;
+                foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+                {
+                    if (!Settings.instance.BlackList.Contains(pps.partInfo.title))
+                    {
+                        OnlyBlacklistedItems = false;
+                        break;
+                    }
+                }
+                if (OnlyBlacklistedItems) return;
                 //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
                 RecoveryItem Stage = new RecoveryItem(v);
                 //Fire the pertinent RecoveryEvent (success or failure). Aka, make the API do its work
