@@ -383,21 +383,64 @@ namespace StageRecovery
                             float amt = (float)massRequired * entry.Value / DnRnSum;
                             propAmounts.Add(entry.Key, amt);
                         }
-
-                        //NOTE: This won't work properly if there isn't enough of each resource. Preload the resource list, determine which fuel is the limiting reagent, then take amounts based on that.
-                        //Then remove proper fuel amounts, tracking mass removed for dV calculation.
+                        
+                        Dictionary<string, float> propsAvailable = new Dictionary<string,float>();
                         foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                             foreach (ProtoPartResourceSnapshot r in p.resources)
                                 if (propsUsed.ContainsKey(r.resourceName))
                                 {
+                                    if (!propsAvailable.ContainsKey(r.resourceName))
+                                        propsAvailable.Add(r.resourceName, float.Parse(r.resourceValues.GetValue("amount")));
+                                    else
+                                        propsAvailable[r.resourceName] += float.Parse(r.resourceValues.GetValue("amount"));
+                                }
+
+                        bool enoughFuel = true;
+                        float limiter = 0;
+                        string limitingFuelType = "";
+                        foreach (KeyValuePair<string, float> entry in propAmounts)
+                        {
+                            float density = PartResourceLibrary.Instance.GetDefinition(entry.Key).density;
+                            if (!propsAvailable.ContainsKey(entry.Key) || (entry.Value > propsAvailable[entry.Key] && 
+                                (propsAvailable[entry.Key] - entry.Value) * density > limiter))
+                            {
+                                enoughFuel = false;
+                                limitingFuelType = entry.Key;
+                                if (propsAvailable.ContainsKey(entry.Key))
+                                    limiter = (entry.Value - propsAvailable[entry.Key]) * density;
+                                else
+                                    limiter = (entry.Value) * density;
+                            }
+                        }
+
+                        if (!enoughFuel)
+                        {
+                            float limiterAmount = propsAvailable[limitingFuelType];
+                            float ratio1 = propsUsed[limitingFuelType];
+                            foreach (KeyValuePair<string, float> entry in propAmounts)
+                            {
+                                propAmounts[entry.Key] = (limiterAmount / ratio1) * propsUsed[entry.Key];
+                            }
+                        }
+
+                        fuelUsed = new Dictionary<string, float>(propAmounts);
+
+                        float massRemoved = 0;
+                        foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                            foreach (ProtoPartResourceSnapshot r in p.resources)
+                                if (propsUsed.ContainsKey(r.resourceName))
+                                {
+                                    float density = PartResourceLibrary.Instance.GetDefinition(r.resourceName).density;
                                     float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
                                     if (amountInPart > propAmounts[r.resourceName])
                                     {
+                                        massRemoved += propAmounts[r.resourceName] * density;
                                         amountInPart -= propAmounts[r.resourceName];
                                         propAmounts[r.resourceName] = 0;
                                     }
                                     else
                                     {
+                                        massRemoved += amountInPart * density;
                                         propAmounts[r.resourceName] -= amountInPart;
                                         amountInPart = 0;
                                     }
@@ -405,6 +448,10 @@ namespace StageRecovery
                                     if (r.resourceRef != null)
                                         r.resourceRef.amount = amountInPart;
                                 }
+
+
+                        double totaldV = netISP * 9.81 * Math.Log(totalMass / totalMass - massRemoved);
+                        finalVelocity -= (float)(totaldV / 2.5);
                     }
 
 
