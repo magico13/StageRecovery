@@ -19,7 +19,7 @@ namespace StageRecovery
         {
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
-            GUILayout.BeginVertical(GUILayout.Width(230));
+            GUILayout.BeginVertical(GUILayout.Width(225));
             int temp = firstToolbarIndex;
             firstToolbarIndex = GUILayout.Toolbar(firstToolbarIndex, new string[] { "Recovered", "Destroyed" });
             if (temp != firstToolbarIndex) NullifySelected();
@@ -33,7 +33,12 @@ namespace StageRecovery
                 foreach (RecoveryItem stage in Settings.instance.RecoveredStages)
                 {
                     if (GUILayout.Button(stage.StageName))
-                        selectedStage = stage;
+                    {
+                        if (selectedStage == stage)
+                            selectedStage = null;
+                        else
+                            selectedStage = stage;
+                    }
                 }
             }
             //List all destroyed stages
@@ -42,7 +47,12 @@ namespace StageRecovery
                 foreach (RecoveryItem stage in Settings.instance.DestroyedStages)
                 {
                     if (GUILayout.Button(stage.StageName))
-                        selectedStage = stage;
+                    {
+                        if (selectedStage == stage)
+                            selectedStage = null;
+                        else
+                            selectedStage = stage;
+                    }
                 }
             }
 
