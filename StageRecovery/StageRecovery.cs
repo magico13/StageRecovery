@@ -121,8 +121,9 @@ namespace StageRecovery
         {
             if (HighLogic.CurrentGame.Mode != Game.Modes.CAREER)
                 return 0;
-            Debug.Log("[SR] Adding funds: " + toAdd + ", New total: " + (Funding.Instance.Funds + toAdd));
-            return (Funding.Instance.Funds += toAdd);
+            Funding.Instance.AddFunds(toAdd, TransactionReasons.VesselRecovery);
+            Debug.Log("[SR] Adding funds: " + toAdd + ", New total: " + Funding.Instance.Funds);
+            return (Funding.Instance.Funds);
         }
 
         //Helper function that I found on StackExchange that helps immensly with dealing with Reflection. I'm not that good at reflection (accessing other mod's functions and data)
