@@ -121,38 +121,49 @@ namespace StageRecovery
         {
             sceneChangeComplete = false;
             if (newScene != GameScenes.FLIGHT)
-                alreadyRecovered.Clear();
+                clampsRecovered.Clear();
         }
 
-        private List<Vessel> alreadyRecovered = new List<Vessel>();
+        private List<Vessel> clampsRecovered = new List<Vessel>();
         public void VesselUnloadEvent(Vessel vessel)
         {
+            //If we aren't supposed to recover clamps, then don't try.
             if (!Settings.instance.RecoverClamps)
                 return;
 
+            //If the vessel or the protovessel are null then we surely can't do anything with them
             if (vessel == null || vessel.protoVessel == null)
                 return;
 
-            if (alreadyRecovered.Find(a => a.id == vessel.id))
+            //If we've already recovered the clamps, then no need to try again
+            if (clampsRecovered.Find(a => a.id == vessel.id) != null)
                 return;
 
+            //Assign the pv variable to the protovessel, then look for if the root is a clamp
             ProtoVessel pv = vessel.protoVessel;
             if (pv.protoPartSnapshots.Count > 0 && pv.protoPartSnapshots[0].partInfo.name.ToLower().Contains("clamp"))
             {
+                //If we find one with "clamp" in its name then it's probably a launch clamp (hopefully this will work with FASA)
                 Debug.Log("[SR] Recovering a clamp!");
-                alreadyRecovered.Add(vessel);
+                //Add it to the recovered clamps list so we don't try to recover it again
+                clampsRecovered.Add(vessel);
                 float totalRefund = 0;
+                //Loop over all the parts and calculate their cost (we recover at 100% since we're at the launchpad/runway)
                 foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
                 {
                     float out1, out2;
                     totalRefund += ShipConstruction.GetPartCosts(pps, pps.partInfo, out out1, out out2);
                 }
+                //Add dem funds to da total. Get dem funds!
                 AddFunds(totalRefund);
+                //Fire the successful recovery event. Even though this isn't a stage we still need to do this for things like KCT to recover the parts. 
+                //Can be averted with stock functions if I can get them working properly
                 APIManager.instance.RecoverySuccessEvent.Fire(vessel, new float[] {100, totalRefund, 0}, "SUCCESS");
+                //And then we try a bunch of things to make sure the clamps are removed (remove it from the flight state, kill it, and destroy it)
                 HighLogic.CurrentGame.flightState.protoVessels.Remove(pv);
                 vessel.Die();
                 Destroy(vessel);
-                
+                //So, question for myself. Would it be better to try to manually fire the recovery events? Would that really be worth anything?
             }
         }
 
