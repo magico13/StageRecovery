@@ -85,6 +85,7 @@ namespace StageRecovery
                 GameEvents.onVesselDestroy.Add(VesselDestroyEvent);
                 //Add the event that listens for unloads (for removing launch clamps)
                 GameEvents.onVesselGoOnRails.Add(VesselUnloadEvent);
+                //GameEvents..Add(DecoupleEvent);
                 //If Blizzy's toolbar isn't available, use the stock one
                 if (!ToolbarManager.ToolbarAvailable)
                     GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
@@ -111,11 +112,19 @@ namespace StageRecovery
             sceneChangeComplete = true;
         }
 
+        public void DecoupleEvent(EventReport s)
+        {
+            Debug.Log("[SR] Decoupled and made vessel " + s.origin.vessel.vesselName);
+        }
+
         public void GameSceneLoadEvent(GameScenes newScene)
         {
             sceneChangeComplete = false;
+            if (newScene != GameScenes.FLIGHT)
+                alreadyRecovered.Clear();
         }
 
+        private List<Vessel> alreadyRecovered = new List<Vessel>();
         public void VesselUnloadEvent(Vessel vessel)
         {
             if (!Settings.instance.RecoverClamps)
@@ -124,11 +133,14 @@ namespace StageRecovery
             if (vessel == null || vessel.protoVessel == null)
                 return;
 
+            if (alreadyRecovered.Find(a => a.id == vessel.id))
+                return;
+
             ProtoVessel pv = vessel.protoVessel;
             if (pv.protoPartSnapshots.Count > 0 && pv.protoPartSnapshots[0].partInfo.name.ToLower().Contains("clamp"))
             {
-                Debug.Log("Recovering a clamp!");
-                
+                Debug.Log("[SR] Recovering a clamp!");
+                alreadyRecovered.Add(vessel);
                 float totalRefund = 0;
                 foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
                 {
@@ -137,7 +149,10 @@ namespace StageRecovery
                 }
                 AddFunds(totalRefund);
                 APIManager.instance.RecoverySuccessEvent.Fire(vessel, new float[] {100, totalRefund, 0}, "SUCCESS");
+                HighLogic.CurrentGame.flightState.protoVessels.Remove(pv);
                 vessel.Die();
+                Destroy(vessel);
+                
             }
         }
 

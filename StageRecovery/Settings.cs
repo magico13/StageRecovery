@@ -126,7 +126,7 @@ namespace StageRecovery
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
-        private bool recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery;
+        private bool recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps;
 
         private Vector2 scrollPos;
 
@@ -332,6 +332,7 @@ namespace StageRecovery
             showFail = GUILayout.Toggle(showFail, "Failure Messages");
             showSuccess = GUILayout.Toggle(showSuccess, "Success Messages");
             poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");
+            recoverClamps = GUILayout.Toggle(recoverClamps, "Recover Clamps");
 
             if (GUILayout.Button("Edit Ignore List"))
             {
@@ -357,6 +358,7 @@ namespace StageRecovery
                 Settings.instance.ShowFailureMessages = showFail;
                 Settings.instance.ShowSuccessMessages = showSuccess;
                 Settings.instance.PoweredRecovery = poweredRecovery;
+                Settings.instance.RecoverClamps = recoverClamps;
                 //Finally we save the settings to the file
                 Settings.instance.Save();
             }
