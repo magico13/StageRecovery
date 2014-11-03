@@ -83,6 +83,8 @@ namespace StageRecovery
                 GameEvents.onGameSceneLoadRequested.Add(GameSceneLoadEvent);
                 //Add the VesselDestroyEvent to the listeners
                 GameEvents.onVesselDestroy.Add(VesselDestroyEvent);
+                //Add the event that listens for unloads (for removing launch clamps)
+                GameEvents.onVesselGoOnRails.Add(VesselUnloadEvent);
                 //If Blizzy's toolbar isn't available, use the stock one
                 if (!ToolbarManager.ToolbarAvailable)
                     GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
@@ -112,6 +114,31 @@ namespace StageRecovery
         public void GameSceneLoadEvent(GameScenes newScene)
         {
             sceneChangeComplete = false;
+        }
+
+        public void VesselUnloadEvent(Vessel vessel)
+        {
+            if (!Settings.instance.RecoverClamps)
+                return;
+
+            if (vessel == null || vessel.protoVessel == null)
+                return;
+
+            ProtoVessel pv = vessel.protoVessel;
+            if (pv.protoPartSnapshots.Count > 0 && pv.protoPartSnapshots[0].partInfo.name.ToLower().Contains("clamp"))
+            {
+                Debug.Log("Recovering a clamp!");
+                
+                float totalRefund = 0;
+                foreach (ProtoPartSnapshot pps in pv.protoPartSnapshots)
+                {
+                    float out1, out2;
+                    totalRefund += ShipConstruction.GetPartCosts(pps, pps.partInfo, out out1, out out2);
+                }
+                AddFunds(totalRefund);
+                APIManager.instance.RecoverySuccessEvent.Fire(vessel, new float[] {100, totalRefund, 0}, "SUCCESS");
+                vessel.Die();
+            }
         }
 
 

@@ -205,7 +205,7 @@ namespace StageRecovery
             if (selectedStage.burnedUp)
             {
                 GUILayout.Label("\nStage burned up on reentry!");
-                GUILayout.Label("Orbital Velocity: " + selectedStage.vessel.obt_speed);
+                GUILayout.Label("Surface Speed: " + selectedStage.vessel.srfSpeed);
             }
 
             //If powered recovery was attempted (and fuel was used) then display that and the fuel amounts consumed

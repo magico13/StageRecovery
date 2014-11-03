@@ -446,13 +446,13 @@ namespace StageRecovery
 
             //Holder for the chance of burning up in atmosphere (through my non-scientific calculations)
             float burnChance = 0f;
-            //If DR is installed, the DRMaxVelocity setting is above 0, and the orbital speed is above the DRMaxV setting then we calculate the burnChance
-            if (DeadlyReentryInstalled && Settings.instance.DeadlyReentryMaxVelocity > 0 && vessel.obt_speed > Settings.instance.DeadlyReentryMaxVelocity)
+            //If DR is installed, the DRMaxVelocity setting is above 0, and the surface speed is above the DRMaxV setting then we calculate the burnChance
+            if (DeadlyReentryInstalled && Settings.instance.DeadlyReentryMaxVelocity > 0 && vessel.srfSpeed > Settings.instance.DeadlyReentryMaxVelocity)
             {
-                //the burnChance is 2% per 1% that the orbital velocity is above the DRMaxV
-                burnChance = (float)(2 * ((vessel.obt_speed / Settings.instance.DeadlyReentryMaxVelocity) - 1));
+                //the burnChance is 2% per 1% that the surface speed is above the DRMaxV
+                burnChance = (float)(2 * ((vessel.srfSpeed / Settings.instance.DeadlyReentryMaxVelocity) - 1));
                 //Log a message alerting us to the speed and the burnChance
-                Debug.Log("[SR] DR velocity exceeded (" + vessel.obt_speed + "/" + Settings.instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
+                Debug.Log("[SR] DR velocity exceeded (" + vessel.srfSpeed + "/" + Settings.instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
             }
 
             if (burnChance == 0) return false;
@@ -762,7 +762,7 @@ namespace StageRecovery
                     msg.AppendLine("Terminal velocity of " + Math.Round(Vt, 2) + " (less than " + Settings.instance.HighCut + " needed)");
                 //If it failed because of burning up (can be in addition to speed) then we'll let you know
                 if (burnedUp)
-                    msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + vessel.obt_speed + " m/s.");
+                    msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + vessel.srfSpeed + " m/s.");
 
                 //Now we actually create and post the message
                 MessageSystem.Message m = new MessageSystem.Message("Stage Destroyed", msg.ToString(), MessageSystemButton.MessageButtonColor.RED, MessageSystemButton.ButtonIcons.MESSAGE);

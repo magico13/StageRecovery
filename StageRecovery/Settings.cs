@@ -17,7 +17,7 @@ namespace StageRecovery
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut;
-        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery;
+        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
         public IgnoreList BlackList = new IgnoreList();
@@ -37,6 +37,7 @@ namespace StageRecovery
             LowCut = 6f;
             HighCut = 12f;
             PoweredRecovery = true;
+            RecoverClamps = true;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
@@ -69,7 +70,8 @@ namespace StageRecovery
 
     public class IgnoreList
     {
-        public List<string> ignore = new List<string> {"fairing", "escape system"};
+        //Set the default ignore items (fairings, escape systems, flags, and asteroids (which are referred to as potatoroids))
+        public List<string> ignore = new List<string> {"fairing", "escape system", "flag", "potato"};
         string filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/ignore.txt";
         public void Load()
         {
@@ -305,13 +307,13 @@ namespace StageRecovery
             {
                 //Like for the flat rate recovery modifier and cutoff, we present a label and a slider for the low cutoff velocity
                 GUILayout.Label("Low Cutoff Velocity: " + lowCut + "m/s");
-                lowCut = GUILayout.HorizontalSlider(lowCut, 0, 7.9f);
+                lowCut = GUILayout.HorizontalSlider(lowCut, 0, 10);
                 lowCut = (float)Math.Round(lowCut, 1);
 
-                //And another slider for the high cutoff velocity
+                //And another slider for the high cutoff velocity (with limits between lowCut and 16)
                 GUILayout.Label("High Cutoff Velocity: " + highCut + "m/s");
-                highCut = GUILayout.HorizontalSlider(highCut, 8f, 16);
-                highCut = (float)Math.Round(highCut, 1);
+                highCut = GUILayout.HorizontalSlider(highCut, lowCut+0.1f, 16);
+                highCut = (float)Math.Max(Math.Round(highCut, 1), lowCut+0.1);
             }
 
             //We begin a horizontal, meaning new elements will be placed to the right of previous ones
