@@ -71,12 +71,13 @@ namespace StageRecovery
             {
                 if (mi.info.Contains("Fully-Deployed Drag"))
                 {
-                    string[] split = mi.info.Split(new Char[] { ':' });
+                    string[] split = mi.info.Split(new Char[] { ':', '\n' });
                     for (int i = 0; i < split.Length; i++)
                     {
                         if (split[i].Contains("Fully-Deployed Drag"))
                         {
-                            return float.Parse(split[i + 1]);
+                            string[] split2 = split[i + 1].Split(new Char[] { '>' });
+                            return float.Parse(split2[1]);
                         }
                     }
                 }
