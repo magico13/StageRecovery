@@ -322,7 +322,7 @@ namespace StageRecovery
                     totalThrust += e.maxThrust;
                     netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
                 }
-                if (totalThrust < (totalMass * 9.81)) //Need greater than 1 TWR to land. Planes would be different, but we ignore them. This isn't quite true with parachutes, btw.
+                if (totalThrust < (totalMass * 9.81) * Settings.instance.MinTWR) //Need greater than 1 TWR to land. Planes would be different, but we ignore them. This isn't quite true with parachutes, btw.
                     return finalVelocity;
                 //Now we determine the netISP by taking the total thrust and dividing by the stuff we calculated earlier.
                 netISP = totalThrust / netISP; 
