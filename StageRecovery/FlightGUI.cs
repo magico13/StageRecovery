@@ -43,11 +43,19 @@ namespace StageRecovery
                 {
                     if (GUILayout.Button(stage.StageName))
                     {
-                        //If you select the same stage again it will minimize the list
-                        if (selectedStage == stage)
-                            selectedStage = null;
-                        else
-                            selectedStage = stage;
+                        if (Input.GetMouseButtonUp(0))
+                        {
+                            //If you select the same stage again it will minimize the list
+                            if (selectedStage == stage)
+                                selectedStage = null;
+                            else
+                                selectedStage = stage;
+                        }
+                        else if (Input.GetMouseButtonUp(1))
+                        {
+                            //Right clicking deletes the stage
+                            Settings.instance.DestroyedStages.Remove(stage);
+                        }
                     }
                 }
             }
@@ -58,11 +66,19 @@ namespace StageRecovery
                 {
                     if (GUILayout.Button(stage.StageName))
                     {
-                        //If you select the same stage again it will minimize the list
-                        if (selectedStage == stage)
-                            selectedStage = null;
-                        else
-                            selectedStage = stage;
+                        if (Input.GetMouseButtonUp(0))
+                        {
+                            //If you select the same stage again it will minimize the list
+                            if (selectedStage == stage)
+                                selectedStage = null;
+                            else
+                                selectedStage = stage;
+                        }
+                        else if (Input.GetMouseButtonUp(1))
+                        {
+                            //Right clicking deletes the stage
+                            Settings.instance.DestroyedStages.Remove(stage);
+                        }
                     }
                 }
             }
@@ -200,6 +216,7 @@ namespace StageRecovery
             GUILayout.Label("\nPercent refunded: "+ Math.Round(100*selectedStage.RecoveryPercent, 2) + "%");
             GUILayout.Label("    --Distance: " + Math.Round(100 * selectedStage.DistancePercent, 2) + "%");
             GUILayout.Label("    --Speed: " + Math.Round(100 * selectedStage.SpeedPercent, 2) + "%");
+            GUILayout.Label("Total refunds: " + Math.Round(selectedStage.FundsReturned, 2));
 
             //If the stage was burned up, display this and the velocity it was going
             if (selectedStage.burnedUp)

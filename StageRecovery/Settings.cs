@@ -16,7 +16,7 @@ namespace StageRecovery
         //The path for the settings file (Config.txt)
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
-        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut;
+        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR;
         [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
@@ -38,6 +38,7 @@ namespace StageRecovery
             HighCut = 12f;
             PoweredRecovery = true;
             RecoverClamps = true;
+            MinTWR = 1.0f;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
@@ -122,7 +123,7 @@ namespace StageRecovery
         //Temporary holders for the settings. They are only copied to the settings when the Save button is pressed.
         //Floats, ints, and other numbers are best represented as strings until the settings are saved (then you parse them)
         //The reason for this is that you can't enter decimal values easily since typing "2." gets changed to "2" when to do a toString() ("25" then "2.5" will work though)
-        private string DRMaxVel;
+        private string DRMaxVel, minTWR;
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
@@ -156,7 +157,7 @@ namespace StageRecovery
         public void AddToolbarButton()
         {
             SRToolbarButton = ToolbarManager.Instance.add("StageRecovery", "MainButton");
-            SRToolbarButton.Visibility = new GameScenesVisibility(new GameScenes[] {GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR, GameScenes.SPH});
+            SRToolbarButton.Visibility = new GameScenesVisibility(new GameScenes[] {GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR});
             SRToolbarButton.TexturePath = "StageRecovery/icon_blizzy";
             SRToolbarButton.ToolTip = "StageRecovery";
             SRToolbarButton.OnClick += ((e) =>
@@ -275,6 +276,8 @@ namespace StageRecovery
             lowCut = Settings.instance.LowCut;
             highCut = Settings.instance.HighCut;
             poweredRecovery = Settings.instance.PoweredRecovery;
+            recoverClamps = Settings.instance.RecoverClamps;
+            minTWR = Settings.instance.MinTWR.ToString();
             showWindow = true;
         }
 
@@ -326,6 +329,11 @@ namespace StageRecovery
             //Make sure to End anything you Begin!
             GUILayout.EndHorizontal();
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Powered TWR");
+            minTWR = GUILayout.TextField(minTWR, 4);
+            GUILayout.EndHorizontal();
+
             //The rest are just toggles and are put one after the other
             recoverSci = GUILayout.Toggle(recoverSci, "Recover Science");
             recoverKerb = GUILayout.Toggle(recoverKerb, "Recover Kerbals");
@@ -359,6 +367,8 @@ namespace StageRecovery
                 Settings.instance.ShowSuccessMessages = showSuccess;
                 Settings.instance.PoweredRecovery = poweredRecovery;
                 Settings.instance.RecoverClamps = recoverClamps;
+                if (!float.TryParse(minTWR, out Settings.instance.MinTWR))
+                    Settings.instance.MinTWR = 1.0f;
                 //Finally we save the settings to the file
                 Settings.instance.Save();
             }
