@@ -141,9 +141,9 @@ namespace StageRecovery
 
             //Assign the pv variable to the protovessel, then look for if the root is a clamp
             ProtoVessel pv = vessel.protoVessel;
-            if (pv.protoPartSnapshots.Count > 0 && pv.protoPartSnapshots[0].partInfo.name.ToLower().Contains("clamp"))
+            if (pv.protoPartSnapshots.Count > 0 && pv.protoPartSnapshots[0].modules.Exists(m => m.moduleName == "LaunchClamp"))
             {
-                //If we find one with "clamp" in its name then it's probably a launch clamp (hopefully this will work with FASA)
+                //We look for the launchclamp module, which will hopefully cover FASA and stock.
                 Debug.Log("[SR] Recovering a clamp!");
                 //Add it to the recovered clamps list so we don't try to recover it again
                 clampsRecovered.Add(vessel);

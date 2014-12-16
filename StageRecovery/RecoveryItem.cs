@@ -222,18 +222,18 @@ namespace StageRecovery
             Dictionary<string, double> resources = new Dictionary<string, double>();
             Dictionary<string, double> rMasses = new Dictionary<string, double>();
             //The stage must be controlled to be landed this way
-            bool stageControllable = false;
+            bool stageControllable = vessel.protoVessel.wasControllable;
             try
             {
                 //Loop over all the parts to check for control, engines, and fuel
                 foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                 {
-                    //Search through the Modules on the part for one called ModuleCommand and check if the crew count in the part is greater than or equal to the minimum required for control
+                  /*  //Search through the Modules on the part for one called ModuleCommand and check if the crew count in the part is greater than or equal to the minimum required for control
                     if (!stageControllable && p.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew <= p.protoModuleCrew.Count)) != null)
                     {
                         //Congrats, the stage is controlled! We can stop looking now.
                         stageControllable = true;
-                    }
+                    }*/
                     //Add the mass of the parts and their resources to the total vessel mass
                     totalMass += p.mass;
                     totalMass += GetResourceMass(p.resources);
@@ -512,9 +512,9 @@ namespace StageRecovery
             if (Settings.instance.FlatRateModel)
             {
                 //Assume uncontrolled until proven controlled
-                bool stageControllable = false;
+                bool stageControllable = vessel.protoVessel.wasControllable;
                 //Cycle through all of the parts on the ship (well, ProtoPartSnaphsots)
-                foreach (ProtoPartSnapshot pps in vessel.protoVessel.protoPartSnapshots)
+                /*foreach (ProtoPartSnapshot pps in vessel.protoVessel.protoPartSnapshots)
                 {
                     //Search through the Modules on the part for one called ModuleCommand and check if the crew count in the part is greater than or equal to the minimum required for control
                     if (pps.modules.Find(module => (module.moduleName == "ModuleCommand" && ((ModuleCommand)module.moduleRef).minimumCrew <= pps.protoModuleCrew.Count)) != null)
@@ -523,7 +523,7 @@ namespace StageRecovery
                         stageControllable = true;
                         break;
                     }
-                }
+                }*/
                 //This is a fun trick for one-liners. The SpeedPercent is equal to 1 if stageControllable==true or the RecoveryModifier saved in the settings if that's false.
                 SpeedPercent = stageControllable ? 1.0f : Settings.instance.RecoveryModifier;
                 //If the speed is too high then we set the recovery due to speed to 0
@@ -633,6 +633,7 @@ namespace StageRecovery
         //This recovers Kerbals on the Stage, returning the list of their names
         private List<String> RecoverKerbals()
         {
+            //Currently causing Kerbals to lose exp!
             List<String> kerbals = new List<string>();
             //If there's no crew, why look?
             if (vessel.protoVessel.GetVesselCrew().Count > 0)

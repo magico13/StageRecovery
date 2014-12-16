@@ -36,6 +36,7 @@ namespace StageRecovery
             GUILayout.Label((firstToolbarIndex == 0 ? "Recovered" : "Destroyed") + " Stages:");
             stagesScroll = GUILayout.BeginScrollView(stagesScroll, HighLogic.Skin.textArea);
 
+            RecoveryItem deleteThis = null;
             //List all recovered stages
             if (firstToolbarIndex == 0)
             {
@@ -54,7 +55,7 @@ namespace StageRecovery
                         else if (Input.GetMouseButtonUp(1))
                         {
                             //Right clicking deletes the stage
-                            Settings.instance.DestroyedStages.Remove(stage);
+                            deleteThis = stage;
                         }
                     }
                 }
@@ -77,10 +78,20 @@ namespace StageRecovery
                         else if (Input.GetMouseButtonUp(1))
                         {
                             //Right clicking deletes the stage
-                            Settings.instance.DestroyedStages.Remove(stage);
+                            deleteThis = stage;
                         }
                     }
                 }
+            }
+
+            if (deleteThis != null)
+            {
+                if (deleteThis == selectedStage)
+                    NullifySelected();
+                if (firstToolbarIndex == 0)
+                    Settings.instance.RecoveredStages.Remove(deleteThis);
+                else
+                    Settings.instance.DestroyedStages.Remove(deleteThis);
             }
 
             //End the list of stages
