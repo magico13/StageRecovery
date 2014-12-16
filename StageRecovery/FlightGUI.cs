@@ -42,7 +42,10 @@ namespace StageRecovery
             {
                 foreach (RecoveryItem stage in Settings.instance.RecoveredStages)
                 {
-                    if (GUILayout.Button(stage.StageName))
+                    string buttonText = stage.StageName;
+                    if (stage == selectedStage)
+                        buttonText = "----   " + buttonText + "   ----";
+                    if (GUILayout.Button(buttonText))
                     {
                         if (Input.GetMouseButtonUp(0))
                         {
@@ -65,7 +68,10 @@ namespace StageRecovery
             {
                 foreach (RecoveryItem stage in Settings.instance.DestroyedStages)
                 {
-                    if (GUILayout.Button(stage.StageName))
+                    string buttonText = stage.StageName;
+                    if (stage == selectedStage)
+                        buttonText = "----   " + buttonText + "   ----";
+                    if (GUILayout.Button(buttonText))
                     {
                         if (Input.GetMouseButtonUp(0))
                         {

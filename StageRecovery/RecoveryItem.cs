@@ -65,6 +65,25 @@ namespace StageRecovery
             KerbalsOnboard = RecoverKerbals();
         }
 
+        public static float GetParachuteDragFromPart(AvailablePart parachute)
+        {
+            foreach (AvailablePart.ModuleInfo mi in parachute.moduleInfos)
+            {
+                if (mi.info.Contains("Fully-Deployed Drag"))
+                {
+                    string[] split = mi.info.Split(new Char[] { ':' });
+                    for (int i = 0; i < split.Length; i++)
+                    {
+                        if (split[i].Contains("Fully-Deployed Drag"))
+                        {
+                            return float.Parse(split[i + 1]);
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
+
         //This function/method/thing calculates the terminal velocity of the Stage
         private float DetermineTerminalVelocity()
         {
@@ -94,7 +113,7 @@ namespace StageRecovery
                     {
                         //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
                         ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
-                        float drag = 500;
+                        float drag = GetParachuteDragFromPart(p.partInfo);
                         if (ppms.moduleRef != null)
                         {
                             ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
