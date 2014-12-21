@@ -76,8 +76,17 @@ namespace StageRecovery
                     {
                         if (split[i].Contains("Fully-Deployed Drag"))
                         {
-                            string[] split2 = split[i + 1].Split(new Char[] { '>' });
-                            return float.Parse(split2[1]);
+                            float drag = 500;
+                            if (!float.TryParse(split[i + 1], out drag))
+                            {
+                                string[] split2 = split[i + 1].Split('>');
+                                if (!float.TryParse(split2[1], out drag))
+                                {
+                                    Debug.Log("[SR] Failure trying to read parachute data. Assuming 500 drag.");
+                                    drag = 500;
+                                }
+                            }
+                            return drag;
                         }
                     }
                 }
