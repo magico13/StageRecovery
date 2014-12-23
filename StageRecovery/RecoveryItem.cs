@@ -123,12 +123,16 @@ namespace StageRecovery
                     {
                         //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
                         ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
-                        float drag = GetParachuteDragFromPart(p.partInfo);
+                        float drag = 500;
                         if (ppms.moduleRef != null)
                         {
                             ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
                             mp.Load(ppms.moduleValues);
                             drag = mp.fullyDeployedDrag;
+                        }
+                        else
+                        {
+                            drag = GetParachuteDragFromPart(p.partInfo);
                         }
                         //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
                         dragCoeff += p.mass * drag;
