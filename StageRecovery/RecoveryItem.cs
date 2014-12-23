@@ -661,7 +661,7 @@ namespace StageRecovery
 
         //This recovers Kerbals on the Stage, returning the list of their names
         private List<String> RecoverKerbals()
-        {
+        { 
             //Currently causing Kerbals to lose exp!
             List<String> kerbals = new List<string>();
             //If there's no crew, why look?
