@@ -672,7 +672,21 @@ namespace StageRecovery
                 {
                     //Yeah, that's all it takes to recover a kerbal. Set them to Available from Assigned
                     if (recovered && Settings.instance.RecoverKerbals)
+                    {
                         pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                        //pcm.experienceTrait.Config.
+                        FlightLog.Entry deathEntry = pcm.careerLog.Entries.Find(e => e.type == "Die");
+                        if (deathEntry != null)
+                        {
+                            Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
+                            int flightNum = deathEntry.flight;
+                            pcm.careerLog.Entries.Remove(deathEntry);
+                            FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
+                            FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
+                            pcm.careerLog.AddEntry(landing);
+                            pcm.careerLog.AddEntry(recovery);
+                        }
+                    }
                     kerbals.Add(pcm.name);
                 }
             }
