@@ -17,7 +17,7 @@ namespace StageRecovery
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR;
-        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps;
+        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
         public IgnoreList BlackList = new IgnoreList();
@@ -39,6 +39,7 @@ namespace StageRecovery
             PoweredRecovery = true;
             RecoverClamps = true;
             MinTWR = 1.0f;
+            UseUpgrades = true;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
@@ -127,7 +128,7 @@ namespace StageRecovery
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
-        private bool recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps;
+        private bool recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades;
 
         private Vector2 scrollPos;
 
@@ -278,6 +279,7 @@ namespace StageRecovery
             poweredRecovery = Settings.instance.PoweredRecovery;
             recoverClamps = Settings.instance.RecoverClamps;
             minTWR = Settings.instance.MinTWR.ToString();
+            useUpgrades = Settings.instance.UseUpgrades;
             showWindow = true;
         }
 
@@ -341,6 +343,7 @@ namespace StageRecovery
             showSuccess = GUILayout.Toggle(showSuccess, "Success Messages");
             poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");
             recoverClamps = GUILayout.Toggle(recoverClamps, "Recover Clamps");
+            useUpgrades = GUILayout.Toggle(useUpgrades, "Tie Into Upgrades");
 
             if (GUILayout.Button("Edit Ignore List"))
             {
@@ -367,6 +370,7 @@ namespace StageRecovery
                 Settings.instance.ShowSuccessMessages = showSuccess;
                 Settings.instance.PoweredRecovery = poweredRecovery;
                 Settings.instance.RecoverClamps = recoverClamps;
+                Settings.instance.UseUpgrades = useUpgrades;
                 if (!float.TryParse(minTWR, out Settings.instance.MinTWR))
                     Settings.instance.MinTWR = 1.0f;
                 //Finally we save the settings to the file

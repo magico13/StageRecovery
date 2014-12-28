@@ -179,6 +179,23 @@ namespace StageRecovery
             return (Funding.Instance.Funds);
         }
 
+
+        public static int BuildingUpgradeLevel(SpaceCenterFacility facility)
+        {
+            int lvl = 0;
+            if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Settings.instance.UseUpgrades)
+            {
+                lvl = (int)ScenarioUpgradeableFacilities.GetFacilityLevel(facility);
+                Debug.Log("[SR] Facility is level " + lvl);
+            }
+            else
+            {
+                lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility);
+                Debug.Log("[SR] Facility max level is " + lvl);
+            }
+            return lvl;
+        }
+
         //Helper function that I found on StackExchange that helps immensly with dealing with Reflection. I'm not that good at reflection (accessing other mod's functions and data)
         public static object GetMemberInfoValue(System.Reflection.MemberInfo member, object sourceObject)
         {

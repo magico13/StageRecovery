@@ -258,6 +258,28 @@ namespace StageRecovery
             bool stageControllable = vessel.protoVessel.wasControllable;
             try
             {
+                if (stageControllable && Settings.instance.UseUpgrades)
+                {
+                    stageControllable = vessel.GetVesselCrew().Find(c => c.experienceTrait.Title == "Pilot") != null;
+                    if (stageControllable)
+                        Debug.Log("[SR] Found a kerbal pilot!");
+                    else
+                    {
+                        Debug.Log("[SR] No kerbal pilot found, searching for a probe core...");
+                        stageControllable = vessel.parts.Find(p => p.Modules.Contains("ModuleSAS")) != null;
+                        if (stageControllable)
+                            Debug.Log("[SR] Found an SAS compatible probe core!");
+                        else
+                            Debug.Log("[SR] No probe core with SAS found.");
+                    }
+
+                }
+                else if (!stageControllable)
+                {
+                    Debug.Log("[SR] Stage not controlled. Can't perform powered recovery.");
+                    return finalVelocity;
+                }
+
                 //Loop over all the parts to check for control, engines, and fuel
                 foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                 {
@@ -570,6 +592,13 @@ namespace StageRecovery
             KSCDistance = (float)SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(vessel.protoVessel.latitude, vessel.protoVessel.longitude));
             //Calculate the max distance from KSC (half way around a circle the size of Kerbin)
             double maxDist = SpaceCenter.Instance.cb.Radius * Math.PI;
+
+            int TSUpgrades = StageRecovery.BuildingUpgradeLevel(SpaceCenterFacility.TrackingStation);
+            if (TSUpgrades == 0)
+                maxDist *= (1 / 2);
+            else if (TSUpgrades == 1)
+                maxDist *= (3 / 4);
+
             //Get the reduction in returns due to distance (0.98 at KSC, .1 at maxDist)
             DistancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(KSCDistance / maxDist));
             //Combine the modifier from the velocity and the modifier from distance together
