@@ -52,7 +52,7 @@ namespace StageRecovery
             Settings.instance.gui.DrawGUIs(windowID);
         }
 
-        //When the scene changes and the mod destroyed
+        //When the scene changes and the mod is destroyed
         public void OnDestroy()
         {
             //If we're in the MainMenu, don't do anything
@@ -127,6 +127,10 @@ namespace StageRecovery
         private List<Vessel> clampsRecovered = new List<Vessel>();
         public void VesselUnloadEvent(Vessel vessel)
         {
+            //If we're disabled, just return
+            if (!Settings.instance.SREnabled)
+                return;
+
             //If we aren't supposed to recover clamps, then don't try.
             if (!Settings.instance.RecoverClamps)
                 return;
@@ -210,6 +214,10 @@ namespace StageRecovery
         //The main show. The VesselDestroyEvent is activated whenever KSP destroys a vessel. We only care about it in a specific set of circumstances
         private void VesselDestroyEvent(Vessel v)
         {
+            //If we're disabled, just return
+            if (!Settings.instance.SREnabled)
+                return;
+
             if (!sceneChangeComplete)
                 return;
 

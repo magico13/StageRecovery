@@ -30,6 +30,15 @@ namespace StageRecovery
         public RecoveryEvent RecoveryFailureEvent = new RecoveryEvent();
 
 
+        public bool SREnabled
+        {
+            get
+            {
+                return Settings.instance.SREnabled;
+            }
+        }
+
+
     }
     
    //The RecoveryEvent class is used by both events. It basically just lets you add a listening method to the event, remove one, or fire all the events.

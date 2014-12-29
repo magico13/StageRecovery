@@ -17,7 +17,7 @@ namespace StageRecovery
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR;
-        [Persistent] public bool RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades;
+        [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
         public IgnoreList BlackList = new IgnoreList();
@@ -26,6 +26,7 @@ namespace StageRecovery
         //The constructor for the settings class. It sets the values to default (which are then replaced when Load() is called)
         public Settings()
         {
+            SREnabled = true;
             RecoveryModifier = 0.75f;
             RecoverKerbals = true;
             RecoverScience = true;
@@ -128,7 +129,7 @@ namespace StageRecovery
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
-        private bool recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades;
+        private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades;
 
         private Vector2 scrollPos;
 
@@ -147,7 +148,7 @@ namespace StageRecovery
                     DummyVoid,
                     DummyVoid,
                     DummyVoid,
-                    (ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB),
+                    (ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.MAPVIEW),
                     GameDatabase.Instance.GetTexture("StageRecovery/icon", false));
             }
         }
@@ -266,6 +267,7 @@ namespace StageRecovery
         //This function will show the settings window and copy the current settings into their holders
         public void ShowSettings()
         {
+            enabled = Settings.instance.SREnabled;
             recMod = Settings.instance.RecoveryModifier;
             cutoff = Settings.instance.CutoffVelocity;
             DRMaxVel = Settings.instance.DeadlyReentryMaxVelocity.ToString();
@@ -288,6 +290,9 @@ namespace StageRecovery
         {
             //We start by begining a vertical segment. All new elements will be placed below the previous one.
             GUILayout.BeginVertical();
+
+            //Whether the mod is enabled or not
+            enabled = GUILayout.Toggle(enabled, " Mod Enabled");
 
             //We can toggle the Flat Rate Model on and off with a toggle
             flatRate = GUILayout.Toggle(flatRate, flatRate ? "Flat Rate Model" : "Variable Rate Model");
@@ -355,6 +360,7 @@ namespace StageRecovery
             {
                 //When the button is clicked then this all is executed.
                 //This all sets the settings to the GUI version's values
+                Settings.instance.SREnabled = enabled;
                 Settings.instance.FlatRateModel = flatRate;
                 Settings.instance.LowCut = lowCut;
                 Settings.instance.HighCut = highCut;

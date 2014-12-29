@@ -37,6 +37,23 @@ namespace StageRecovery
             }
         }
 
+        /* Check to see if StageRecovery is enabled. Returns false if unavailable or if user settings prevent SR from activating. */
+        public static bool StageRecoveryEnabled
+        {
+            get
+            {
+                if (StageRecoveryAvailable)
+                {
+                    object SREnabledObject = GetMemberInfoValue(SRType.GetMember("SREnabled")[0], Instance);
+                    return (bool)SREnabledObject;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
         #region APIMethods
         /***************/
         /* API methods */
