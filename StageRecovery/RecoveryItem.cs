@@ -649,7 +649,7 @@ namespace StageRecovery
                             totalScience += science;
                             //For display we'll keep the title, amt, and science earned in one string
                             //ie: 5 Data from Crew Report at LaunchPad: 8 Science
-                            string display = amt + " Data from " + title + ": " + science + " science";
+							string display = "<#6DCFF6>©" + amt + "</> Data from " + title + ": <#6DCFF6>" + science + "</> science";
                             ScienceExperiments.Add(display);
                         }
                     }
@@ -759,7 +759,7 @@ namespace StageRecovery
                 {
                     msg.AppendLine("\nScience recovered: "+ScienceRecovered);
                     foreach (string science in ScienceExperiments)
-						msg.AppendLine("<#6DCFF6>©" + science + "</>");
+						msg.AppendLine(science);
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
