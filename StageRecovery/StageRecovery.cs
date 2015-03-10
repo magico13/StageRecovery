@@ -190,12 +190,10 @@ namespace StageRecovery
             if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Settings.instance.UseUpgrades)
             {
                 lvl = (int)ScenarioUpgradeableFacilities.GetFacilityLevel(facility);
-                Debug.Log("[SR] Facility is level " + lvl);
             }
             else
             {
                 lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility);
-                Debug.Log("[SR] Facility max level is " + lvl);
             }
             return lvl;
         }
@@ -211,6 +209,30 @@ namespace StageRecovery
             return newVal;
         }
 
+        //Check to see if FMRS is installed and enabled
+        public static bool FMRS_Enabled()
+        {
+            try
+            {
+                Type FMRSType = AssemblyLoader.loadedAssemblies
+                            .Select(a => a.assembly.GetExportedTypes())
+                            .SelectMany(t => t)
+                            .FirstOrDefault(t => t.FullName == "FMRS.FMRS_Util");
+                if (FMRSType == null) return false;
+
+                UnityEngine.Object FMRSUtilClass = GameObject.FindObjectOfType(FMRSType);
+                bool enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Enabled")[0], FMRSUtilClass);
+                if (enabled)
+                    enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Armed")[0], FMRSUtilClass);
+
+                return enabled;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         //The main show. The VesselDestroyEvent is activated whenever KSP destroys a vessel. We only care about it in a specific set of circumstances
         private void VesselDestroyEvent(Vessel v)
         {
@@ -219,6 +241,9 @@ namespace StageRecovery
                 return;
 
             if (!sceneChangeComplete)
+                return;
+
+            if (FMRS_Enabled())
                 return;
 
             //If FlightGlobals is null, just return. We can't do anything

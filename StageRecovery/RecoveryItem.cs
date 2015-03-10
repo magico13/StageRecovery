@@ -595,9 +595,9 @@ namespace StageRecovery
 
             int TSUpgrades = StageRecovery.BuildingUpgradeLevel(SpaceCenterFacility.TrackingStation);
             if (TSUpgrades == 0)
-                maxDist *= (1 / 2);
+                maxDist *= (1.0 / 2.0);
             else if (TSUpgrades == 1)
-                maxDist *= (3 / 4);
+                maxDist *= (3.0 / 4.0);
 
             //Get the reduction in returns due to distance (0.98 at KSC, .1 at maxDist)
             DistancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(KSCDistance / maxDist));
