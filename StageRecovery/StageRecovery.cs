@@ -243,9 +243,6 @@ namespace StageRecovery
             if (!sceneChangeComplete)
                 return;
 
-            if (FMRS_Enabled())
-                return;
-
             //If FlightGlobals is null, just return. We can't do anything
             if (FlightGlobals.fetch == null)
                 return;
@@ -253,6 +250,22 @@ namespace StageRecovery
             //If the protoVessel is null, we can't do anything so just return
             if (v.protoVessel == null)
                 return;
+
+            if (FMRS_Enabled())
+            {//If the vessel is controlled or has a RealChute Module, FMRS will handle it
+                if ((v.IsControllable && v.isCommandable) || v.protoVessel.protoPartSnapshots.Find(p => p.modules != null && p.modules.Find(m => m.moduleName == "RealChuteModule") != null) != null)
+                {
+                    return;
+                }
+                //If there's crew onboard, FMRS will handle that too
+                foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+                {
+                    if (pps.protoCrewNames.Count > 0)
+                        return;
+                }
+
+                // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
+            }
 
             //Our criteria for even attempting recovery. Broken down: vessel exists, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is less than 35km,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)
