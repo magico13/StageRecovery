@@ -253,7 +253,7 @@ namespace StageRecovery
 
             if (FMRS_Enabled())
             {//If the vessel is controlled or has a RealChute Module, FMRS will handle it
-                if ((v.IsControllable && v.isCommandable) || v.protoVessel.protoPartSnapshots.Find(p => p.modules != null && p.modules.Find(m => m.moduleName == "RealChuteModule") != null) != null)
+                if ((v.protoVessel.wasControllable) || v.protoVessel.protoPartSnapshots.Find(p => p.modules != null && p.modules.Find(m => m.moduleName == "RealChuteModule") != null) != null)
                 {
                     return;
                 }
