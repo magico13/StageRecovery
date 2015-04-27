@@ -251,7 +251,7 @@ namespace StageRecovery
             if (v.protoVessel == null)
                 return;
 
-            if (FMRS_Enabled())
+            if (HighLogic.LoadedSceneIsFlight && FMRS_Enabled())
             {//If the vessel is controlled or has a RealChute Module, FMRS will handle it
                 if ((v.protoVessel.wasControllable) || v.protoVessel.protoPartSnapshots.Find(p => p.modules != null && p.modules.Find(m => m.moduleName == "RealChuteModule") != null) != null)
                 {
@@ -269,7 +269,7 @@ namespace StageRecovery
 
             //Our criteria for even attempting recovery. Broken down: vessel exists, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is less than 35km,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)
-            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && Math.Exp(-v.altitude / (v.mainBody.atmosphereScaleHeight*1000)) >= 0.009 &&
+            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && v.altitude < 70000 && //TODO: Use something other than hardcoded 70km (due to 1.0)
                (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL) && !v.isEVA && v.altitude > 100)
             {
                 bool OnlyBlacklistedItems = true;

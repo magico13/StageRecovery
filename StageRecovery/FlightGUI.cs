@@ -53,7 +53,7 @@ namespace StageRecovery
             GUILayout.EndHorizontal();
             //NullifySelected will set the selectedStage to null and reset the toolbar
 
-            GUILayout.Label("FMRS: " + (StageRecovery.FMRS_Enabled() ? "Active" : "Inactive"));
+           // GUILayout.Label("FMRS: " + (StageRecovery.FMRS_Enabled() ? "Active" : "Inactive"));
 
             if (firstToolbarIndex >= 0)
             {
