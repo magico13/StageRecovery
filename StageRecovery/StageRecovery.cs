@@ -269,7 +269,7 @@ namespace StageRecovery
 
             //Our criteria for even attempting recovery. Broken down: vessel exists, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is less than 35km,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)
-            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && v.altitude < 70000 && //TODO: Use something other than hardcoded 70km (due to 1.0)
+            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && (v.altitude < v.mainBody.atmosphereDepth) && //TODO: Use something other than atmosphere height (pressure again probably)
                (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL) && !v.isEVA && v.altitude > 100)
             {
                 bool OnlyBlacklistedItems = true;

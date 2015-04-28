@@ -494,10 +494,13 @@ namespace StageRecovery
         private bool DetermineIfBurnedUp()
         {
             //Check to see if Deadly Reentry is installed (check the loaded assemblies for DeadlyReentry.ReentryPhysics (namespace.class))
-            bool DeadlyReentryInstalled = AssemblyLoader.loadedAssemblies
+          /*  bool DeadlyReentryInstalled = AssemblyLoader.loadedAssemblies
                     .Select(a => a.assembly.GetExportedTypes())
                     .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DeadlyReentry.ReentryPhysics") != null;
+                    .FirstOrDefault(t => t.FullName == "DeadlyReentry.ReentryPhysics") != null;*/
+
+            //For 1.0, check if the heating percent is > 0 (later we'll want to scale with that value)
+            bool DeadlyReentryInstalled = HighLogic.CurrentGame.Parameters.Difficulty.ReentryHeatScale > 0;
 
             //Holder for the chance of burning up in atmosphere (through my non-scientific calculations)
             float burnChance = 0f;
@@ -516,12 +519,12 @@ namespace StageRecovery
             float totalHeatShield = 0f, maxHeatShield = 0f;
             foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
             {
-                if (p.modules.Find(mod => mod.moduleName == "ModuleHeatShield") != null)
+                if (p.modules.Find(mod => mod.moduleName == "ModuleAblator") != null)
                 {
                     //Grab the heat shield module
-                    ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleHeatShield");
+                    ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
                     //Determine what type of shielding is in use
-                    String ablativeType = heatShield.moduleValues.GetValue("ablative");
+                   /* String ablativeType = heatShield.moduleValues.GetValue("ablative");
                     //Hopefully it's AblativeShielding, because that's what we want
                     if (ablativeType == "AblativeShielding")
                     {
@@ -538,7 +541,17 @@ namespace StageRecovery
                         //We add 400 to each. This is so there's still a chance of failure
                         totalHeatShield += 400;
                         maxHeatShield += 400;
-                    }
+                    }*/
+
+                    //For stock 1.0
+                    //Determine the amount of shielding remaining
+                    float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
+                    //And the maximum amount of shielding
+                    float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
+                    //Add those to the totals for the craft
+                    totalHeatShield += shieldRemaining;
+                    maxHeatShield += maxShield;
+
                 }
             }
             //Assume we're not going to burn up until proven that we will
@@ -595,9 +608,9 @@ namespace StageRecovery
 
             int TSUpgrades = StageRecovery.BuildingUpgradeLevel(SpaceCenterFacility.TrackingStation);
             if (TSUpgrades == 0)
-                maxDist *= (1.0 / 2.0);
+                maxDist *= (0.5);
             else if (TSUpgrades == 1)
-                maxDist *= (3.0 / 4.0);
+                maxDist *= (0.75);
 
             //Get the reduction in returns due to distance (0.98 at KSC, .1 at maxDist)
             DistancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(KSCDistance / maxDist));
