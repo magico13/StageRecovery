@@ -11,6 +11,16 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.5.4 - (04/28/2015)
+ - Updated to KSP 1.0
+ - Tie into the stock upgrade system.
+	- Tracking Center upgrades improve distance based returns
+	- Pilot kerbals or probes with SAS are needed for powered recovery
+ - Added FMRS support. The two shouldn't try to recover the same things now and should play nicely together!
+ - Added colors in recovery messages
+ - A bit of Flight GUI rework to make it easier to use, take less screen space, and generally be better.
+ - Deadly Reentry support moved to use Stock system. Doesn't scale with Stock setting yet, but if Stock is set to 0% then SR won't burn things up.
+
 1.5.3 - (12/22/2014)
  - Fixed issue with losing experience on recovery. Kerbals now gain experience as appropriate for landing on Kerbin.
 

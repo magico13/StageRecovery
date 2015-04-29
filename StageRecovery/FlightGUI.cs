@@ -13,10 +13,10 @@ namespace StageRecovery
         public bool showFlightGUI = false;
 
         //This Rect object controls the physical window (size and location)
-        public Rect flightWindowRect = new Rect((Screen.width-600)/2, (Screen.height-480)/2, 240, 480);
+        public Rect flightWindowRect = new Rect((Screen.width-600)/2, (Screen.height-480)/2, 240, 1);
 
         //This is all stuff we need to keep constant between draws
-        private int firstToolbarIndex = 0, infoBarIndex = 0;
+        private int firstToolbarIndex = -1, infoBarIndex = 0;
         private Vector2 stagesScroll, infoScroll;
         private RecoveryItem selectedStage;
         //And this does the actual drawing
@@ -28,80 +28,106 @@ namespace StageRecovery
             GUILayout.BeginVertical(GUILayout.Width(225));
             //Draw the toolbar that selects between recovered and destroyed stages
             int temp = firstToolbarIndex;
-            firstToolbarIndex = GUILayout.Toolbar(firstToolbarIndex, new string[] { "Recovered", "Destroyed" });
-            if (temp != firstToolbarIndex) NullifySelected();
+            //firstToolbarIndex = GUILayout.Toolbar(firstToolbarIndex, new string[] { "Recovered", "Destroyed" });
+            GUILayout.BeginHorizontal();
+            bool active = GUILayout.Toggle(firstToolbarIndex == 0, "Recovered" + (Settings.instance.RecoveredStages.Count > 0 ? " ("+Settings.instance.RecoveredStages.Count+")" : ""), GUI.skin.button);
+            if (!active && firstToolbarIndex == 0)
+                firstToolbarIndex = -1;
+            else if (active)
+                firstToolbarIndex = 0;
+
+
+            active = GUILayout.Toggle(firstToolbarIndex == 1, "Destroyed" + (Settings.instance.DestroyedStages.Count > 0 ? " (" + Settings.instance.DestroyedStages.Count + ")" : ""), GUI.skin.button);
+            if (!active && firstToolbarIndex == 1)
+                firstToolbarIndex = -1;
+            else if (active)
+                firstToolbarIndex = 1;
+            if (temp != firstToolbarIndex)
+            {
+                NullifySelected();
+                if (firstToolbarIndex == -1)
+                    flightWindowRect.height = 1;
+                else
+                    flightWindowRect.height = 480;
+            }
+            GUILayout.EndHorizontal();
             //NullifySelected will set the selectedStage to null and reset the toolbar
 
-            //Begin listing the recovered/destryoed stages in a scroll view (so you can scroll if it's too long)
-            GUILayout.Label((firstToolbarIndex == 0 ? "Recovered" : "Destroyed") + " Stages:");
-            stagesScroll = GUILayout.BeginScrollView(stagesScroll, HighLogic.Skin.textArea);
+           // GUILayout.Label("FMRS: " + (StageRecovery.FMRS_Enabled() ? "Active" : "Inactive"));
 
-            RecoveryItem deleteThis = null;
-            //List all recovered stages
-            if (firstToolbarIndex == 0)
+            if (firstToolbarIndex >= 0)
             {
-                foreach (RecoveryItem stage in Settings.instance.RecoveredStages)
-                {
-                    string buttonText = stage.StageName;
-                    if (stage == selectedStage)
-                        buttonText = "----   " + buttonText + "   ----";
-                    if (GUILayout.Button(buttonText))
-                    {
-                        if (Input.GetMouseButtonUp(0))
-                        {
-                            //If you select the same stage again it will minimize the list
-                            if (selectedStage == stage)
-                                selectedStage = null;
-                            else
-                                selectedStage = stage;
-                        }
-                        else if (Input.GetMouseButtonUp(1))
-                        {
-                            //Right clicking deletes the stage
-                            deleteThis = stage;
-                        }
-                    }
-                }
-            }
-            //List all destroyed stages
-            else if (firstToolbarIndex == 1)
-            {
-                foreach (RecoveryItem stage in Settings.instance.DestroyedStages)
-                {
-                    string buttonText = stage.StageName;
-                    if (stage == selectedStage)
-                        buttonText = "----   " + buttonText + "   ----";
-                    if (GUILayout.Button(buttonText))
-                    {
-                        if (Input.GetMouseButtonUp(0))
-                        {
-                            //If you select the same stage again it will minimize the list
-                            if (selectedStage == stage)
-                                selectedStage = null;
-                            else
-                                selectedStage = stage;
-                        }
-                        else if (Input.GetMouseButtonUp(1))
-                        {
-                            //Right clicking deletes the stage
-                            deleteThis = stage;
-                        }
-                    }
-                }
-            }
+                //Begin listing the recovered/destryoed stages in a scroll view (so you can scroll if it's too long)
+                GUILayout.Label((firstToolbarIndex == 0 ? "Recovered" : "Destroyed") + " Stages:");
+                stagesScroll = GUILayout.BeginScrollView(stagesScroll, HighLogic.Skin.textArea);
 
-            if (deleteThis != null)
-            {
-                if (deleteThis == selectedStage)
-                    NullifySelected();
+                RecoveryItem deleteThis = null;
+                //List all recovered stages
                 if (firstToolbarIndex == 0)
-                    Settings.instance.RecoveredStages.Remove(deleteThis);
-                else
-                    Settings.instance.DestroyedStages.Remove(deleteThis);
-            }
+                {
+                    foreach (RecoveryItem stage in Settings.instance.RecoveredStages)
+                    {
+                        string buttonText = stage.StageName;
+                        if (stage == selectedStage)
+                            buttonText = "--  " + buttonText + "  --";
+                        if (GUILayout.Button(buttonText))
+                        {
+                            if (Input.GetMouseButtonUp(0))
+                            {
+                                //If you select the same stage again it will minimize the list
+                                if (selectedStage == stage)
+                                    selectedStage = null;
+                                else
+                                    selectedStage = stage;
+                            }
+                            else if (Input.GetMouseButtonUp(1))
+                            {
+                                //Right clicking deletes the stage
+                                deleteThis = stage;
+                            }
+                        }
+                    }
+                }
+                //List all destroyed stages
+                else if (firstToolbarIndex == 1)
+                {
+                    foreach (RecoveryItem stage in Settings.instance.DestroyedStages)
+                    {
+                        string buttonText = stage.StageName;
+                        if (stage == selectedStage)
+                            buttonText = "--  " + buttonText + "  --";
+                        if (GUILayout.Button(buttonText))
+                        {
+                            if (Input.GetMouseButtonUp(0))
+                            {
+                                //If you select the same stage again it will minimize the list
+                                if (selectedStage == stage)
+                                    selectedStage = null;
+                                else
+                                    selectedStage = stage;
+                            }
+                            else if (Input.GetMouseButtonUp(1))
+                            {
+                                //Right clicking deletes the stage
+                                deleteThis = stage;
+                            }
+                        }
+                    }
+                }
 
-            //End the list of stages
-            GUILayout.EndScrollView();
+                if (deleteThis != null)
+                {
+                    if (deleteThis == selectedStage)
+                        NullifySelected();
+                    if (firstToolbarIndex == 0)
+                        Settings.instance.RecoveredStages.Remove(deleteThis);
+                    else
+                        Settings.instance.DestroyedStages.Remove(deleteThis);
+                }
+
+                //End the list of stages
+                GUILayout.EndScrollView();
+            }
             GUILayout.EndVertical();
 
             //If a stage is selected we show the info for it

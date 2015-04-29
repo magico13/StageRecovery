@@ -123,12 +123,16 @@ namespace StageRecovery
                     {
                         //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
                         ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
-                        float drag = GetParachuteDragFromPart(p.partInfo);
+                        float drag = 500;
                         if (ppms.moduleRef != null)
                         {
                             ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
                             mp.Load(ppms.moduleValues);
                             drag = mp.fullyDeployedDrag;
+                        }
+                        else
+                        {
+                            drag = GetParachuteDragFromPart(p.partInfo);
                         }
                         //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
                         dragCoeff += p.mass * drag;
@@ -254,6 +258,28 @@ namespace StageRecovery
             bool stageControllable = vessel.protoVessel.wasControllable;
             try
             {
+                if (stageControllable && Settings.instance.UseUpgrades)
+                {
+                    stageControllable = vessel.GetVesselCrew().Find(c => c.experienceTrait.Title == "Pilot") != null;
+                    if (stageControllable)
+                        Debug.Log("[SR] Found a kerbal pilot!");
+                    else
+                    {
+                        Debug.Log("[SR] No kerbal pilot found, searching for a probe core...");
+                        stageControllable = vessel.parts.Find(p => p.Modules.Contains("ModuleSAS")) != null;
+                        if (stageControllable)
+                            Debug.Log("[SR] Found an SAS compatible probe core!");
+                        else
+                            Debug.Log("[SR] No probe core with SAS found.");
+                    }
+
+                }
+                else if (!stageControllable)
+                {
+                    Debug.Log("[SR] Stage not controlled. Can't perform powered recovery.");
+                    return finalVelocity;
+                }
+
                 //Loop over all the parts to check for control, engines, and fuel
                 foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                 {
@@ -468,10 +494,13 @@ namespace StageRecovery
         private bool DetermineIfBurnedUp()
         {
             //Check to see if Deadly Reentry is installed (check the loaded assemblies for DeadlyReentry.ReentryPhysics (namespace.class))
-            bool DeadlyReentryInstalled = AssemblyLoader.loadedAssemblies
+          /*  bool DeadlyReentryInstalled = AssemblyLoader.loadedAssemblies
                     .Select(a => a.assembly.GetExportedTypes())
                     .SelectMany(t => t)
-                    .FirstOrDefault(t => t.FullName == "DeadlyReentry.ReentryPhysics") != null;
+                    .FirstOrDefault(t => t.FullName == "DeadlyReentry.ReentryPhysics") != null;*/
+
+            //For 1.0, check if the heating percent is > 0 (later we'll want to scale with that value)
+            bool DeadlyReentryInstalled = HighLogic.CurrentGame.Parameters.Difficulty.ReentryHeatScale > 0;
 
             //Holder for the chance of burning up in atmosphere (through my non-scientific calculations)
             float burnChance = 0f;
@@ -490,12 +519,12 @@ namespace StageRecovery
             float totalHeatShield = 0f, maxHeatShield = 0f;
             foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
             {
-                if (p.modules.Find(mod => mod.moduleName == "ModuleHeatShield") != null)
+                if (p.modules.Find(mod => mod.moduleName == "ModuleAblator") != null)
                 {
                     //Grab the heat shield module
-                    ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleHeatShield");
+                    ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
                     //Determine what type of shielding is in use
-                    String ablativeType = heatShield.moduleValues.GetValue("ablative");
+                   /* String ablativeType = heatShield.moduleValues.GetValue("ablative");
                     //Hopefully it's AblativeShielding, because that's what we want
                     if (ablativeType == "AblativeShielding")
                     {
@@ -512,7 +541,17 @@ namespace StageRecovery
                         //We add 400 to each. This is so there's still a chance of failure
                         totalHeatShield += 400;
                         maxHeatShield += 400;
-                    }
+                    }*/
+
+                    //For stock 1.0
+                    //Determine the amount of shielding remaining
+                    float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
+                    //And the maximum amount of shielding
+                    float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
+                    //Add those to the totals for the craft
+                    totalHeatShield += shieldRemaining;
+                    maxHeatShield += maxShield;
+
                 }
             }
             //Assume we're not going to burn up until proven that we will
@@ -566,6 +605,13 @@ namespace StageRecovery
             KSCDistance = (float)SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(vessel.protoVessel.latitude, vessel.protoVessel.longitude));
             //Calculate the max distance from KSC (half way around a circle the size of Kerbin)
             double maxDist = SpaceCenter.Instance.cb.Radius * Math.PI;
+
+            int TSUpgrades = StageRecovery.BuildingUpgradeLevel(SpaceCenterFacility.TrackingStation);
+            if (TSUpgrades == 0)
+                maxDist *= (0.5);
+            else if (TSUpgrades == 1)
+                maxDist *= (0.75);
+
             //Get the reduction in returns due to distance (0.98 at KSC, .1 at maxDist)
             DistancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(KSCDistance / maxDist));
             //Combine the modifier from the velocity and the modifier from distance together
@@ -778,7 +824,7 @@ namespace StageRecovery
             }
             else if (!recovered && Settings.instance.ShowFailureMessages)
             {
-				msg.AppendLine("<#ED0B0B>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
+                msg.AppendLine("<#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
                 msg.AppendLine("Stage contains these parts:");
                 for (int i = 0; i < PartsRecovered.Count; i++)
                 {
@@ -796,7 +842,7 @@ namespace StageRecovery
                         totalCost += Math.Max(ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet), 0);
                     }
                     //Alert the user to what the total value was (without modifiers)
-					msg.AppendLine("It was valued at <#ED0B0B>" + totalCost + "</> Funds.");
+                    msg.AppendLine("It was valued at <#FF9900>" + totalCost + "</> Funds."); //ED0B0B
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
@@ -804,7 +850,7 @@ namespace StageRecovery
                 //Display which module was used for recovery
                 msg.AppendLine(ParachuteModule + " Module used.");
                 //Display the terminal velocity (Vt) and what is needed to have any recovery
-                msg.AppendLine("Terminal velocity of <#ED0B0B>" + Math.Round(Vt, 2) + "</> (less than " + (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut) + " needed)");
+                msg.AppendLine("Terminal velocity of <#FF9900>" + Math.Round(Vt, 2) + "</> (less than " + (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut) + " needed)");
                 
                 //If it failed because of burning up (can be in addition to speed) then we'll let you know
                 if (burnedUp)

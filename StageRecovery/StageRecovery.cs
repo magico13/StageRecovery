@@ -52,7 +52,7 @@ namespace StageRecovery
             Settings.instance.gui.DrawGUIs(windowID);
         }
 
-        //When the scene changes and the mod destroyed
+        //When the scene changes and the mod is destroyed
         public void OnDestroy()
         {
             //If we're in the MainMenu, don't do anything
@@ -127,6 +127,10 @@ namespace StageRecovery
         private List<Vessel> clampsRecovered = new List<Vessel>();
         public void VesselUnloadEvent(Vessel vessel)
         {
+            //If we're disabled, just return
+            if (!Settings.instance.SREnabled)
+                return;
+
             //If we aren't supposed to recover clamps, then don't try.
             if (!Settings.instance.RecoverClamps)
                 return;
@@ -179,6 +183,21 @@ namespace StageRecovery
             return (Funding.Instance.Funds);
         }
 
+
+        public static int BuildingUpgradeLevel(SpaceCenterFacility facility)
+        {
+            int lvl = 0;
+            if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Settings.instance.UseUpgrades)
+            {
+                lvl = (int)ScenarioUpgradeableFacilities.GetFacilityLevel(facility);
+            }
+            else
+            {
+                lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility);
+            }
+            return lvl;
+        }
+
         //Helper function that I found on StackExchange that helps immensly with dealing with Reflection. I'm not that good at reflection (accessing other mod's functions and data)
         public static object GetMemberInfoValue(System.Reflection.MemberInfo member, object sourceObject)
         {
@@ -190,9 +209,37 @@ namespace StageRecovery
             return newVal;
         }
 
+        //Check to see if FMRS is installed and enabled
+        public static bool FMRS_Enabled()
+        {
+            try
+            {
+                Type FMRSType = AssemblyLoader.loadedAssemblies
+                            .Select(a => a.assembly.GetExportedTypes())
+                            .SelectMany(t => t)
+                            .FirstOrDefault(t => t.FullName == "FMRS.FMRS_Util");
+                if (FMRSType == null) return false;
+
+                UnityEngine.Object FMRSUtilClass = GameObject.FindObjectOfType(FMRSType);
+                bool enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Enabled")[0], FMRSUtilClass);
+                if (enabled)
+                    enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Armed")[0], FMRSUtilClass);
+
+                return enabled;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         //The main show. The VesselDestroyEvent is activated whenever KSP destroys a vessel. We only care about it in a specific set of circumstances
         private void VesselDestroyEvent(Vessel v)
         {
+            //If we're disabled, just return
+            if (!Settings.instance.SREnabled)
+                return;
+
             if (!sceneChangeComplete)
                 return;
 
@@ -204,9 +251,25 @@ namespace StageRecovery
             if (v.protoVessel == null)
                 return;
 
+            if (HighLogic.LoadedSceneIsFlight && FMRS_Enabled())
+            {//If the vessel is controlled or has a RealChute Module, FMRS will handle it
+                if ((v.protoVessel.wasControllable) || v.protoVessel.protoPartSnapshots.Find(p => p.modules != null && p.modules.Find(m => m.moduleName == "RealChuteModule") != null) != null)
+                {
+                    return;
+                }
+                //If there's crew onboard, FMRS will handle that too
+                foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+                {
+                    if (pps.protoCrewNames.Count > 0)
+                        return;
+                }
+
+                // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
+            }
+
             //Our criteria for even attempting recovery. Broken down: vessel exists, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is less than 35km,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)
-            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && Math.Exp(-v.altitude / (v.mainBody.atmosphereScaleHeight*1000)) >= 0.009 &&
+            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && (v.altitude < v.mainBody.atmosphereDepth) && //TODO: Use something other than atmosphere height (pressure again probably)
                (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL) && !v.isEVA && v.altitude > 100)
             {
                 bool OnlyBlacklistedItems = true;
