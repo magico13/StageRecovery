@@ -30,14 +30,14 @@ namespace StageRecovery
             int temp = firstToolbarIndex;
             //firstToolbarIndex = GUILayout.Toolbar(firstToolbarIndex, new string[] { "Recovered", "Destroyed" });
             GUILayout.BeginHorizontal();
-            bool active = GUILayout.Toggle(firstToolbarIndex==0, "Recovered", GUI.skin.button);
+            bool active = GUILayout.Toggle(firstToolbarIndex == 0, "Recovered" + (Settings.instance.RecoveredStages.Count > 0 ? " ("+Settings.instance.RecoveredStages.Count+")" : ""), GUI.skin.button);
             if (!active && firstToolbarIndex == 0)
                 firstToolbarIndex = -1;
             else if (active)
                 firstToolbarIndex = 0;
 
-            
-            active = GUILayout.Toggle(firstToolbarIndex==1, "Destroyed", GUI.skin.button);
+
+            active = GUILayout.Toggle(firstToolbarIndex == 1, "Destroyed" + (Settings.instance.DestroyedStages.Count > 0 ? " (" + Settings.instance.DestroyedStages.Count + ")" : ""), GUI.skin.button);
             if (!active && firstToolbarIndex == 1)
                 firstToolbarIndex = -1;
             else if (active)

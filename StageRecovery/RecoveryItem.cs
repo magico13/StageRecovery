@@ -824,7 +824,7 @@ namespace StageRecovery
             }
             else if (!recovered && Settings.instance.ShowFailureMessages)
             {
-				msg.AppendLine("<#ED0B0B>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
+                msg.AppendLine("<#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
                 msg.AppendLine("Stage contains these parts:");
                 for (int i = 0; i < PartsRecovered.Count; i++)
                 {
@@ -842,7 +842,7 @@ namespace StageRecovery
                         totalCost += Math.Max(ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet), 0);
                     }
                     //Alert the user to what the total value was (without modifiers)
-					msg.AppendLine("It was valued at <#ED0B0B>" + totalCost + "</> Funds.");
+                    msg.AppendLine("It was valued at <#FF9900>" + totalCost + "</> Funds."); //ED0B0B
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
@@ -850,7 +850,7 @@ namespace StageRecovery
                 //Display which module was used for recovery
                 msg.AppendLine(ParachuteModule + " Module used.");
                 //Display the terminal velocity (Vt) and what is needed to have any recovery
-                msg.AppendLine("Terminal velocity of <#ED0B0B>" + Math.Round(Vt, 2) + "</> (less than " + (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut) + " needed)");
+                msg.AppendLine("Terminal velocity of <#FF9900>" + Math.Round(Vt, 2) + "</> (less than " + (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut) + " needed)");
                 
                 //If it failed because of burning up (can be in addition to speed) then we'll let you know
                 if (burnedUp)
