@@ -65,9 +65,9 @@ namespace StageRecovery
             KerbalsOnboard = RecoverKerbals();
         }
 
-        public static float GetParachuteDragFromPart(AvailablePart parachute)
+        public static double GetParachuteDragFromPart(AvailablePart parachute)
         {
-            foreach (AvailablePart.ModuleInfo mi in parachute.moduleInfos)
+           /* foreach (AvailablePart.ModuleInfo mi in parachute.moduleInfos)
             {
                 if (mi.info.Contains("Fully-Deployed Drag"))
                 {
@@ -90,8 +90,13 @@ namespace StageRecovery
                         }
                     }
                 }
+            }*/
+            double area = 0;
+            if (parachute.partPrefab.Modules.Contains("ModuleParachute"))
+            {
+                area = ((ModuleParachute)parachute.partPrefab.Modules["ModuleParachute"]).areaDeployed;
             }
-            return 0;
+            return area;
         }
 
         //This function/method/thing calculates the terminal velocity of the Stage
@@ -101,6 +106,7 @@ namespace StageRecovery
             float totalMass = 0;
             float dragCoeff = 0;
             float RCParameter = 0;
+            double totalParachuteArea = 0;
             bool realChuteInUse = false;
             try
             {
@@ -119,23 +125,22 @@ namespace StageRecovery
                     //Assume the part isn't a parachute until proven a parachute
                     bool isParachute = false;
                     //For instance, by having the ModuleParachute module
-                    if (ModuleNames.Contains("ModuleParachute"))
+                    if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
                     {
                         //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
                         ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
-                        float drag = 500;
                         if (ppms.moduleRef != null)
                         {
                             ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
                             mp.Load(ppms.moduleValues);
-                            drag = mp.fullyDeployedDrag;
+                            totalParachuteArea += mp.areaDeployed;
                         }
                         else
                         {
-                            drag = GetParachuteDragFromPart(p.partInfo);
+                            totalParachuteArea += GetParachuteDragFromPart(p.partInfo);
                         }
                         //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
-                        dragCoeff += p.mass * drag;
+                       // dragCoeff += p.mass * drag;
                         //This is most definitely a parachute part
                         isParachute = true;
                     }
@@ -185,11 +190,12 @@ namespace StageRecovery
                     if (!isParachute)
                     {
                         //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
-                        if (p.partRef != null)
+                     /*   if (p.partRef != null)
                             dragCoeff += p.mass * p.partRef.maximum_drag;
                         //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
                         else
-                            dragCoeff += p.mass * 0.2f;
+                            dragCoeff += p.mass * 0.2f;*/
+                        totalParachuteArea = 1;
                     }
                 }
             }
@@ -202,15 +208,17 @@ namespace StageRecovery
             {
                 //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
                 //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
-                dragCoeff = dragCoeff / (totalMass);
+              //  dragCoeff = dragCoeff / (totalMass);
                 //Calculate Vt by what the wiki says
-                v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+                //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+
+                v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI) / totalParachuteArea);
             }
             //Otherwise we're using RealChutes and we have a bit different of a calculation
             else
             {
                 //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI) * Math.Pow(RCParameter, -1));
+                v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI) / RCParameter);
             }
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
             Debug.Log("[SR] Vt: " + v);
