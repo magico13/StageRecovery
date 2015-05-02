@@ -104,7 +104,7 @@ namespace StageRecovery
         {
             float v = 0;
             float totalMass = 0;
-            float dragCoeff = 0;
+           // float dragCoeff = 0;
             float RCParameter = 0;
             double totalParachuteArea = 0;
             bool realChuteInUse = false;
@@ -195,7 +195,7 @@ namespace StageRecovery
                         //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
                         else
                             dragCoeff += p.mass * 0.2f;*/
-                        totalParachuteArea = 1;
+                        totalParachuteArea += 1;
                     }
                 }
             }
@@ -212,13 +212,13 @@ namespace StageRecovery
                 //Calculate Vt by what the wiki says
                 //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
 
-                v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI) / totalParachuteArea);
+                v = (float)(63*Math.Pow(totalMass / totalParachuteArea, 0.4));
             }
             //Otherwise we're using RealChutes and we have a bit different of a calculation
             else
             {
                 //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI) / RCParameter);
+                v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
             }
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
             Debug.Log("[SR] Vt: " + v);

@@ -11,6 +11,12 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.5.5 - (05/02/2015)
+- Updated to KSP 1.0.2
+- Fixed calculation of Vt for stages. Not 100% accurate, but fairly close
+- Added option to choose which Toolbar to use (when Toolbar Mod is installed)
+- Switched to KCT's code for calculating building levels, since that worked in 0.90
+
 1.5.4 - (04/28/2015)
  - Updated to KSP 1.0
  - Tie into the stock upgrade system.
