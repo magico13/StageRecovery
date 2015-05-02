@@ -17,7 +17,7 @@ namespace StageRecovery
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR;
-        [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades;
+        [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
         public IgnoreList BlackList = new IgnoreList();
@@ -41,6 +41,7 @@ namespace StageRecovery
             RecoverClamps = true;
             MinTWR = 1.0f;
             UseUpgrades = true;
+            UseToolbarMod = true;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
@@ -129,7 +130,7 @@ namespace StageRecovery
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
-        private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades;
+        private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades, useToolbar;
 
         private Vector2 scrollPos;
 
@@ -138,6 +139,8 @@ namespace StageRecovery
         //This function is used to add the button to the stock toolbar
         public void OnGUIAppLauncherReady()
         {
+            if (ToolbarManager.ToolbarAvailable && Settings.instance.UseToolbarMod)
+                return;
             bool vis;
             if (ApplicationLauncher.Ready && (SRButtonStock == null || !ApplicationLauncher.Instance.Contains(SRButtonStock, out vis))) //Add Stock button
             {
@@ -282,6 +285,7 @@ namespace StageRecovery
             recoverClamps = Settings.instance.RecoverClamps;
             minTWR = Settings.instance.MinTWR.ToString();
             useUpgrades = Settings.instance.UseUpgrades;
+            useToolbar = Settings.instance.UseToolbarMod;
             showWindow = true;
         }
 
@@ -349,6 +353,7 @@ namespace StageRecovery
             poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");
             recoverClamps = GUILayout.Toggle(recoverClamps, "Recover Clamps");
             useUpgrades = GUILayout.Toggle(useUpgrades, "Tie Into Upgrades");
+            useToolbar = GUILayout.Toggle(useToolbar, "Use Toolbar Mod");
 
             if (GUILayout.Button("Edit Ignore List"))
             {
@@ -377,6 +382,7 @@ namespace StageRecovery
                 Settings.instance.PoweredRecovery = poweredRecovery;
                 Settings.instance.RecoverClamps = recoverClamps;
                 Settings.instance.UseUpgrades = useUpgrades;
+                Settings.instance.UseToolbarMod = useToolbar;
                 if (!float.TryParse(minTWR, out Settings.instance.MinTWR))
                     Settings.instance.MinTWR = 1.0f;
                 //Finally we save the settings to the file
@@ -447,7 +453,8 @@ namespace StageRecovery
             List<Part> parts = EditorLogic.fetch.ship.Parts;
             bool realChuteInUse = false;
             float totalMass = 0;
-            float dragCoeff = 0;
+            //float dragCoeff = 0;
+            double totalParachuteArea = 0;
             float RCParameter = 0;
             foreach (Part part in parts)
             {
@@ -491,29 +498,37 @@ namespace StageRecovery
                         RCParameter += dragC * (float)Math.Pow(diameter, 2);
                     }
                 }
-                else if (hasChute)
+                else if (!realChuteInUse && hasChute)
                 {
                     ModuleParachute mp = (ModuleParachute)part.Modules["ModuleParachute"];
-                    dragCoeff += part.mass * mp.fullyDeployedDrag;
+                    //dragCoeff += part.mass * mp.fullyDeployedDrag;
+                    totalParachuteArea += mp.areaDeployed;
                 }
                 else
                 {
-                    dragCoeff += part.mass * part.maximum_drag;
+                    //dragCoeff += part.mass * part.maximum_drag;
+                    totalParachuteArea += 0.1;
                 }
             }
             if (!realChuteInUse)
             {
                 //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
                 //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
-                dragCoeff = dragCoeff / (totalMass);
+                //dragCoeff = dragCoeff / (totalMass);
                 //Calculate Vt by what the wiki says
-                Vt = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+                //Vt = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+                //float adjuster = 0;
+                //ConfigNode aNode = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/StageRecovery/adjust.txt");
+                //adjuster = float.Parse(aNode.GetValue("adjuster"));
+                //Vt = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * adjuster * totalParachuteArea));
+               // Debug.Log(totalParachuteArea);
+                Vt = (float)(63*Math.Pow(totalMass / totalParachuteArea, 0.4));
             }
             //Otherwise we're using RealChutes and we have a bit different of a calculation
             else
             {
                 //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                Vt = (float)Math.Sqrt(((8000 * totalMass * 9.8) / (1.223 * Math.PI) * Math.Pow(RCParameter, -1)));
+                Vt = (float)Math.Sqrt(((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter)));
             }
             return Vt;
         }
