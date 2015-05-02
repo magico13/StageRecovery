@@ -17,7 +17,7 @@ namespace StageRecovery
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR;
-        [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades;
+        [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
         public IgnoreList BlackList = new IgnoreList();
@@ -41,6 +41,7 @@ namespace StageRecovery
             RecoverClamps = true;
             MinTWR = 1.0f;
             UseUpgrades = true;
+            UseToolbarMod = true;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
@@ -129,7 +130,7 @@ namespace StageRecovery
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
-        private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades;
+        private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades, useToolbar;
 
         private Vector2 scrollPos;
 
@@ -138,6 +139,8 @@ namespace StageRecovery
         //This function is used to add the button to the stock toolbar
         public void OnGUIAppLauncherReady()
         {
+            if (ToolbarManager.ToolbarAvailable && Settings.instance.UseToolbarMod)
+                return;
             bool vis;
             if (ApplicationLauncher.Ready && (SRButtonStock == null || !ApplicationLauncher.Instance.Contains(SRButtonStock, out vis))) //Add Stock button
             {
@@ -282,6 +285,7 @@ namespace StageRecovery
             recoverClamps = Settings.instance.RecoverClamps;
             minTWR = Settings.instance.MinTWR.ToString();
             useUpgrades = Settings.instance.UseUpgrades;
+            useToolbar = Settings.instance.UseToolbarMod;
             showWindow = true;
         }
 
@@ -349,6 +353,7 @@ namespace StageRecovery
             poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");
             recoverClamps = GUILayout.Toggle(recoverClamps, "Recover Clamps");
             useUpgrades = GUILayout.Toggle(useUpgrades, "Tie Into Upgrades");
+            useToolbar = GUILayout.Toggle(useToolbar, "Use Toolbar Mod");
 
             if (GUILayout.Button("Edit Ignore List"))
             {
@@ -377,6 +382,7 @@ namespace StageRecovery
                 Settings.instance.PoweredRecovery = poweredRecovery;
                 Settings.instance.RecoverClamps = recoverClamps;
                 Settings.instance.UseUpgrades = useUpgrades;
+                Settings.instance.UseToolbarMod = useToolbar;
                 if (!float.TryParse(minTWR, out Settings.instance.MinTWR))
                     Settings.instance.MinTWR = 1.0f;
                 //Finally we save the settings to the file

@@ -21,7 +21,7 @@ namespace StageRecovery
         //Needed to instantiate the Blizzy Toolbar button
         internal StageRecovery()
         {
-            if (ToolbarManager.ToolbarAvailable && Settings.instance != null)
+            if (ToolbarManager.ToolbarAvailable && Settings.instance != null && Settings.instance.UseToolbarMod)
                 Settings.instance.gui.AddToolbarButton();
         }
 
@@ -87,8 +87,8 @@ namespace StageRecovery
                 GameEvents.onVesselGoOnRails.Add(VesselUnloadEvent);
                 //GameEvents..Add(DecoupleEvent);
                 //If Blizzy's toolbar isn't available, use the stock one
-                if (!ToolbarManager.ToolbarAvailable)
-                    GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
+              //  if (!ToolbarManager.ToolbarAvailable)
+                GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
                 //Set the eventAdded flag to true so this code doesn't run again
                 eventAdded = true;
             }
@@ -189,11 +189,12 @@ namespace StageRecovery
             int lvl = 0;
             if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Settings.instance.UseUpgrades)
             {
-                lvl = (int)ScenarioUpgradeableFacilities.GetFacilityLevel(facility);
+                lvl = (int)(2 * ScenarioUpgradeableFacilities.GetFacilityLevel(facility));
             }
             else
             {
-                lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility);
+                //lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility);
+                lvl = 2;
             }
             return lvl;
         }
