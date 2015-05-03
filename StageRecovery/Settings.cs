@@ -16,7 +16,7 @@ namespace StageRecovery
         //The path for the settings file (Config.txt)
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
-        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR;
+        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride;
         [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
@@ -42,6 +42,7 @@ namespace StageRecovery
             MinTWR = 1.0f;
             UseUpgrades = true;
             UseToolbarMod = true;
+            DistanceOverride = -1.0f;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
