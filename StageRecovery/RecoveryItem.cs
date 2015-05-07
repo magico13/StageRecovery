@@ -123,7 +123,7 @@ namespace StageRecovery
                     //Add resource masses
                     totalMass += GetResourceMass(p.resources);
                     //Assume the part isn't a parachute until proven a parachute
-                    bool isParachute = false;
+                   // bool isParachute = false;
                     //For instance, by having the ModuleParachute module
                     if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
                     {
@@ -142,7 +142,7 @@ namespace StageRecovery
                         //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
                        // dragCoeff += p.mass * drag;
                         //This is most definitely a parachute part
-                        isParachute = true;
+                     //   isParachute = true;
                     }
                     //If the part has the RealChuteModule, we have to do some tricks to access it
                     if (ModuleNames.Contains("RealChuteModule"))
@@ -181,22 +181,22 @@ namespace StageRecovery
 
                             }
                             //This is a parachute also
-                            isParachute = true;
+                           // isParachute = true;
                             //It's existence means that RealChute is installed and in use on the craft (you could have it installed and use stock chutes, so we only check if it's on the craft)
                             realChuteInUse = true;
                         }
                     }
                     //If the part isn't a parachute (no ModuleParachute or RealChuteModule)
-                    if (!isParachute)
-                    {
+                   // if (!isParachute)
+                   // {
                         //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
                      /*   if (p.partRef != null)
                             dragCoeff += p.mass * p.partRef.maximum_drag;
                         //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
                         else
                             dragCoeff += p.mass * 0.2f;*/
-                        totalParachuteArea += 1;
-                    }
+                        //totalParachuteArea += 0.01;
+                   // }
                 }
             }
             catch (Exception e)
@@ -204,21 +204,28 @@ namespace StageRecovery
                 Debug.LogError("[SR] Error occured while trying to determine terminal velocity.");
                 Debug.LogException(e);
             }
-            if (!realChuteInUse)
+            if (totalParachuteArea != 0)
             {
-                //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
-                //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
-              //  dragCoeff = dragCoeff / (totalMass);
-                //Calculate Vt by what the wiki says
-                //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+                if (!realChuteInUse)
+                {
+                    //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
+                    //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
+                    //  dragCoeff = dragCoeff / (totalMass);
+                    //Calculate Vt by what the wiki says
+                    //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
 
-                v = (float)(63*Math.Pow(totalMass / totalParachuteArea, 0.4));
+                    v = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
+                }
+                //Otherwise we're using RealChutes and we have a bit different of a calculation
+                else
+                {
+                    //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
+                    v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
+                }
             }
-            //Otherwise we're using RealChutes and we have a bit different of a calculation
             else
             {
-                //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
+                v = 200.0f;
             }
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
             Debug.Log("[SR] Vt: " + v);
@@ -274,7 +281,7 @@ namespace StageRecovery
                     else
                     {
                         Debug.Log("[SR] No kerbal pilot found, searching for a probe core...");
-                        stageControllable = vessel.parts.Find(p => p.Modules.Contains("ModuleSAS")) != null;
+                        stageControllable = vessel.protoVessel.protoPartSnapshots.Find(p => p.modules.Find(m => m.moduleName == "ModuleSAS") != null) != null;
                         if (stageControllable)
                             Debug.Log("[SR] Found an SAS compatible probe core!");
                         else
@@ -399,7 +406,7 @@ namespace StageRecovery
                 //Determine the cutoff velocity that we're aiming for. This is dependent on the recovery model used (flat rate vs variable rate)
                 float cutoff = Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut;
 
-                double finalMassRequired = totalMass * Math.Exp(-(2.5 * (finalVelocity-cutoff+2)) / (9.81 * netISP));
+                double finalMassRequired = totalMass * Math.Exp(-(1.5 * (finalVelocity-cutoff+2)) / (9.81 * netISP));
                 double massRequired = totalMass - finalMassRequired;
 
                 //If the engine doesn't need fuel (ie, electric engines from firespitter) then we just say you land

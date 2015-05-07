@@ -28,6 +28,7 @@ namespace StageRecovery
         //These are the two events. They are fired whenever appropriate, which means they activate all the listening methods.
         public RecoveryEvent RecoverySuccessEvent = new RecoveryEvent();
         public RecoveryEvent RecoveryFailureEvent = new RecoveryEvent();
+        public RecoveryProcessingEvent OnRecoveryProcessingStart = new RecoveryProcessingEvent();
 
 
         public bool SREnabled
@@ -71,9 +72,40 @@ namespace StageRecovery
                 method.Invoke(vessel, infoArray, reason);
         }
     }
+
+    //It basically just lets you add a listening method to the event, remove one, or fire all the events.
+    public class RecoveryProcessingEvent
+    {
+        //This is the list of methods that should be activated when the event fires
+        private List<Action<Vessel>> listeningMethods = new List<Action<Vessel>>();
+
+        //This adds an event to the List of listening methods
+        public void Add(Action<Vessel> method)
+        {
+            //We only add it if it isn't already added. Just in case.
+            if (!listeningMethods.Contains(method))
+                listeningMethods.Add(method);
+        }
+
+        //This removes and event from the List
+        public void Remove(Action<Vessel> method)
+        {
+            //We also only remove it if it's actually in the list.
+            if (listeningMethods.Contains(method))
+                listeningMethods.Remove(method);
+        }
+
+        //This fires the event off, activating all the listening methods.
+        public void Fire(Vessel vessel)
+        {
+            //Loop through the list of listening methods and Invoke them.
+            foreach (Action<Vessel> method in listeningMethods)
+                method.Invoke(vessel);
+        }
+    }
 }
 /*
-Copyright (C) 2014  Michael Marvin
+Copyright (C) 2015  Michael Marvin
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
