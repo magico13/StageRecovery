@@ -628,7 +628,10 @@ namespace StageRecovery
                 maxDist *= (0.75);
 
             //Get the reduction in returns due to distance (0.98 at KSC, .1 at maxDist)
-            DistancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(KSCDistance / maxDist));
+            if (Settings.instance.DistanceOverride < 0)
+                DistancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(KSCDistance / maxDist));
+            else
+                DistancePercent = Settings.instance.DistanceOverride;
             //Combine the modifier from the velocity and the modifier from distance together
             RecoveryPercent = SpeedPercent * DistancePercent;
         }
