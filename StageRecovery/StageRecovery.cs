@@ -295,6 +295,8 @@ namespace StageRecovery
                 Stage.AddToList();
                 //Post a message to the stock message system, if people are still using that.
                 Stage.PostStockMessage();
+
+                APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
             }
         }
     }

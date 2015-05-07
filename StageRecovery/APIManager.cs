@@ -29,6 +29,7 @@ namespace StageRecovery
         public RecoveryEvent RecoverySuccessEvent = new RecoveryEvent();
         public RecoveryEvent RecoveryFailureEvent = new RecoveryEvent();
         public RecoveryProcessingEvent OnRecoveryProcessingStart = new RecoveryProcessingEvent();
+        public RecoveryProcessingEvent OnRecoveryProcessingFinish = new RecoveryProcessingEvent();
 
 
         public bool SREnabled
@@ -73,7 +74,7 @@ namespace StageRecovery
         }
     }
 
-    //It basically just lets you add a listening method to the event, remove one, or fire all the events.
+    //This basically just lets you add a listening method to the event, remove one, or fire all the events.
     public class RecoveryProcessingEvent
     {
         //This is the list of methods that should be activated when the event fires
