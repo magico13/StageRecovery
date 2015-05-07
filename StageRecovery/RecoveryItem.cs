@@ -495,7 +495,7 @@ namespace StageRecovery
                     //Calculate the total delta-v expended.
                     double totaldV = netISP * 9.81 * Math.Log(totalMass / (totalMass - massRemoved));
                     //Divide that by 2.5 and subtract it from the velocity after parachutes.
-                    finalVelocity -= (float)(totaldV / 2.5);
+                    finalVelocity -= (float)(totaldV / 1.5);
                 }
             }
             //Hopefully we removed enough fuel to land!
