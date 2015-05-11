@@ -204,24 +204,20 @@ namespace StageRecovery
                 Debug.LogError("[SR] Error occured while trying to determine terminal velocity.");
                 Debug.LogException(e);
             }
-            if (totalParachuteArea != 0)
+            if (realChuteInUse)
             {
-                if (!realChuteInUse)
-                {
-                    //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
-                    //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
-                    //  dragCoeff = dragCoeff / (totalMass);
-                    //Calculate Vt by what the wiki says
-                    //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
-
-                    v = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
-                }
-                //Otherwise we're using RealChutes and we have a bit different of a calculation
-                else
-                {
-                    //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                    v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
-                }
+            	//This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
+            	v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
+            }
+            else if (totalParachuteArea != 0)
+            {
+	            //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
+	            //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
+	            //  dragCoeff = dragCoeff / (totalMass);
+	            //Calculate Vt by what the wiki says
+	            //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+	
+	            v = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
             }
             else
             {
