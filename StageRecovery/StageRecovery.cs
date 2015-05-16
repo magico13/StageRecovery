@@ -283,6 +283,10 @@ namespace StageRecovery
                     }
                 }
                 if (OnlyBlacklistedItems) return;
+
+                //If we got this far, we can assume we're going to be attempting to recover the vessel, so we should fire the processing event
+                APIManager.instance.OnRecoveryProcessingStart.Fire(v);
+
                 //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
                 RecoveryItem Stage = new RecoveryItem(v);
                 //Fire the pertinent RecoveryEvent (success or failure). Aka, make the API do its work
@@ -291,6 +295,8 @@ namespace StageRecovery
                 Stage.AddToList();
                 //Post a message to the stock message system, if people are still using that.
                 Stage.PostStockMessage();
+
+                APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
             }
         }
     }

@@ -11,6 +11,13 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.5.6 - (05/15/2015)
+- Non-parachuted stages now have a fixed Vt of 200 m/s
+- Powered recovery should work properly now. Requires 300m/s of dV to work.
+- Added OnRecoveryProcessingStart and OnRecoveryProcessingFinish events to API, for Kerbal Konstructs support. Fire when first starting recovery code (after determining viability for recovery, but before Vt calculations) and at the end of recovery code (doesn't include information about recovery, just for cleaning up)
+- Support for RealChuteLite in FAR
+- Hopefully fixed issues with ridiculous distances from KSC. If not, now logging lat/lon of stage and KSC, to help debug.
+
 1.5.5 - (05/02/2015)
 - Updated to KSP 1.0.2
 - Fixed calculation of Vt for stages. Not 100% accurate, but fairly close

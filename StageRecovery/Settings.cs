@@ -16,7 +16,7 @@ namespace StageRecovery
         //The path for the settings file (Config.txt)
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
-        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR;
+        [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride;
         [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod;
 
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
@@ -42,6 +42,7 @@ namespace StageRecovery
             MinTWR = 1.0f;
             UseUpgrades = true;
             UseToolbarMod = true;
+            DistanceOverride = -1.0f;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
@@ -460,11 +461,11 @@ namespace StageRecovery
             {
                 totalMass += part.mass;
                 if (!empty) totalMass += part.GetResourceMass();
-                bool hasRealChute = part.Modules.Contains("RealChuteModule");
+              /*  bool hasRealChute = part.Modules.Contains("RealChuteModule");
                 bool hasChute = part.Modules.Contains("ModuleParachute");
-                if (hasRealChute) realChuteInUse = true;
+                if (hasRealChute) realChuteInUse = true;*/
 
-                if (hasRealChute)
+                if (part.Modules.Contains("RealChuteModule"))
                 {
                     PartModule realChute = part.Modules["RealChuteModule"];
                     ConfigNode rcNode = new ConfigNode();
@@ -497,20 +498,31 @@ namespace StageRecovery
                         //But it works perfectly for mutiple identical parachutes (the normal case)
                         RCParameter += dragC * (float)Math.Pow(diameter, 2);
                     }
+                    realChuteInUse = true;
                 }
-                else if (!realChuteInUse && hasChute)
+                else if (part.Modules.Contains("RealChuteFAR")) //RealChute Lite for FAR
+                {
+                    PartModule realChute = part.Modules["RealChuteFAR"];
+                    float diameter = (float)realChute.Fields.GetValue("deployedDiameter");
+                    // = float.Parse(realChute.moduleValues.GetValue("deployedDiameter"));
+                    float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
+                    RCParameter += dragC * (float)Math.Pow(diameter, 2);
+
+                    realChuteInUse = true;
+                }
+                else if (!realChuteInUse && part.Modules.Contains("ModuleParachute"))
                 {
                     ModuleParachute mp = (ModuleParachute)part.Modules["ModuleParachute"];
                     //dragCoeff += part.mass * mp.fullyDeployedDrag;
                     totalParachuteArea += mp.areaDeployed;
                 }
-                else
+               /* else
                 {
                     //dragCoeff += part.mass * part.maximum_drag;
                     totalParachuteArea += 0.1;
-                }
+                }*/
             }
-            if (!realChuteInUse)
+            /*if (!realChuteInUse)
             {
                 //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
                 //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
@@ -523,12 +535,20 @@ namespace StageRecovery
                 //Vt = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * adjuster * totalParachuteArea));
                // Debug.Log(totalParachuteArea);
                 Vt = (float)(63*Math.Pow(totalMass / totalParachuteArea, 0.4));
-            }
+            }*/
             //Otherwise we're using RealChutes and we have a bit different of a calculation
-            else
+            if (realChuteInUse)
             {
                 //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
                 Vt = (float)Math.Sqrt(((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter)));
+            }
+            else if (totalParachuteArea != 0)
+            {
+                Vt = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
+            }
+            else
+            {
+                Vt = 200;
             }
             return Vt;
         }
