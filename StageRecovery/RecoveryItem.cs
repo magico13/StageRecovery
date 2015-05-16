@@ -186,6 +186,16 @@ namespace StageRecovery
                             realChuteInUse = true;
                         }
                     }
+
+                    if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
+                    {
+                        ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
+                        float diameter = float.Parse(realChute.moduleValues.GetValue("deployedDiameter"));
+                        float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
+                        RCParameter += dragC * (float)Math.Pow(diameter, 2);
+
+                        realChuteInUse = true;
+                    }
                     //If the part isn't a parachute (no ModuleParachute or RealChuteModule)
                    // if (!isParachute)
                    // {
@@ -613,7 +623,7 @@ namespace StageRecovery
                 SpeedPercent = GetVariableRecoveryValue(Vt);
 
             //Calculate the distance from KSC in meters
-            KSCDistance = (float)SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(vessel.protoVessel.latitude, vessel.protoVessel.longitude));
+            KSCDistance = (float)SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(vessel.latitude, vessel.longitude));
             //Calculate the max distance from KSC (half way around a circle the size of Kerbin)
             double maxDist = SpaceCenter.Instance.cb.Radius * Math.PI;
 
@@ -630,6 +640,10 @@ namespace StageRecovery
                 DistancePercent = Settings.instance.DistanceOverride;
             //Combine the modifier from the velocity and the modifier from distance together
             RecoveryPercent = SpeedPercent * DistancePercent;
+
+            Debug.Log("[SR] Vessel Lat/Lon: " + vessel.latitude + "/" + vessel.longitude);
+            Debug.Log("[SR] KSC Lat/Lon: " + SpaceCenter.Instance.Latitude + "/" + SpaceCenter.Instance.Longitude);
+            Debug.Log("[SR] Distance: "+KSCDistance);
         }
 
         //This populates the dictionary of Recovered Parts and the dictionary of Costs, along with total funds returns (original, modified, fuel, and dry)
