@@ -11,6 +11,12 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.5.7 - (07/11/2015)
+- Fixed issues with kerbal recovery causing lost levels
+- Fixed compatibility issue with RSS (checking only for Kerbin)
+- Added info for when a stage is lost because no pilot or probe with SAS
+- Fixed up Tracking Station related things a bit. Powered recovery should work now and you can terminate a flight and get things recovered as long as its in the atmosphere at the time (including "orbiting" vessels)
+
 1.5.6 - (05/15/2015)
 - Non-parachuted stages now have a fixed Vt of 200 m/s
 - Powered recovery should work properly now. Requires 300m/s of dV to work.

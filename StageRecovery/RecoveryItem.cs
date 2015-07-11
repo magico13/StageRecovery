@@ -145,7 +145,7 @@ namespace StageRecovery
                      //   isParachute = true;
                     }
                     //If the part has the RealChuteModule, we have to do some tricks to access it
-                    if (ModuleNames.Contains("RealChuteModule"))
+                    else if (ModuleNames.Contains("RealChuteModule"))
                     {
                         //First off, get the PPMS since we'll need that
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
@@ -187,7 +187,7 @@ namespace StageRecovery
                         }
                     }
 
-                    if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
+                    else if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
                     {
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
                         float diameter = float.Parse(realChute.moduleValues.GetValue("deployedDiameter"));
@@ -263,6 +263,7 @@ namespace StageRecovery
             Debug.Log("[SR] Trying powered recovery");
             //ISP references: http://forum.kerbalspaceprogram.com/threads/34315-How-Do-I-calculate-Delta-V-on-more-than-one-engine
             //Thanks to Malkuth, of Mission Controller Extended, for the base of this code.
+            bool hasEngines = false;
             float finalVelocity = Vt;
             float totalMass = 0;
             //We keep the active engines and enginesFX for later use
@@ -275,6 +276,8 @@ namespace StageRecovery
             //we keep track of the total resources and their masses
             Dictionary<string, double> resources = new Dictionary<string, double>();
             Dictionary<string, double> rMasses = new Dictionary<string, double>();
+            //Holder for the propellants the engines need and the ratio
+            Dictionary<string, float> propsUsed = new Dictionary<string, float>();
             //The stage must be controlled to be landed this way
             bool stageControllable = vessel.protoVessel.wasControllable;
             try
@@ -320,21 +323,69 @@ namespace StageRecovery
                         //If we find a standard engine, add it to the list if it's enabled and doesn't use solid fuel (no SRBs here, mister!)
                         if (ppms.moduleName == "ModuleEngines")
                         {
-                            ModuleEngines engine = (ModuleEngines)ppms.moduleRef;
-                            engine.Load(ppms.moduleValues);
+                            ModuleEngines engine;
+                            if (ppms.moduleRef != null)
+                            {
+                                engine = (ModuleEngines)ppms.moduleRef;
+                                engine.Load(ppms.moduleValues);
+                            }
+                            else
+                            {
+                                engine = (ModuleEngines)p.partInfo.partPrefab.Modules["ModuleEngines"];
+                            }
                             if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)//Don't use SRBs
                             {
-                                engines.Add(engine);
+                                hasEngines = true;
+                                //engines.Add(engine);
+                                totalThrust += engine.maxThrust;
+                                netISP += (engine.maxThrust / engine.atmosphereCurve.Evaluate(1));
+
+                                if (propsUsed.Count == 0)
+                                {
+                                    foreach (Propellant prop in engine.propellants)
+                                    {
+                                        //We don't care about air, electricity, or coolant as it's assumed those are infinite.
+                                        if (!(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
+                                        {
+                                            if (!propsUsed.ContainsKey(prop.name))
+                                                propsUsed.Add(prop.name, prop.ratio);
+                                        }
+                                    }
+                                }
                             }
                         }
                         //Same with the newer fancy engines (like the one added in 0.23.5)
                         if (ppms.moduleName == "ModuleEnginesFX")
                         {
-                            ModuleEnginesFX engine = (ModuleEnginesFX)ppms.moduleRef;
-                            engine.Load(ppms.moduleValues);
-                            if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)
+                            ModuleEnginesFX engine;
+                            if (ppms.moduleRef != null)
                             {
-                                enginesFX.Add(engine);
+                                engine = (ModuleEnginesFX)ppms.moduleRef;
+                                engine.Load(ppms.moduleValues);
+                            }
+                            else
+                            {
+                                engine = (ModuleEnginesFX)p.partInfo.partPrefab.Modules["ModuleEnginesFX"];
+                            }
+                            if (engine.isEnabled && engine.propellants.Find(prop => prop.name.ToLower().Contains("solidfuel")) == null)//Don't use SRBs
+                            {
+                                hasEngines = true;
+                                //engines.Add(engine);
+                                totalThrust += engine.maxThrust;
+                                netISP += (engine.maxThrust / engine.atmosphereCurve.Evaluate(1));
+
+                                if (propsUsed.Count == 0)
+                                {
+                                    foreach (Propellant prop in engine.propellants)
+                                    {
+                                        //We don't care about air, electricity, or coolant as it's assumed those are infinite.
+                                        if (!(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
+                                        {
+                                            if (!propsUsed.ContainsKey(prop.name))
+                                                propsUsed.Add(prop.name, prop.ratio);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -362,15 +413,14 @@ namespace StageRecovery
                 Debug.LogError("[SR] Error occurred while attempting powered recovery.");
                 Debug.LogException(e);
             }
-            //Holder for the propellants the engines need and the ratio
-            Dictionary<string, float> propsUsed = new Dictionary<string, float>();
+            
             //So, I'm not positive jets really need to be done differently. Though they could go further than normal rockets because of gliding.
-            if (stageControllable && (engines.Count > 0 || enginesFX.Count > 0)) //If the stage is controlled and there are engines, we continue.
+            if (stageControllable && hasEngines) //If the stage is controlled and there are engines, we continue.
             {
                 //Debug.Log("[SR] Controlled and has engines");
                 //Engine landing
                 //Determine the total thrust and begin calculating the net ISP
-                foreach (ModuleEngines e in engines)
+              /*  foreach (ModuleEngines e in engines)
                 {
                     totalThrust += e.maxThrust;
                     netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
@@ -379,14 +429,14 @@ namespace StageRecovery
                 {
                     totalThrust += e.maxThrust;
                     netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
-                }
+                }*/
                 if (totalThrust < (totalMass * 9.81) * Settings.instance.MinTWR) //Need greater than 1 TWR to land. Planes would be different, but we ignore them. This isn't quite true with parachutes, btw.
                     return finalVelocity;
                 //Now we determine the netISP by taking the total thrust and dividing by the stuff we calculated earlier.
                 netISP = totalThrust / netISP; 
                
                 //We need to find out what propellants we need, so we check the first engine or engineFX
-                if (engines.Count > 0)
+                /*if (engines.Count > 0)
                 {
                     foreach (Propellant prop in engines[0].propellants)
                     {
@@ -409,7 +459,7 @@ namespace StageRecovery
                                 propsUsed.Add(prop.name, prop.ratio);
                         }
                     }
-                }
+                }*/
                 //Determine the cutoff velocity that we're aiming for. This is dependent on the recovery model used (flat rate vs variable rate)
                 float cutoff = Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut;
 
@@ -460,7 +510,7 @@ namespace StageRecovery
                     //If we don't have enough fuel, we determine how much we CAN use so that maybe we'll land slow enough for a partial refund
                     if (!enoughFuel)
                     {
-                        float limiterAmount = (float)resources[limitingFuelType];
+                        float limiterAmount = resources.ContainsKey(limitingFuelType) ? (float)resources[limitingFuelType] : 0;
                         float ratio1 = propsUsed[limitingFuelType];
                         foreach (KeyValuePair<string, float> entry in new Dictionary<string, float>(propAmounts))
                         {
@@ -794,12 +844,6 @@ namespace StageRecovery
                             pcm.flightLog.AddEntry(FlightLog.EntryType.Land, "Kerbin");
                             pcm.flightLog.AddEntry(FlightLog.EntryType.Recover);
                             pcm.ArchiveFlightLog();
-                            /*
-                            int flightNum = pcm.careerLog.Entries.Count > 0 ? pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].flight : 0;
-                            FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
-                            FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
-                            pcm.careerLog.AddEntry(landing);
-                            pcm.careerLog.AddEntry(recovery);*/
                         }
                     }
                     kerbals.Add(pcm.name);
@@ -890,7 +934,7 @@ namespace StageRecovery
 
                 if (poweredRecovery)
                 {
-                    msg.AppendLine("Propulsive landing. Check SR Flight GUI for information about propellant amounts consumed.");
+                    msg.AppendLine("Propulsive landing. Check SR Flight GUI for information about amount of propellant consumed.");
                 }
 
                 //Setup and then post the message
