@@ -20,7 +20,7 @@ namespace StageRecovery
                     return Vt < Settings.instance.HighCut;
             }
         }
-        public bool burnedUp, poweredRecovery;
+        public bool burnedUp, poweredRecovery, noControl;
         public string StageName, ParachuteModule;
         public float Vt = 0f;
         public List<string> ScienceExperiments = new List<string>();
@@ -298,6 +298,7 @@ namespace StageRecovery
                 else if (!stageControllable)
                 {
                     Debug.Log("[SR] Stage not controlled. Can't perform powered recovery.");
+                    noControl = true;
                     return finalVelocity;
                 }
 
@@ -822,6 +823,7 @@ namespace StageRecovery
 				msg.AppendLine("Total refunded for parts: <#B4D455>£" + DryReturns + "</>");
 				msg.AppendLine("Total refunded for fuel: <#B4D455>£" + FuelReturns + "</>");
 				msg.AppendLine("Total refunds: <#B4D455>£" + FundsReturned + "</>");
+                msg.AppendLine("Total value: <#B4D455>£" + FundsOriginal + "</>");
 
                 if (KerbalsOnboard.Count > 0)
                 {
@@ -845,6 +847,11 @@ namespace StageRecovery
 					msg.AppendLine("Terminal velocity of <#8BED8B>" + Math.Round(Vt, 2) + "</> (less than " + Settings.instance.CutoffVelocity + " needed)");
                 else
 					msg.AppendLine("Terminal velocity of <#8BED8B>" + Math.Round(Vt, 2) + "</> (less than " + Settings.instance.HighCut + " needed)");
+
+                if (poweredRecovery)
+                {
+                    msg.AppendLine("Propulsive landing. Check SR Flight GUI for information about propellant amounts consumed.");
+                }
 
                 //Setup and then post the message
                 MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
@@ -883,6 +890,16 @@ namespace StageRecovery
                 //If it failed because of burning up (can be in addition to speed) then we'll let you know
                 if (burnedUp)
                     msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + vessel.srfSpeed + " m/s.");
+
+                if (poweredRecovery && !burnedUp)
+                {
+                    msg.AppendLine("Attempted propulsive landing but could not reduce velocity enough for safe touchdown. Check the SR Flight GUI for additonal info.");
+                }
+
+                if (noControl)
+                {
+                    msg.AppendLine("Attempted propulsive landing but could not find a point of control. Add a pilot or probe core with SAS for propulsive landings.");
+                }
 
                 //Now we actually create and post the message
                 MessageSystem.Message m = new MessageSystem.Message("Stage Destroyed", msg.ToString(), MessageSystemButton.MessageButtonColor.RED, MessageSystemButton.ButtonIcons.MESSAGE);

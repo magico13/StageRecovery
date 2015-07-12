@@ -198,6 +198,7 @@ namespace StageRecovery
                 GUILayout.Label("Total refunded for fuel: " + Math.Round(selectedStage.FuelReturns, 2));
                 GUILayout.Label("Total refunds: " + Math.Round(selectedStage.FundsReturned, 2));
                 GUILayout.Label("Percent refunded: " + Math.Round(100 * selectedStage.RecoveryPercent, 2) + "%");
+                GUILayout.Label("Total value: " + Math.Round(selectedStage.FundsOriginal, 2));
             }
             else //Otherwise just display the total value of the parts
             {
@@ -260,6 +261,7 @@ namespace StageRecovery
             GUILayout.Label("    --Distance: " + Math.Round(100 * selectedStage.DistancePercent, 2) + "%");
             GUILayout.Label("    --Speed: " + Math.Round(100 * selectedStage.SpeedPercent, 2) + "%");
             GUILayout.Label("Total refunds: " + Math.Round(selectedStage.FundsReturned, 2));
+            GUILayout.Label("Total value: " + Math.Round(selectedStage.FundsOriginal, 2));
 
             //If the stage was burned up, display this and the velocity it was going
             if (selectedStage.burnedUp)
@@ -277,6 +279,13 @@ namespace StageRecovery
                 {
                     GUILayout.Label(fuel.Key + " : " + fuel.Value + " units");
                 }
+            }
+
+            if (selectedStage.noControl)
+            {
+                GUILayout.Label("\nPowered recovery was attempted but no form of control was found.");
+                GUILayout.Label("Include a pilot or probe with SAS to use powered recovery.");
+
             }
         }
     }
