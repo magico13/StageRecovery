@@ -268,10 +268,10 @@ namespace StageRecovery
                 // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
             }
 
-            //Our criteria for even attempting recovery. Broken down: vessel exists, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is less than 35km,
+            //Our criteria for even attempting recovery. Broken down: vessel exists, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is within atmosphere,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)
-            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && v.mainBody.bodyName == "Kerbin" && (!v.loaded || v.packed) && (v.altitude < v.mainBody.atmosphereDepth) && //TODO: Use something other than atmosphere height (pressure again probably)
-               (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL) && !v.isEVA && v.altitude > 100)
+            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && (v.mainBody.bodyName == "Kerbin" || v.mainBody.bodyName == "Earth") && (!v.loaded || v.packed) && (v.altitude < v.mainBody.atmosphereDepth) &&
+               (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL || v.situation == Vessel.Situations.ORBITING) && !v.isEVA && v.altitude > 100)
             {
                 bool OnlyBlacklistedItems = true;
                 foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
