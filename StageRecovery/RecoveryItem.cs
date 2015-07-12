@@ -750,16 +750,56 @@ namespace StageRecovery
                     {
                         pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
                         //pcm.experienceTrait.Config.
-                        FlightLog.Entry deathEntry = pcm.careerLog.Entries.Find(e => e.type == "Die");
-                        if (deathEntry != null)
+                        //Way to go Squad, you now kill Kerbals TWICE instead of only once.
+                        bool TwoDeathEntries = (pcm.careerLog.Entries.Count > 1 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die" 
+                            && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 2].type == "Die");
+                        if (TwoDeathEntries)
                         {
-                            Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
-                            int flightNum = deathEntry.flight;
-                            pcm.careerLog.Entries.Remove(deathEntry);
+                            Debug.Log("[SR] Squad has decided to kill " + pcm.name + " not once, but TWICE!");
+                            FlightLog.Entry deathEntry0 = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];//pcm.careerLog.Entries.Find(e => e.type == "Die");
+                            if (deathEntry0 != null && deathEntry0.type == "Die")
+                            {
+                                pcm.careerLog.Entries.Remove(deathEntry0);
+                            }
+                            FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
+                            if (deathEntry != null && deathEntry.type == "Die")
+                            {
+                                Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
+                                int flightNum = deathEntry.flight;
+                                pcm.careerLog.Entries.Remove(deathEntry);
+                                FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
+                                FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
+                                pcm.careerLog.AddEntry(landing);
+                                pcm.careerLog.AddEntry(recovery);
+                            }
+                        }
+                        else if (pcm.careerLog.Entries.Count > 0 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die")
+                        {
+                            Debug.Log("[SR] Squad has been gracious and has only killed " + pcm.name + " once, instead of twice.");
+                            FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
+                            if (deathEntry != null && deathEntry.type == "Die")
+                            {
+                                Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
+                                int flightNum = deathEntry.flight;
+                                pcm.careerLog.Entries.Remove(deathEntry);
+                                FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
+                                FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
+                                pcm.careerLog.AddEntry(landing);
+                                pcm.careerLog.AddEntry(recovery);
+                            }
+                        }
+                        else
+                        {
+                            Debug.Log("[SR] No death entry added, but we'll add a successful recovery anyway.");
+                            pcm.flightLog.AddEntry(FlightLog.EntryType.Land, "Kerbin");
+                            pcm.flightLog.AddEntry(FlightLog.EntryType.Recover);
+                            pcm.ArchiveFlightLog();
+                            /*
+                            int flightNum = pcm.careerLog.Entries.Count > 0 ? pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].flight : 0;
                             FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
                             FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
                             pcm.careerLog.AddEntry(landing);
-                            pcm.careerLog.AddEntry(recovery);
+                            pcm.careerLog.AddEntry(recovery);*/
                         }
                     }
                     kerbals.Add(pcm.name);
