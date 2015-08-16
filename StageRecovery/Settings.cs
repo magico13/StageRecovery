@@ -19,6 +19,7 @@ namespace StageRecovery
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride;
         [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod;
 
+        public bool Clicked = false;
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
         public IgnoreList BlackList = new IgnoreList();
 
@@ -148,8 +149,8 @@ namespace StageRecovery
                 SRButtonStock = ApplicationLauncher.Instance.AddModApplication(
                     ShowWindow,
                     hideAll,
-                    DummyVoid,
-                    DummyVoid,
+                    OnHoverOn,
+                    OnHoverOff,
                     DummyVoid,
                     DummyVoid,
                     (ApplicationLauncher.AppScenes.SPACECENTER | ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.MAPVIEW),
@@ -175,15 +176,30 @@ namespace StageRecovery
         //This method is used when the toolbar button is clicked. It alternates between showing the window and hiding it.
         public void onClick()
         {
-            if (showWindow || flightGUI.showFlightGUI)
+            if (Settings.instance.Clicked && (showWindow || flightGUI.showFlightGUI))
                 hideAll();
             else
                 ShowWindow();
         }
 
+        //When the button is hovered over, show the flight GUI if in flight
+        public void OnHoverOn()
+        {
+            if (HighLogic.LoadedSceneIsFlight)
+                flightGUI.showFlightGUI = true;
+        }
+
+        //When the button is no longer hovered over, hide the flight GUI if it wasn't clicked
+        public void OnHoverOff()
+        {
+            if (HighLogic.LoadedSceneIsFlight && !Settings.instance.Clicked)
+                flightGUI.showFlightGUI = false;
+        }
+
         //This shows the correct window depending on the current scene
         public void ShowWindow()
         {
+            Settings.instance.Clicked = true;
             if (HighLogic.LoadedSceneIsFlight)
                 flightGUI.showFlightGUI = true;
             else if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
@@ -214,6 +230,7 @@ namespace StageRecovery
             showWindow = false;
             flightGUI.showFlightGUI = false;
             showBlacklist = false;
+            Settings.instance.Clicked = false;
         }
 
         //Resets the windows. Hides them and resets the Rect object. Not really needed, but it's here
