@@ -25,7 +25,8 @@ namespace StageRecovery
         public float Vt = 0f;
         public List<string> ScienceExperiments = new List<string>();
         public float ScienceRecovered = 0;
-        public List<string> KerbalsOnboard = new List<string>();
+        //public List<string> KerbalsOnboard = new List<string>();
+        public List<ProtoCrewMember> KerbalsOnboard = new List<ProtoCrewMember>();
         public Dictionary<string, int> PartsRecovered = new Dictionary<string, int>();
         public Dictionary<string, float> Costs = new Dictionary<string, float>();
         public float FundsOriginal = 0, FundsReturned = 0, DryReturns = 0, FuelReturns = 0;
@@ -44,6 +45,10 @@ namespace StageRecovery
                     p.Pack();
             //Get the name
             StageName = vessel.vesselName;
+        }
+
+        public bool Process()
+        {
             //Determine what the terminal velocity should be
             Vt = DetermineTerminalVelocity();
             //Try to perform a powered landing
@@ -63,6 +68,8 @@ namespace StageRecovery
             //Recover Kerbals if we're allowed
             //if (recovered && Settings.instance.RecoverKerbals)
             KerbalsOnboard = RecoverKerbals();
+
+            return recovered;
         }
 
         public static double GetParachuteDragFromPart(AvailablePart parachute)
@@ -785,70 +792,108 @@ namespace StageRecovery
         }
 
         //This recovers Kerbals on the Stage, returning the list of their names
-        private List<String> RecoverKerbals()
+        private List<ProtoCrewMember> RecoverKerbals()
         { 
-            //Currently causing Kerbals to lose exp!
-            List<String> kerbals = new List<string>();
-            //If there's no crew, why look?
-            if (vessel.protoVessel.GetVesselCrew().Count > 0)
+            List<ProtoCrewMember> kerbals = new List<ProtoCrewMember>();
+
+            if (KerbalsOnboard.Count > 0)
             {
-                //Recover the kerbals and get their names
-                foreach (ProtoCrewMember pcm in vessel.protoVessel.GetVesselCrew())
+                //We've already removed the Kerbals, now we recover them
+                kerbals = KerbalsOnboard;
+            }
+            else
+            {
+                //If there's no crew, why look?
+                if (vessel.protoVessel.GetVesselCrew().Count > 0)
                 {
-                    //Yeah, that's all it takes to recover a kerbal. Set them to Available from Assigned
-                    if (recovered && Settings.instance.RecoverKerbals)
+                    //Recover the kerbals and get their names
+                    foreach (ProtoCrewMember pcm in vessel.protoVessel.GetVesselCrew())
                     {
-                        pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
-                        //pcm.experienceTrait.Config.
-                        //Way to go Squad, you now kill Kerbals TWICE instead of only once.
-                        bool TwoDeathEntries = (pcm.careerLog.Entries.Count > 1 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die" 
-                            && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 2].type == "Die");
-                        if (TwoDeathEntries)
-                        {
-                            Debug.Log("[SR] Squad has decided to kill " + pcm.name + " not once, but TWICE!");
-                            FlightLog.Entry deathEntry0 = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];//pcm.careerLog.Entries.Find(e => e.type == "Die");
-                            if (deathEntry0 != null && deathEntry0.type == "Die")
-                            {
-                                pcm.careerLog.Entries.Remove(deathEntry0);
-                            }
-                            FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
-                            if (deathEntry != null && deathEntry.type == "Die")
-                            {
-                                Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
-                                int flightNum = deathEntry.flight;
-                                pcm.careerLog.Entries.Remove(deathEntry);
-                                FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
-                                FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
-                                pcm.careerLog.AddEntry(landing);
-                                pcm.careerLog.AddEntry(recovery);
-                            }
-                        }
-                        else if (pcm.careerLog.Entries.Count > 0 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die")
-                        {
-                            Debug.Log("[SR] Squad has been gracious and has only killed " + pcm.name + " once, instead of twice.");
-                            FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
-                            if (deathEntry != null && deathEntry.type == "Die")
-                            {
-                                Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
-                                int flightNum = deathEntry.flight;
-                                pcm.careerLog.Entries.Remove(deathEntry);
-                                FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
-                                FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
-                                pcm.careerLog.AddEntry(landing);
-                                pcm.careerLog.AddEntry(recovery);
-                            }
-                        }
-                        else
-                        {
-                            Debug.Log("[SR] No death entry added, but we'll add a successful recovery anyway.");
-                            pcm.flightLog.AddEntry(FlightLog.EntryType.Land, "Kerbin");
-                            pcm.flightLog.AddEntry(FlightLog.EntryType.Recover);
-                            pcm.ArchiveFlightLog();
-                        }
+                        //Yeah, that's all it takes to recover a kerbal. Set them to Available from Assigned
+                        /*  if (recovered && Settings.instance.RecoverKerbals)
+                          {
+                              pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                              //pcm.experienceTrait.Config.
+                              
+
+                              //remove the Kerbal from the vessel
+                              ProtoPartSnapshot crewedPart = vessel.protoVessel.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
+                              if (crewedPart != null)
+                                  crewedPart.RemoveCrew(pcm.name);
+                              else
+                                  Debug.Log("[SR] Can't find the part housing " + pcm.name);
+                          }*/
+                        kerbals.Add(pcm);
                     }
-                    kerbals.Add(pcm.name);
                 }
             }
+
+            if (kerbals.Count > 0 && Settings.instance.RecoverKerbals && recovered)
+            {
+                foreach (ProtoCrewMember pcm in kerbals)
+                {
+                    Debug.Log("[SR] Recovering " + pcm.name);
+                    pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                    //Way to go Squad, you now kill Kerbals TWICE instead of only once.
+                    bool TwoDeathEntries = (pcm.careerLog.Entries.Count > 1 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die"
+                        && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 2].type == "Die");
+                    if (TwoDeathEntries)
+                    {
+                        Debug.Log("[SR] Squad has decided to kill " + pcm.name + " not once, but TWICE!");
+                        FlightLog.Entry deathEntry0 = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];//pcm.careerLog.Entries.Find(e => e.type == "Die");
+                        if (deathEntry0 != null && deathEntry0.type == "Die")
+                        {
+                            pcm.careerLog.Entries.Remove(deathEntry0);
+                        }
+                        FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
+                        if (deathEntry != null && deathEntry.type == "Die")
+                        {
+                            Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
+                            int flightNum = deathEntry.flight;
+                            pcm.careerLog.Entries.Remove(deathEntry);
+                            FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, Planetarium.fetch.Home.bodyName);
+                            FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
+                            pcm.careerLog.AddEntry(landing);
+                            pcm.careerLog.AddEntry(recovery);
+                        }
+                    }
+                    else if (pcm.careerLog.Entries.Count > 0 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die")
+                    {
+                        Debug.Log("[SR] Squad has been gracious and has only killed " + pcm.name + " once, instead of twice.");
+                        FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
+                        if (deathEntry != null && deathEntry.type == "Die")
+                        {
+                            Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
+                            int flightNum = deathEntry.flight;
+                            pcm.careerLog.Entries.Remove(deathEntry);
+                            FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, Planetarium.fetch.Home.bodyName);
+                            FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
+                            pcm.careerLog.AddEntry(landing);
+                            pcm.careerLog.AddEntry(recovery);
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("[SR] No death entry added, but we'll add a successful recovery anyway.");
+                        pcm.flightLog.AddEntry(FlightLog.EntryType.Land, Planetarium.fetch.Home.bodyName);
+                        pcm.flightLog.AddEntry(FlightLog.EntryType.Recover);
+                        pcm.ArchiveFlightLog();
+                    }
+                }
+            }
+            else if (kerbals.Count > 0 && (!Settings.instance.RecoverKerbals || !recovered))
+            {
+                //kill the kerbals instead
+                foreach (ProtoCrewMember pcm in kerbals)
+                {
+                    if (pcm.rosterStatus != ProtoCrewMember.RosterStatus.Dead || pcm.rosterStatus != ProtoCrewMember.RosterStatus.Missing)
+                    {
+                        pcm.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                        pcm.Die();
+                    }
+                }
+            }
+
             return kerbals;
         }
 
@@ -912,8 +957,8 @@ namespace StageRecovery
                 if (KerbalsOnboard.Count > 0)
                 {
                     msg.AppendLine("\nKerbals recovered:");
-                    foreach (string kerbal in KerbalsOnboard)
-                        msg.AppendLine("<#E0D503>" + kerbal +"</>");
+                    foreach (ProtoCrewMember kerbal in KerbalsOnboard)
+                        msg.AppendLine("<#E0D503>" + kerbal.name +"</>");
                 }
                 if (ScienceExperiments.Count > 0)
                 {
