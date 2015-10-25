@@ -129,30 +129,8 @@ namespace StageRecovery
                     totalMass += p.mass;
                     //Add resource masses
                     totalMass += GetResourceMass(p.resources);
-                    //Assume the part isn't a parachute until proven a parachute
-                   // bool isParachute = false;
-                    //For instance, by having the ModuleParachute module
-                    if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
-                    {
-                        //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
-                        ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
-                        if (ppms.moduleRef != null)
-                        {
-                            ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
-                            mp.Load(ppms.moduleValues);
-                            totalParachuteArea += mp.areaDeployed;
-                        }
-                        else
-                        {
-                            totalParachuteArea += GetParachuteDragFromPart(p.partInfo);
-                        }
-                        //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
-                       // dragCoeff += p.mass * drag;
-                        //This is most definitely a parachute part
-                     //   isParachute = true;
-                    }
-                    //If the part has the RealChuteModule, we have to do some tricks to access it
-                    else if (ModuleNames.Contains("RealChuteModule"))
+
+                    if (ModuleNames.Contains("RealChuteModule"))
                     {
                         //First off, get the PPMS since we'll need that
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
@@ -188,12 +166,11 @@ namespace StageRecovery
 
                             }
                             //This is a parachute also
-                           // isParachute = true;
+                            // isParachute = true;
                             //It's existence means that RealChute is installed and in use on the craft (you could have it installed and use stock chutes, so we only check if it's on the craft)
                             realChuteInUse = true;
                         }
                     }
-
                     else if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
                     {
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
@@ -203,6 +180,39 @@ namespace StageRecovery
 
                         realChuteInUse = true;
                     }
+                    else if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
+                    {
+                        double scale = 1.0;
+                        //check for Tweakscale and modify the area appropriately
+                        if (ModuleNames.Contains("TweakScale"))
+                        {
+                            ConfigNode tweakScale = p.modules.Find(m => m.moduleName == "TweakScale").moduleValues;
+                            double currentScale = 100, defaultScale = 100;
+                            double.TryParse(tweakScale.GetValue("currentScale"), out currentScale);
+                            double.TryParse(tweakScale.GetValue("defaultScale"), out defaultScale);
+                            scale = currentScale / defaultScale;
+                        }
+
+                        //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
+                        ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
+                        if (ppms.moduleRef != null)
+                        {
+                            ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
+                            mp.Load(ppms.moduleValues);
+                            //totalParachuteArea += mp.areaDeployed;
+                            totalParachuteArea += mp.areaDeployed * Math.Pow(scale, 2);
+                        }
+                        else
+                        {
+                            totalParachuteArea += GetParachuteDragFromPart(p.partInfo) * Math.Pow(scale, 2);
+                        }
+                        //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
+                       // dragCoeff += p.mass * drag;
+                        //This is most definitely a parachute part
+                     //   isParachute = true;
+                    }
+                    //If the part has the RealChuteModule, we have to do some tricks to access it
+                    
                     //If the part isn't a parachute (no ModuleParachute or RealChuteModule)
                    // if (!isParachute)
                    // {
@@ -881,12 +891,12 @@ namespace StageRecovery
                     }
                 }
             }
-            else if (kerbals.Count > 0 && (!Settings.instance.RecoverKerbals || !recovered))
+            else if (KerbalsOnboard.Count > 0 && (!Settings.instance.RecoverKerbals || !recovered))
             {
-                //kill the kerbals instead
+                //kill the kerbals instead //Don't kill them twice
                 foreach (ProtoCrewMember pcm in kerbals)
                 {
-                    if (pcm.rosterStatus != ProtoCrewMember.RosterStatus.Dead || pcm.rosterStatus != ProtoCrewMember.RosterStatus.Missing)
+                    if (pcm.rosterStatus != ProtoCrewMember.RosterStatus.Dead && pcm.rosterStatus != ProtoCrewMember.RosterStatus.Missing)
                     {
                         pcm.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
                         pcm.Die();

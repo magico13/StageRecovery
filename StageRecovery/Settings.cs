@@ -469,15 +469,19 @@ namespace StageRecovery
         {
             float Vt = float.MaxValue;
             List<Part> parts = EditorLogic.fetch.ship.Parts;
+            
+            float totalMass, dryMass, fuelMass;
+            totalMass = EditorLogic.fetch.ship.GetShipMass(out dryMass, out fuelMass);
+            if (empty)
+                totalMass = dryMass;
             bool realChuteInUse = false;
-            float totalMass = 0;
             //float dragCoeff = 0;
             double totalParachuteArea = 0;
             float RCParameter = 0;
             foreach (Part part in parts)
             {
-                totalMass += part.mass;
-                if (!empty) totalMass += part.GetResourceMass();
+               // totalMass += part.mass;
+               // if (!empty) totalMass += part.GetResourceMass();
               /*  bool hasRealChute = part.Modules.Contains("RealChuteModule");
                 bool hasChute = part.Modules.Contains("ModuleParachute");
                 if (hasRealChute) realChuteInUse = true;*/
@@ -529,9 +533,20 @@ namespace StageRecovery
                 }
                 else if (!realChuteInUse && part.Modules.Contains("ModuleParachute"))
                 {
+                    double scale = 1.0;
+                    //check for Tweakscale and modify the area appropriately
+                    if (part.Modules.Contains("TweakScale"))
+                    {
+                        PartModule tweakScale = part.Modules["TweakScale"];
+                        double currentScale = 100, defaultScale = 100;
+                        double.TryParse(tweakScale.Fields.GetValue("currentScale").ToString(), out currentScale);
+                        double.TryParse(tweakScale.Fields.GetValue("defaultScale").ToString(), out defaultScale);
+                        scale = currentScale / defaultScale;
+                    }
+
                     ModuleParachute mp = (ModuleParachute)part.Modules["ModuleParachute"];
                     //dragCoeff += part.mass * mp.fullyDeployedDrag;
-                    totalParachuteArea += mp.areaDeployed;
+                    totalParachuteArea += mp.areaDeployed * Math.Pow(scale, 2);
                 }
                /* else
                 {

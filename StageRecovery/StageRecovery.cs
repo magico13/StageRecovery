@@ -69,6 +69,11 @@ namespace StageRecovery
                 Settings.instance.gui.SRToolbarButton.Destroy();
         }
 
+        void CrewKilled(EventReport er)
+        {
+            Debug.Log("[SR] Crew Killed!");
+        }
+
         //Fired when the mod loads each scene
         public void Start()
         {
@@ -86,6 +91,9 @@ namespace StageRecovery
                 //Add the VesselDestroyEvent to the listeners
                 //GameEvents.onVesselDestroy.Add(VesselDestroyEvent);
                 GameEvents.onVesselWillDestroy.Add(VesselDestroyEvent);
+
+                GameEvents.onCrewKilled.Add(CrewKilled);
+
                 //Add the event that listens for unloads (for removing launch clamps)
                 GameEvents.onVesselGoOnRails.Add(VesselUnloadEvent);
                 //GameEvents..Add(DecoupleEvent);
@@ -174,15 +182,14 @@ namespace StageRecovery
                     //So, question for myself. Would it be better to try to manually fire the recovery events? Would that really be worth anything?
                 }
             }
-
+            
             //If it's a stage that will be destroyed, we need to manually recover the Kerbals
             if (Settings.instance.RecoverKerbals && pv.GetVesselCrew().Count > 0)
             {
                 //Check if the conditions for vessel destruction are met
-                if (vessel != FlightGlobals.ActiveVessel && !vessel.isEVA && vessel.mainBody == Planetarium.fetch.Home && pv.situation != Vessel.Situations.LANDED && vessel.atmDensity >= 0.01) //unloading in > 0.01 atm and not landed
+                if (vessel != FlightGlobals.ActiveVessel && !vessel.isEVA && vessel.mainBody == Planetarium.fetch.Home && pv.situation != Vessel.Situations.LANDED && vessel.atmDensity >= 0.01) //unloading in > 0.01 atm and not landed //pv.altitude < vessel.mainBody.atmosphereDepth
                 {
-                    //Perform recovery here, rather than after destruction?
-                    Debug.Log("[SR] Vessel " + pv.vesselName + " is going to be destroyed. Recovering Kerbals!"); //makes it so kerbals can't be killed even when they should be. Don't forget to fix
+                    Debug.Log("[SR] Vessel " + pv.vesselName + " is going to be destroyed. Recovering Kerbals!"); //Kerbal death should be handled by SR instead
                     RecoveryItem recItem = new RecoveryItem(vessel);
                     
                     foreach (ProtoCrewMember pcm in pv.GetVesselCrew())
