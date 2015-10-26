@@ -418,6 +418,12 @@ namespace StageRecovery
 
         public void EditorCalc()
         {
+
+           /* EditorGUI stuff = new EditorGUI();
+            stuff.BreakShipIntoStages();
+            if (stuff.stages.Count > 0)
+                stuff.stages[0].Highlight();*/
+
             float Vt = DetermineVtEditor(false);
             StringBuilder msg = new StringBuilder();
             bool recovered = false;

@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APIManager.cs" />
+    <Compile Include="EditorGUI.cs" />
     <Compile Include="FlightGUI.cs" />
     <Compile Include="RecoveryItem.cs" />
     <Compile Include="Settings.cs" />

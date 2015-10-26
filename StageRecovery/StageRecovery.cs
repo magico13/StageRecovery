@@ -239,6 +239,20 @@ namespace StageRecovery
             return lvl;
         }
 
+        //Function to estimate the final velocity given a stage's mass and parachute area
+        public static double VelocityEstimate(double mass, double chuteArea, bool RealChute = false)
+        {
+            if (chuteArea <= 0)
+                return 200;
+            if (mass <= 0)
+                return 0;
+
+            if (!RealChute)
+                return (63 * Math.Pow(mass / chuteArea, 0.4));
+            else
+                return Math.Sqrt((8000 * mass * 9.8) / (1.223 * Math.PI * chuteArea));
+        }
+
         //Helper function that I found on StackExchange that helps immensly with dealing with Reflection. I'm not that good at reflection (accessing other mod's functions and data)
         public static object GetMemberInfoValue(System.Reflection.MemberInfo member, object sourceObject)
         {
