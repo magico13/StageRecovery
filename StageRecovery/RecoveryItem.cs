@@ -946,11 +946,8 @@ namespace StageRecovery
                 //Start adding some in-game display messages about the return
 				msg.AppendLine("<#8BED8B>Stage '" + StageName + "' recovered " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
 
-                for (int i = 0; i < PartsRecovered.Count; i++)
-                {
-					msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <#B4D455>£" + (PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent) +"</>");
-                }
-				msg.AppendLine("\n");
+                
+				//msg.AppendLine("\n");
                 //List the percent returned and break it down into distance and speed percentages
 				msg.AppendLine("Recovery percentage: <#8BED8B>" + Math.Round(100 * RecoveryPercent, 1) + "%</>");
 				msg.AppendLine("<#8BED8B>" + Math.Round(100 * DistancePercent, 1) + "%</> distance");
@@ -990,6 +987,12 @@ namespace StageRecovery
                     msg.AppendLine("Propulsive landing. Check SR Flight GUI for information about amount of propellant consumed.");
                 }
 
+                msg.AppendLine("Stage contained the following parts:");
+                for (int i = 0; i < PartsRecovered.Count; i++)
+                {
+                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <#B4D455>£" + (PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent) + "</>");
+                }
+
                 //Setup and then post the message
                 MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
                 MessageSystem.Instance.AddMessage(m);
@@ -997,11 +1000,7 @@ namespace StageRecovery
             else if (!recovered && Settings.instance.ShowFailureMessages)
             {
                 msg.AppendLine("<#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
-                msg.AppendLine("Stage contains these parts:");
-                for (int i = 0; i < PartsRecovered.Count; i++)
-                {
-                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i));
-                }
+                
                 //If we're career mode (MONEY!) then we also let you know the (why do I say 'we'? It's only me working on this) total cost of the parts
                 if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
                 {
@@ -1036,6 +1035,12 @@ namespace StageRecovery
                 if (noControl)
                 {
                     msg.AppendLine("Attempted propulsive landing but could not find a point of control. Add a pilot or probe core with SAS for propulsive landings.");
+                }
+
+                msg.AppendLine("Stage contained the following parts:");
+                for (int i = 0; i < PartsRecovered.Count; i++)
+                {
+                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i));
                 }
 
                 //Now we actually create and post the message

@@ -116,6 +116,8 @@ namespace StageRecovery
     {
         public FlightGUI flightGUI = new FlightGUI();
 
+        public EditorGUI editorGUI = new EditorGUI();
+
         //The window is only shown when this is true
         private bool showWindow, showBlacklist;
 
@@ -176,7 +178,7 @@ namespace StageRecovery
         //This method is used when the toolbar button is clicked. It alternates between showing the window and hiding it.
         public void onClick()
         {
-            if (Settings.instance.Clicked && (showWindow || flightGUI.showFlightGUI))
+            if (Settings.instance.Clicked && (showWindow || flightGUI.showFlightGUI || editorGUI.showEditorGUI))
                 hideAll();
             else
                 ShowWindow();
@@ -214,6 +216,7 @@ namespace StageRecovery
             if (showWindow) mainWindowRect = GUILayout.Window(8940, mainWindowRect, DrawSettingsGUI, "StageRecovery", HighLogic.Skin.window);
             if (flightGUI.showFlightGUI) flightGUI.flightWindowRect = GUILayout.Window(8940, flightGUI.flightWindowRect, flightGUI.DrawFlightGUI, "StageRecovery", HighLogic.Skin.window);
             if (showBlacklist) blacklistRect = GUILayout.Window(8941, blacklistRect, DrawBlacklistGUI, "Ignore List", HighLogic.Skin.window);
+            if (editorGUI.showEditorGUI) editorGUI.EditorGUIRect = GUILayout.Window(8940, editorGUI.EditorGUIRect, editorGUI.DrawEditorGUI, "StageRecovery", HighLogic.Skin.window);
         }
 
         //More drawing window stuff. I only half understand this. It just works.
@@ -222,6 +225,7 @@ namespace StageRecovery
             if (showWindow) DrawSettingsGUI(windowID);
             if (flightGUI.showFlightGUI) flightGUI.DrawFlightGUI(windowID);
             if (showBlacklist) DrawBlacklistGUI(windowID);
+            if (editorGUI.showEditorGUI) editorGUI.DrawEditorGUI(windowID);
         }
 
         //Hide all the windows. We only have one so this isn't super helpful, but alas.
@@ -229,8 +233,10 @@ namespace StageRecovery
         {
             showWindow = false;
             flightGUI.showFlightGUI = false;
+            editorGUI.showEditorGUI = false;
             showBlacklist = false;
             Settings.instance.Clicked = false;
+            editorGUI.UnHighlightAll();
         }
 
         //Resets the windows. Hides them and resets the Rect object. Not really needed, but it's here
@@ -239,6 +245,7 @@ namespace StageRecovery
             hideAll();
             mainWindowRect = new Rect(0, 0, windowWidth, 1);
             flightGUI.flightWindowRect = new Rect((Screen.width - 768) / 2, (Screen.height - 540) / 2, 768, 540);
+            editorGUI.EditorGUIRect = new Rect(Screen.width / 3, Screen.height / 3, 200, 1);
             blacklistRect = new Rect(0, 0, 360, 1);
         }
 
@@ -418,11 +425,11 @@ namespace StageRecovery
 
         public void EditorCalc()
         {
-
-           /* EditorGUI stuff = new EditorGUI();
-            stuff.BreakShipIntoStages();
-            if (stuff.stages.Count > 0)
-                stuff.stages[0].Highlight();*/
+            editorGUI.BreakShipIntoStages();
+            editorGUI.HighlightAll();
+            editorGUI.showEditorGUI = true;
+            editorGUI.EditorGUIRect.height = 1; //reset the height
+            return;
 
             float Vt = DetermineVtEditor(false);
             StringBuilder msg = new StringBuilder();
