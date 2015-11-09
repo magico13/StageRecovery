@@ -11,6 +11,9 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.5.8 - (11/09/2015)
+- Updated to KSP 1.0.5
+
 1.5.7 - (07/11/2015)
 - Fixed issues with kerbal recovery causing lost levels
 - Fixed compatibility issue with RSS (checking only for Kerbin)
