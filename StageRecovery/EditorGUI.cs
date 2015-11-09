@@ -9,6 +9,57 @@ namespace StageRecovery
     public class EditorGUI
     {
         public List<EditorStatItem> stages = new List<EditorStatItem>();
+        public bool showEditorGUI = false;
+        bool highLight = false;
+        public Rect EditorGUIRect = new Rect(Screen.width / 3, Screen.height / 3, 200, 1);
+        public void DrawEditorGUI(int windowID)
+        {
+            GUILayout.BeginVertical();
+            //provide toggles to turn highlighting on/off
+            if (GUILayout.Button("Toggle Vessel Highlighting"))
+            {
+                highLight = !highLight;
+                if (highLight)
+                    HighlightAll();
+                else
+                    UnHighlightAll();
+            }
+
+            //list each stage, with info for each
+            foreach (EditorStatItem stage in stages)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Stage " + stage.stageNumber);
+                GUILayout.Label(stage.Velocity.ToString("N1")+" m/s");
+                if (GUILayout.Button("Highlight"))
+                {
+                    //highlight this stage and unhighlight all others
+                    UnHighlightAll();
+                    stage.Highlight();
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.EndVertical();
+
+            //Make it draggable
+            if (!Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2))
+                GUI.DragWindow();
+        }
+
+        public void UnHighlightAll()
+        {
+            highLight = false;
+            foreach (EditorStatItem stage in stages)
+                stage.UnHighlight();
+        }
+
+        public void HighlightAll()
+        {
+            highLight = true;
+            foreach (EditorStatItem stage in stages)
+                stage.Highlight();
+        }
 
         public void BreakShipIntoStages()
         {
@@ -257,6 +308,18 @@ namespace StageRecovery
     {
         public int stageNumber=0;
         public double dryMass=0, mass=0, chuteArea=0;
+        private double _Velocity = -1;
+        private bool highlighted = false;
+        public double Velocity
+        {
+            get
+            {
+                if (_Velocity < 0)
+                    _Velocity = GetVelocity();
+                return _Velocity;
+            }
+        }
+
 
         public List<Part> parts = new List<Part>();
 
@@ -269,19 +332,45 @@ namespace StageRecovery
             chuteArea = ChuteArea;
         }
 
-        public double GetVelocity()
+        private double GetVelocity()
         {
             return StageRecovery.VelocityEstimate(mass, chuteArea);
         }
 
         public void Highlight()
         {
+            UnityEngine.Color stageColor = UnityEngine.Color.red;
+            if (Velocity < Settings.instance.HighCut)
+                stageColor = UnityEngine.Color.yellow;
+            if (Velocity < Settings.instance.LowCut)
+                stageColor = UnityEngine.Color.green;
             foreach (Part p in parts)
             {
                 p.SetHighlight(true, false);
-                p.SetHighlightColor(UnityEngine.Color.white);
+                p.SetHighlightColor(stageColor);
                 p.SetHighlightType(Part.HighlightType.AlwaysOn);
             }
+            highlighted = true;
+        }
+
+        public void UnHighlight()
+        {
+            foreach (Part p in parts)
+            {
+                p.SetHighlightColor(UnityEngine.Color.green);
+                p.SetHighlight(false, true);
+            }
+            highlighted = false;
+        }
+
+        public bool ToggleHighlight()
+        {
+            if (highlighted)
+                UnHighlight();
+            else
+                Highlight();
+
+            return highlighted;
         }
     }
 }
