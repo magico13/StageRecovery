@@ -10,7 +10,7 @@ namespace StageRecovery
     {
         public List<EditorStatItem> stages = new List<EditorStatItem>();
         public bool showEditorGUI = false;
-        bool highLight = false;
+        bool highLight = false, empty = true;
         public Rect EditorGUIRect = new Rect(Screen.width / 3, Screen.height / 3, 200, 1);
         public void DrawEditorGUI(int windowID)
         {
@@ -25,22 +25,43 @@ namespace StageRecovery
                     UnHighlightAll();
             }
 
+            if (GUILayout.Button("Tanks: "+(empty? "Empty":"Full")))
+            {
+                empty = !empty;
+                if (highLight)
+                    HighlightAll();
+            }
+
             //list each stage, with info for each
             foreach (EditorStatItem stage in stages)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Stage " + stage.stageNumber);
-                GUILayout.Label(stage.Velocity.ToString("N1")+" m/s");
+                double vel = empty ? stage.EmptyVelocity : stage.FullVelocity;
+                GUILayout.Label(vel.ToString("N1")+" m/s");
+            //    GUILayout.Label("("+stage.FullVelocity.ToString("N1") + ")");
                 if (GUILayout.Button("Highlight"))
                 {
                     //highlight this stage and unhighlight all others
+                    bool status = !highLight || stage.Highlighted;
                     UnHighlightAll();
-                    stage.Highlight();
+                    stage.SetHighlight(!status, empty);
                 }
                 GUILayout.EndHorizontal();
             }
 
+
+            if (GUILayout.Button("Recalculate"))
+            {
+                BreakShipIntoStages();
+            }
             GUILayout.EndVertical();
+
+           /* if (GUI.Button(new Rect(EditorGUIRect.xMax-10, EditorGUIRect.yMin, 10, 10), "X"))
+            {
+                UnHighlightAll();
+                showEditorGUI = false;
+            }*/
 
             //Make it draggable
             if (!Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2))
@@ -58,7 +79,7 @@ namespace StageRecovery
         {
             highLight = true;
             foreach (EditorStatItem stage in stages)
-                stage.Highlight();
+                stage.Highlight(empty);
         }
 
         public void BreakShipIntoStages()
@@ -308,15 +329,33 @@ namespace StageRecovery
     {
         public int stageNumber=0;
         public double dryMass=0, mass=0, chuteArea=0;
-        private double _Velocity = -1;
-        private bool highlighted = false;
-        public double Velocity
+        private double _FullVelocity = -1, _DryVelocity = -1;
+        private bool _highlighted = false;
+
+        public bool Highlighted
         {
             get
             {
-                if (_Velocity < 0)
-                    _Velocity = GetVelocity();
-                return _Velocity;
+                return _highlighted;
+            }
+        }
+        public double FullVelocity
+        {
+            get
+            {
+                if (_FullVelocity < 0)
+                    _FullVelocity = GetVelocity(false);
+                return _FullVelocity;
+            }
+        }
+
+        public double EmptyVelocity
+        {
+            get
+            {
+                if (_DryVelocity < 0)
+                    _DryVelocity = GetVelocity(true);
+                return _DryVelocity;
             }
         }
 
@@ -332,45 +371,61 @@ namespace StageRecovery
             chuteArea = ChuteArea;
         }
 
-        private double GetVelocity()
+        private double GetVelocity(bool dry=true)
         {
-            return StageRecovery.VelocityEstimate(mass, chuteArea);
+
+            if (dry)
+                return StageRecovery.VelocityEstimate(dryMass, chuteArea);
+            else
+                return StageRecovery.VelocityEstimate(mass, chuteArea);
         }
 
-        public void Highlight()
+        public void Highlight(bool dry=true)
         {
+            double vel = dry ? EmptyVelocity : FullVelocity;
             UnityEngine.Color stageColor = UnityEngine.Color.red;
-            if (Velocity < Settings.instance.HighCut)
+            if (vel < Settings.instance.HighCut)
                 stageColor = UnityEngine.Color.yellow;
-            if (Velocity < Settings.instance.LowCut)
+            if (vel < Settings.instance.LowCut)
                 stageColor = UnityEngine.Color.green;
+            //Part p = parts[0];
             foreach (Part p in parts)
             {
                 p.SetHighlight(true, false);
                 p.SetHighlightColor(stageColor);
                 p.SetHighlightType(Part.HighlightType.AlwaysOn);
             }
-            highlighted = true;
+            _highlighted = true;
         }
 
         public void UnHighlight()
         {
             foreach (Part p in parts)
             {
-                p.SetHighlightColor(UnityEngine.Color.green);
-                p.SetHighlight(false, true);
+                //p.SetHighlightColor(UnityEngine.Color.green);
+                //p.SetHighlight(false, false);
+                //p.SetHighlightType();
+                p.SetHighlightDefault();
             }
-            highlighted = false;
+            _highlighted = false;
+        }
+
+        public void SetHighlight(bool status, bool dry = true)
+        {
+            if (status)
+                Highlight(dry);
+            else
+                UnHighlight();
         }
 
         public bool ToggleHighlight()
         {
-            if (highlighted)
+            if (_highlighted)
                 UnHighlight();
             else
                 Highlight();
 
-            return highlighted;
+            return _highlighted;
         }
     }
 }
