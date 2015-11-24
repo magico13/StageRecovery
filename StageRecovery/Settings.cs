@@ -17,7 +17,7 @@ namespace StageRecovery
         protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent] public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride;
-        [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod;
+        [Persistent] public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod, HideButton;
 
         public bool Clicked = false;
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
@@ -44,6 +44,8 @@ namespace StageRecovery
             UseUpgrades = true;
             UseToolbarMod = true;
             DistanceOverride = -1.0f;
+
+            HideButton = false;
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
@@ -145,6 +147,10 @@ namespace StageRecovery
         {
             if (ToolbarManager.ToolbarAvailable && Settings.instance.UseToolbarMod)
                 return;
+
+            if (Settings.instance.HideButton) //If told to hide the button, then don't show the button. Blizzy's can do this automatically.
+                return;
+
             bool vis;
             if (ApplicationLauncher.Ready && (SRButtonStock == null || !ApplicationLauncher.Instance.Contains(SRButtonStock, out vis))) //Add Stock button
             {
