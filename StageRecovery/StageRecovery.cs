@@ -11,11 +11,15 @@ namespace StageRecovery
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class StageRecovery : MonoBehaviour
     {
+        public static StageRecovery instance;
         //Flag that says whether the VesselDestroyEvent has been added, so we don't accidentally add it twice.
         private static bool eventAdded = false;
         private static bool sceneChangeComplete = false;
 
         private List<RecoveryItem> RecoveryQueue = new List<RecoveryItem>();
+        private List<Guid> StageWatchList = new List<Guid>();
+
+        private static double cutoffAlt = 23000;
 
         //List of scenes where we shouldn't run the mod. I toyed with runOnce, but couldn't get it working
         private static List<GameScenes> forbiddenScenes = new List<GameScenes> { GameScenes.LOADING, GameScenes.LOADINGBUFFER, GameScenes.CREDITS, GameScenes.MAINMENU, GameScenes.SETTINGS };
@@ -30,6 +34,8 @@ namespace StageRecovery
         //Fired when the mod loads each scene
         public void Awake()
         {
+            instance = this;
+
             //If we're in the MainMenu, don't do anything
             if (forbiddenScenes.Contains(HighLogic.LoadedScene))
                 return;
@@ -69,11 +75,6 @@ namespace StageRecovery
                 Settings.instance.gui.SRToolbarButton.Destroy();
         }
 
-        void CrewKilled(EventReport er)
-        {
-            Debug.Log("[SR] Crew Killed!");
-        }
-
         //Fired when the mod loads each scene
         public void Start()
         {
@@ -92,14 +93,16 @@ namespace StageRecovery
                 //GameEvents.onVesselDestroy.Add(VesselDestroyEvent);
                 GameEvents.onVesselWillDestroy.Add(VesselDestroyEvent);
 
-                GameEvents.onCrewKilled.Add(CrewKilled);
-
                 //Add the event that listens for unloads (for removing launch clamps)
                 GameEvents.onVesselGoOnRails.Add(VesselUnloadEvent);
                 //GameEvents..Add(DecoupleEvent);
                 //If Blizzy's toolbar isn't available, use the stock one
               //  if (!ToolbarManager.ToolbarAvailable)
                 GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
+
+                cutoffAlt = ComputeCutoffAlt(Planetarium.fetch.Home, 0.01F)+100;
+                Debug.Log("[SR] Determined cutoff altitude to be " + cutoffAlt);
+
                 //Set the eventAdded flag to true so this code doesn't run again
                 eventAdded = true;
             }
@@ -118,6 +121,12 @@ namespace StageRecovery
             if (!HighLogic.LoadedSceneIsFlight)
             {
                 Settings.instance.ClearStageLists();
+            }
+
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                foreach (Vessel v in FlightGlobals.Vessels)
+                    WatchVessel(v);
             }
 
             sceneChangeComplete = true;
@@ -191,26 +200,82 @@ namespace StageRecovery
                 {
                     Debug.Log("[SR] Vessel " + pv.vesselName + " is going to be destroyed. Recovering Kerbals!"); //Kerbal death should be handled by SR instead
                     RecoveryItem recItem = new RecoveryItem(vessel);
-                    
-                    foreach (ProtoCrewMember pcm in pv.GetVesselCrew())
-                    {
-                        //remove kerbal from vessel
-                        ProtoPartSnapshot crewedPart = pv.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
-                        if (crewedPart != null)
-                        {
-                            crewedPart.RemoveCrew(pcm.name);
-                            recItem.KerbalsOnboard.Add(pcm);
-                        }
-                        else
-                            Debug.Log("[SR] Can't find the part housing " + pcm.name);
-                    }
+
+                    //Pre-recover the Kerbals
+                    recItem.PreRecoverKerbals();
 
                     //Add the ship to the RecoveryQueue to be handled by the OnDestroy event
                     RecoveryQueue.Add(recItem);
                 }
+                else
+                    WatchVessel(vessel);
             }
         }
 
+        public void FixedUpdate()
+        {
+            //For each vessel in the watchlist, check to see if it reaches an atm density of 0.01 and if so, pre-recover it
+            foreach (Guid id in new List<Guid>(StageWatchList))
+            {
+                Vessel vessel = FlightGlobals.Vessels.Find(v => v.id == id);
+                if (vessel == null)
+                {
+                    StageWatchList.Remove(id);
+                    continue;
+                }
+                if ((!vessel.loaded || vessel.packed) && vessel.altitude < cutoffAlt)
+                {
+                    Debug.Log("[SR] Vessel " + vessel.vesselName + " (" + id + ") is about to be destroyed. Pre-recovering Kerbals.");
+                    RecoveryItem recItem = new RecoveryItem(vessel);
+
+                    //Pre-recover the Kerbals
+                    recItem.PreRecoverKerbals();
+
+                    //Add the ship to the RecoveryQueue to be handled by the VesselDestroy event
+                    instance.RecoveryQueue.Add(recItem);
+
+                    Debug.Log("[SR] Current RecoveryQueue size: " + instance.RecoveryQueue.Count);
+
+                    StageWatchList.Remove(id);
+                }
+            }
+        }
+
+        public static float ComputeCutoffAlt(CelestialBody body, float cutoffDensity, float stepSize=100)
+        {
+            //This unfortunately doesn't seem to be coming up with the right altitude for Kerbin (~23km, it finds ~27km)
+            double dens = 0;
+            float alt = (float)body.atmosphereDepth;
+            while (alt > 0)
+            {
+                dens = body.GetDensity(FlightGlobals.getStaticPressure(alt, body), body.atmosphereTemperatureCurve.Evaluate(alt)); //body.atmospherePressureCurve.Evaluate(alt)
+                //Debug.Log("[SR] Alt: " + alt + " Pres: " + dens);
+                if (dens < cutoffDensity)
+                    alt -= stepSize;
+                else
+                    break;
+            }
+            return alt;
+        }
+
+        public static bool WatchVessel(Vessel ves)
+        {
+            if (FMRS_Enabled()) //If FMRS is active then we don't watch any vessels
+                return false;
+
+            //If the vessel is around the home planet and the periapsis is below 23km, then we add it to the watch list
+            if (ves != null && ves.protoVessel.GetVesselCrew().Count > 0 && ves.orbit != null && ves.mainBody == Planetarium.fetch.Home && ves.orbit.PeA < cutoffAlt && !ves.isEVA && FlightGlobals.ActiveVessel != ves)
+            {
+                if (instance.StageWatchList.Contains(ves.id))
+                    return true;
+
+                instance.StageWatchList.Add(ves.id);
+                Debug.Log("[SR] Added vessel " + ves.vesselName + " (" + ves.id + ") to watchlist.");
+                return true;
+            }
+            
+            return false;
+        }
 
         //Small function to add funds to the game and write a log message about it.
         //Returns the new total.
@@ -308,17 +373,11 @@ namespace StageRecovery
 
             if (HighLogic.LoadedSceneIsFlight && FMRS_Enabled())
             {//If the vessel is controlled or has a RealChute Module, FMRS will handle it
-                if ((v.protoVessel.wasControllable) || v.protoVessel.protoPartSnapshots.Find(p => p.modules != null && p.modules.Find(m => m.moduleName == "RealChuteModule") != null) != null)
+                if ((v.protoVessel.wasControllable) || v.protoVessel.protoPartSnapshots.Find(p => p.modules != null && p.modules.Find(m => m.moduleName == "RealChuteModule") != null) != null || v.protoVessel.GetVesselCrew().Count > 0)
                 {
                     return;
                 }
                 //If there's crew onboard, FMRS will handle that too
-                foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
-                {
-                    if (pps.protoModuleCrew.Count > 0)
-                        return;
-                }
-
                 // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
             }
 
@@ -342,11 +401,15 @@ namespace StageRecovery
                 APIManager.instance.OnRecoveryProcessingStart.Fire(v);
 
                 //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
+                Debug.Log("[SR] Searching in RecoveryQueue (" + instance.RecoveryQueue.Count + ") for " + v.id);
+                foreach (RecoveryItem r in instance.RecoveryQueue)
+                    Debug.Log("[SR] " + r.vessel.id);
                 RecoveryItem Stage;
-                if (RecoveryQueue.Count > 0 && RecoveryQueue.Exists(ri => ri.vessel.id == v.id))
+                if (instance.RecoveryQueue.Count > 0 && instance.RecoveryQueue.Exists(ri => ri.vessel.id == v.id))
                 {
-                    Stage = RecoveryQueue.Find(ri => ri.vessel.id == v.id);
-                    RecoveryQueue.Remove(Stage);
+                    Stage = instance.RecoveryQueue.Find(ri => ri.vessel.id == v.id);
+                    instance.RecoveryQueue.Remove(Stage);
+                    Debug.Log("[SR] Found vessel in the RecoveryQueue.");
                 }
                 else
                     Stage = new RecoveryItem(v);

@@ -49,6 +49,7 @@ namespace StageRecovery
 
         public bool Process()
         {
+            Debug.Log("[SR] Altitude: " + vessel.altitude);
             //Determine what the terminal velocity should be
             Vt = DetermineTerminalVelocity();
             //Try to perform a powered landing
@@ -707,8 +708,8 @@ namespace StageRecovery
             //Combine the modifier from the velocity and the modifier from distance together
             RecoveryPercent = SpeedPercent * DistancePercent;
 
-            Debug.Log("[SR] Vessel Lat/Lon: " + vessel.latitude + "/" + vessel.longitude);
-            Debug.Log("[SR] KSC Lat/Lon: " + SpaceCenter.Instance.Latitude + "/" + SpaceCenter.Instance.Longitude);
+            //Debug.Log("[SR] Vessel Lat/Lon: " + vessel.latitude + "/" + vessel.longitude);
+            //Debug.Log("[SR] KSC Lat/Lon: " + SpaceCenter.Instance.Latitude + "/" + SpaceCenter.Instance.Longitude);
             Debug.Log("[SR] Distance: "+KSCDistance);
         }
 
@@ -808,31 +809,25 @@ namespace StageRecovery
             {
                 //We've already removed the Kerbals, now we recover them
                 kerbals = KerbalsOnboard;
+                Debug.Log("[SR] Found pre-recovered Kerbals");
             }
             else
             {
-                //If there's no crew, why look?
-                if (vessel.protoVessel.GetVesselCrew().Count > 0)
+                //Recover the kerbals and get their names
+                foreach (ProtoCrewMember pcm in vessel.protoVessel.GetVesselCrew())
                 {
-                    //Recover the kerbals and get their names
-                    foreach (ProtoCrewMember pcm in vessel.protoVessel.GetVesselCrew())
-                    {
-                        //Yeah, that's all it takes to recover a kerbal. Set them to Available from Assigned
-                        /*  if (recovered && Settings.instance.RecoverKerbals)
-                          {
-                              pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
-                              //pcm.experienceTrait.Config.
-                              
-
-                              //remove the Kerbal from the vessel
-                              ProtoPartSnapshot crewedPart = vessel.protoVessel.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
-                              if (crewedPart != null)
-                                  crewedPart.RemoveCrew(pcm.name);
-                              else
-                                  Debug.Log("[SR] Can't find the part housing " + pcm.name);
-                          }*/
-                        kerbals.Add(pcm);
-                    }
+                    //Yeah, that's all it takes to recover a kerbal. Set them to Available from Assigned
+                    /*  if (recovered && Settings.instance.RecoverKerbals)
+                        {
+                            pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                            //remove the Kerbal from the vessel
+                            ProtoPartSnapshot crewedPart = vessel.protoVessel.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
+                            if (crewedPart != null)
+                                crewedPart.RemoveCrew(pcm.name);
+                            else
+                                Debug.Log("[SR] Can't find the part housing " + pcm.name);
+                        }*/
+                    kerbals.Add(pcm);
                 }
             }
 
@@ -906,6 +901,23 @@ namespace StageRecovery
         }
 
 
+        public void PreRecoverKerbals()
+        {
+            ProtoVessel pv = vessel.protoVessel;
+            foreach (ProtoCrewMember pcm in pv.GetVesselCrew())
+            {
+                //remove kerbal from vessel
+                ProtoPartSnapshot crewedPart = pv.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
+                if (crewedPart != null)
+                {
+                    crewedPart.RemoveCrew(pcm.name);
+                    KerbalsOnboard.Add(pcm);
+                    Debug.Log("[SR] Pre-recovered " + pcm.name);
+                }
+                else
+                    Debug.Log("[SR] Can't find the part housing " + pcm.name);
+            }
+        }
 
         //Fires the correct API event
         public void FireEvent()
