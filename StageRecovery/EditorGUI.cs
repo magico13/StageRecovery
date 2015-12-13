@@ -10,7 +10,7 @@ namespace StageRecovery
     {
         public List<EditorStatItem> stages = new List<EditorStatItem>();
         public bool showEditorGUI = false;
-        bool highLight = false, empty = true;
+        bool highLight = false, tanksDry = true;
         public Rect EditorGUIRect = new Rect(Screen.width / 3, Screen.height / 3, 200, 1);
         public void DrawEditorGUI(int windowID)
         {
@@ -25,9 +25,9 @@ namespace StageRecovery
                     UnHighlightAll();
             }
 
-            if (GUILayout.Button("Tanks: "+(empty? "Empty":"Full")))
+            if (GUILayout.Button("Tanks: "+(tanksDry? "Empty":"Full")))
             {
-                empty = !empty;
+                tanksDry = !tanksDry;
                 if (highLight)
                     HighlightAll();
             }
@@ -37,15 +37,17 @@ namespace StageRecovery
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Stage " + stage.stageNumber);
-                double vel = empty ? stage.EmptyVelocity : stage.FullVelocity;
+                double vel = tanksDry ? stage.EmptyVelocity : stage.FullVelocity;
                 GUILayout.Label(vel.ToString("N1")+" m/s");
             //    GUILayout.Label("("+stage.FullVelocity.ToString("N1") + ")");
                 if (GUILayout.Button("Highlight"))
                 {
                     //highlight this stage and unhighlight all others
-                    bool status = !highLight || stage.Highlighted;
+                    bool status = stage.Highlighted;
+                    if (highLight)
+                        status = false;
                     UnHighlightAll();
-                    stage.SetHighlight(!status, empty);
+                    stage.SetHighlight(!status, tanksDry);
                 }
                 GUILayout.EndHorizontal();
             }
@@ -54,6 +56,8 @@ namespace StageRecovery
             if (GUILayout.Button("Recalculate"))
             {
                 BreakShipIntoStages();
+                if (highLight)
+                    HighlightAll();
             }
             GUILayout.EndVertical();
 
@@ -79,7 +83,7 @@ namespace StageRecovery
         {
             highLight = true;
             foreach (EditorStatItem stage in stages)
-                stage.Highlight(empty);
+                stage.Highlight(tanksDry);
         }
 
         public void BreakShipIntoStages()
