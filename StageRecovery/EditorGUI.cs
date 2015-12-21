@@ -58,6 +58,8 @@ namespace StageRecovery
                 BreakShipIntoStages();
                 if (highLight)
                     HighlightAll();
+
+                EditorGUIRect.height = 1; //reset the height so it is the smallest size it needs to be 
             }
             GUILayout.EndVertical();
 
@@ -184,7 +186,9 @@ namespace StageRecovery
                 stages.Add(current);
             }
 
-            Debug.Log("[SR] Found " + stageNum + " stages!");
+            ConsolidateStages();
+
+            Debug.Log("[SR] Found " + stages.Count + " stages!");
 
            /* while (toCheck.Count > 0) //should instead search through the children, stopping when finding a decoupler, then switch to it's children
             {
@@ -321,6 +325,46 @@ namespace StageRecovery
             }
             return stage;
         }
+
+        public void ConsolidateStages()
+        {
+            //finds identical (and adjacent) stages in the list and merges them into a single master stage
+            //must find all identical stages first, then merge
+
+            EditorStatItem compareItem = null;
+
+            for (int i=0; i<stages.Count; i++)
+            {
+                EditorStatItem stage = stages[i];
+              //  if (compareItem == null)
+                compareItem = stage;
+
+                int j = i+1;
+                while (j < stages.Count)
+                {
+                    if (stages[j].parts.Count != compareItem.parts.Count || stages[j].mass != compareItem.mass || stages[j].chuteArea != compareItem.chuteArea)
+                    {
+                        //probably not the same stage setup
+                        break;
+                    }
+                    j++;
+                }
+
+                if (j > i+1)
+                {
+                    Debug.Log("[SR] Found " + (j - i) + " identical stages");
+                    //some stages are the same (up to j)
+                    //merge the stages
+                    for (int k = j-1; k>i; k--)
+                    {
+                        //add the parts from k to i
+                        stages[i].parts.AddRange(stages[k].parts);
+                        stages.RemoveAt(k);
+                    }
+                    stages[i].ForceRecalculate();
+                }
+            }
+        }
     }
 
     public class StageParts
@@ -430,6 +474,12 @@ namespace StageRecovery
                 Highlight();
 
             return _highlighted;
+        }
+
+        public void ForceRecalculate()
+        {
+            _FullVelocity = GetVelocity(false);
+            _DryVelocity = GetVelocity(true);
         }
     }
 }

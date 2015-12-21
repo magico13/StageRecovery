@@ -966,10 +966,10 @@ namespace StageRecovery
 				msg.AppendLine("<#8BED8B>" + Math.Round(100 * SpeedPercent, 1) + "%</> speed");
 				msg.AppendLine("");
                 //List the total refunds for parts, fuel, and the combined total
+                msg.AppendLine("Total refunds: <#B4D455>£" + FundsReturned + "</>");
 				msg.AppendLine("Total refunded for parts: <#B4D455>£" + DryReturns + "</>");
 				msg.AppendLine("Total refunded for fuel: <#B4D455>£" + FuelReturns + "</>");
-				msg.AppendLine("Total refunds: <#B4D455>£" + FundsReturned + "</>");
-                msg.AppendLine("Total value: <#B4D455>£" + FundsOriginal + "</>");
+                msg.AppendLine("Stage value: <#B4D455>£" + FundsOriginal + "</>");
 
                 if (KerbalsOnboard.Count > 0)
                 {
@@ -999,7 +999,7 @@ namespace StageRecovery
                     msg.AppendLine("Propulsive landing. Check SR Flight GUI for information about amount of propellant consumed.");
                 }
 
-                msg.AppendLine("Stage contained the following parts:");
+                msg.AppendLine("\nStage contained the following parts:");
                 for (int i = 0; i < PartsRecovered.Count; i++)
                 {
                     msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <#B4D455>£" + (PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent) + "</>");
@@ -1049,7 +1049,7 @@ namespace StageRecovery
                     msg.AppendLine("Attempted propulsive landing but could not find a point of control. Add a pilot or probe core with SAS for propulsive landings.");
                 }
 
-                msg.AppendLine("Stage contained the following parts:");
+                msg.AppendLine("\nStage contained the following parts:");
                 for (int i = 0; i < PartsRecovered.Count; i++)
                 {
                     msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i));
