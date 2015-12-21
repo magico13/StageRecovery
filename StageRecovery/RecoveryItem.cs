@@ -687,7 +687,7 @@ namespace StageRecovery
             }
             //If we're not using Flat Rate (thus using Variable Rate) then we have to do a bit more work to get the SpeedPercent
             else
-                SpeedPercent = GetVariableRecoveryValue(Vt);
+                SpeedPercent = (float)GetVariableRecoveryValue(Vt);
 
             //Calculate the distance from KSC in meters
             KSCDistance = (float)SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(vessel.latitude, vessel.longitude));
@@ -1063,7 +1063,7 @@ namespace StageRecovery
 
         //When using the variable recovery rate we determine the rate from a negative curvature quadratic with y=100 at velocity=lowCut and y=0 at vel=highCut.
         //No other zeroes are in that range. Check this github issue for an example and some more details: https://github.com/magico13/StageRecovery/issues/1
-        public static float GetVariableRecoveryValue(float v)
+        public static double GetVariableRecoveryValue(double v)
         {
             //We're following ax^2+bx+c=recovery
             //We know that -b/2a=LowCut since that's the only location where the derivative of the quadratic is 0 (the max)

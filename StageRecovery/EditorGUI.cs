@@ -11,7 +11,7 @@ namespace StageRecovery
         public List<EditorStatItem> stages = new List<EditorStatItem>();
         public bool showEditorGUI = false;
         bool highLight = false, tanksDry = true;
-        public Rect EditorGUIRect = new Rect(Screen.width / 3, Screen.height / 3, 200, 1);
+        public Rect EditorGUIRect = new Rect(Screen.width / 3, Screen.height / 3, 250, 1);
         public void DrawEditorGUI(int windowID)
         {
             GUILayout.BeginVertical();
@@ -39,6 +39,7 @@ namespace StageRecovery
                 GUILayout.Label("Stage " + stage.stageNumber);
                 double vel = tanksDry ? stage.EmptyVelocity : stage.FullVelocity;
                 GUILayout.Label(vel.ToString("N1")+" m/s");
+                GUILayout.Label(stage.GetRecoveryPercent(tanksDry) + "%");
             //    GUILayout.Label("("+stage.FullVelocity.ToString("N1") + ")");
                 if (GUILayout.Button("Highlight"))
                 {
@@ -189,115 +190,6 @@ namespace StageRecovery
             ConsolidateStages();
 
             Debug.Log("[SR] Found " + stages.Count + " stages!");
-
-           /* while (toCheck.Count > 0) //should instead search through the children, stopping when finding a decoupler, then switch to it's children
-            {
-                parent = toCheck[0];
-                toCheck.RemoveAt(0);
-                current.parts.Add(parent);
-                current.dryMass += parent.mass;
-                current.mass += parent.mass + parent.GetResourceMass();
-
-                foreach (Part part in parent.children) //does this include the parent? Hopefully not //Is this recursive? If not, this will be easier but we need to account for that
-                {
-                    if (!part.Modules.Contains("ModuleDecouple"))
-                    {
-                        //get parachutes
-                        double pChutes = 0;
-                        if (part.Modules.Contains("RealChuteModule"))
-                        {
-                            PartModule realChute = part.Modules["RealChuteModule"];
-                            ConfigNode rcNode = new ConfigNode();
-                            realChute.Save(rcNode);
-
-                            //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
-                            Type matLibraryType = AssemblyLoader.loadedAssemblies
-                                .SelectMany(a => a.assembly.GetExportedTypes())
-                                .SingleOrDefault(t => t.FullName == "RealChute.Libraries.MaterialsLibrary");
-
-                            //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
-                            //We get that from the PPMS 
-                            ConfigNode[] parachutes = rcNode.GetNodes("PARACHUTE");
-                            //We then act on each individual parachute in the module
-                            foreach (ConfigNode chute in parachutes)
-                            {
-                                //First off, the diameter of the parachute. From that we can (later) determine the Vt, assuming a circular chute
-                                float diameter = float.Parse(chute.GetValue("deployedDiameter"));
-                                //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
-                                string mat = chute.GetValue("material");
-                                //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
-                                System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
-                                //In order to invoke the method, we need to grab the active instance of the material library
-                                object MatLibraryInstance = matLibraryType.GetProperty("instance").GetValue(null, null);
-                                //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
-                                object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
-                                //With that material object we can extract the dragCoefficient using the helper function above.
-                                float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
-                                //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
-                                //But it works perfectly for mutiple identical parachutes (the normal case)
-                                pChutes += dragC * (float)Math.Pow(diameter, 2);
-                            }
-                            realChuteInUse = true;
-                        }
-                        else if (part.Modules.Contains("RealChuteFAR")) //RealChute Lite for FAR
-                        {
-                            PartModule realChute = part.Modules["RealChuteFAR"];
-                            float diameter = (float)realChute.Fields.GetValue("deployedDiameter");
-                            // = float.Parse(realChute.moduleValues.GetValue("deployedDiameter"));
-                            float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
-                            pChutes += dragC * (float)Math.Pow(diameter, 2);
-
-                            realChuteInUse = true;
-                        }
-                        else if (!realChuteInUse && part.Modules.Contains("ModuleParachute"))
-                        {
-                            double scale = 1.0;
-                            //check for Tweakscale and modify the area appropriately
-                            if (part.Modules.Contains("TweakScale"))
-                            {
-                                PartModule tweakScale = part.Modules["TweakScale"];
-                                double currentScale = 100, defaultScale = 100;
-                                double.TryParse(tweakScale.Fields.GetValue("currentScale").ToString(), out currentScale);
-                                double.TryParse(tweakScale.Fields.GetValue("defaultScale").ToString(), out defaultScale);
-                                scale = currentScale / defaultScale;
-                            }
-
-                            ModuleParachute mp = (ModuleParachute)part.Modules["ModuleParachute"];
-                            //dragCoeff += part.mass * mp.fullyDeployedDrag;
-                            pChutes += mp.areaDeployed * Math.Pow(scale, 2);
-                        }
-
-                        current.chuteArea += pChutes;
-                        current.parts.Add(part);
-                        toCheck.Add(part);
-                    }
-                    else
-                    {
-                        //stages.Add(current);
-                        //start a new stage
-                        //current = new EditorStatItem();
-                        //stageNum++;
-                        //current.stageNumber = stageNum;
-                        //parent = part;
-                       // break;
-                        //If children isn't recursive, then reparent here and finish the foreach loop (perhaps exclude the decoupler too)
-                        DecouplersToCheck.Add(part);
-                    }
-
-                    current.dryMass += part.mass;
-                    current.mass += part.mass + part.GetResourceMass();
-                }
-                stages.Add(current);
-                if (parent.children.Count == 0)
-                    break;
-                else
-                {
-                    //start a new stage
-                    current = new EditorStatItem();
-                    stageNum++;
-                    current.stageNumber = stageNum;
-                }
-            }*/
         }
 
         StageParts DetermineStage(Part parent)
@@ -421,11 +313,29 @@ namespace StageRecovery
 
         private double GetVelocity(bool dry=true)
         {
-
             if (dry)
                 return StageRecovery.VelocityEstimate(dryMass, chuteArea);
             else
                 return StageRecovery.VelocityEstimate(mass, chuteArea);
+        }
+
+        public double GetRecoveryPercent(bool dry=true)
+        {
+            double Vt = GetVelocity(dry);
+            bool recovered = false;
+            if (Settings.instance.FlatRateModel)
+                recovered = Vt < Settings.instance.CutoffVelocity;
+            else
+                recovered = Vt < Settings.instance.HighCut;
+
+            if (!recovered)
+                return 0;
+
+            double recoveryPercent = 0;
+            if (recovered && Settings.instance.FlatRateModel) recoveryPercent = 1;
+            else if (recovered && !Settings.instance.FlatRateModel) recoveryPercent = RecoveryItem.GetVariableRecoveryValue(Vt);
+
+            return Math.Round(100 * recoveryPercent, 2);
         }
 
         public void Highlight(bool dry=true)
