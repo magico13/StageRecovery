@@ -234,7 +234,7 @@ namespace StageRecovery
                     //Add the ship to the RecoveryQueue to be handled by the VesselDestroy event
                     instance.RecoveryQueue.Add(recItem);
 
-                    Debug.Log("[SR] Current RecoveryQueue size: " + instance.RecoveryQueue.Count);
+                   // Debug.Log("[SR] Current RecoveryQueue size: " + instance.RecoveryQueue.Count);
 
                     StageWatchList.Remove(id);
                 }
@@ -402,8 +402,6 @@ namespace StageRecovery
 
                 //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
                 Debug.Log("[SR] Searching in RecoveryQueue (" + instance.RecoveryQueue.Count + ") for " + v.id);
-                foreach (RecoveryItem r in instance.RecoveryQueue)
-                    Debug.Log("[SR] " + r.vessel.id);
                 RecoveryItem Stage;
                 if (instance.RecoveryQueue.Count > 0 && instance.RecoveryQueue.Exists(ri => ri.vessel.id == v.id))
                 {

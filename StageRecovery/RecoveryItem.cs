@@ -296,11 +296,21 @@ namespace StageRecovery
             Dictionary<string, float> propsUsed = new Dictionary<string, float>();
             //The stage must be controlled to be landed this way
             bool stageControllable = vessel.protoVessel.wasControllable;
+            if (!stageControllable && KerbalsOnboard.Count > 0)
+            {
+                if (!Settings.instance.UseUpgrades)
+                    stageControllable = true;
+                else
+                {
+                    if (KerbalsOnboard.Exists(pcm => pcm.experienceTrait.Title == "Pilot"))
+                        stageControllable = true;
+                }
+            }
             try
             {
                 if (stageControllable && Settings.instance.UseUpgrades)
                 {
-                    stageControllable = vessel.GetVesselCrew().Find(c => c.experienceTrait.Title == "Pilot") != null;
+                    stageControllable = vessel.GetVesselCrew().Exists(c => c.experienceTrait.Title == "Pilot") || KerbalsOnboard.Exists(pcm => pcm.experienceTrait.Title == "Pilot");
                     if (stageControllable)
                         Debug.Log("[SR] Found a kerbal pilot!");
                     else
@@ -669,6 +679,16 @@ namespace StageRecovery
             {
                 //Assume uncontrolled until proven controlled
                 bool stageControllable = vessel.protoVessel.wasControllable;
+                if (!stageControllable && KerbalsOnboard.Count > 0)
+                {
+                    if (!Settings.instance.UseUpgrades)
+                        stageControllable = true;
+                    else
+                    {
+                        if (KerbalsOnboard.Exists(pcm => pcm.trait == "Pilot"))
+                            stageControllable = true;
+                    }
+                }
                 //Cycle through all of the parts on the ship (well, ProtoPartSnaphsots)
                 /*foreach (ProtoPartSnapshot pps in vessel.protoVessel.protoPartSnapshots)
                 {

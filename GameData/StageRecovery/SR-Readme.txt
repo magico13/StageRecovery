@@ -11,6 +11,9 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.6.1 (12/29/2015)
+- Powered recovery should work correctly with pre-recovered Kerbals now
+
 1.6.0 (12/21/2015)
 - Hovering over Stock the SR icon in flight lets you preview the SR window
 - TweakScaled parachutes now supported
