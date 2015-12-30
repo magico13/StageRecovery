@@ -205,7 +205,7 @@ namespace StageRecovery
                     recItem.PreRecoverKerbals();
 
                     //Add the ship to the RecoveryQueue to be handled by the OnDestroy event
-                    RecoveryQueue.Add(recItem);
+                    instance.RecoveryQueue.Add(recItem);
                 }
                 else
                     WatchVessel(vessel);
