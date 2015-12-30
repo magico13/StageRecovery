@@ -615,41 +615,24 @@ namespace StageRecovery
 
             //Holders for the total amount of ablative shielding available, and the maximum total
             float totalHeatShield = 0f, maxHeatShield = 0f;
-            foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+            if (vessel.protoVessel != null)
             {
-                if (p.modules.Find(mod => mod.moduleName == "ModuleAblator") != null)
+                foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
                 {
-                    //Grab the heat shield module
-                    ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
-                    //Determine what type of shielding is in use
-                   /* String ablativeType = heatShield.moduleValues.GetValue("ablative");
-                    //Hopefully it's AblativeShielding, because that's what we want
-                    if (ablativeType == "AblativeShielding")
+                    if (p.modules != null && p.modules.Exists(mod => mod.moduleName == "ModuleAblator"))
                     {
+                        //Grab the heat shield module
+                        ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
+                        //For stock 1.0
                         //Determine the amount of shielding remaining
-                        float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == ablativeType).resourceValues.GetValue("amount"));
+                        float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
                         //And the maximum amount of shielding
-                        float maxShield = float.Parse(p.resources.Find(r => r.resourceName == ablativeType).resourceValues.GetValue("maxAmount"));
+                        float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
                         //Add those to the totals for the craft
                         totalHeatShield += shieldRemaining;
                         maxHeatShield += maxShield;
+
                     }
-                    else //Non-ablative shielding. Add a semi-random amount of shielding.
-                    {
-                        //We add 400 to each. This is so there's still a chance of failure
-                        totalHeatShield += 400;
-                        maxHeatShield += 400;
-                    }*/
-
-                    //For stock 1.0
-                    //Determine the amount of shielding remaining
-                    float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
-                    //And the maximum amount of shielding
-                    float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
-                    //Add those to the totals for the craft
-                    totalHeatShield += shieldRemaining;
-                    maxHeatShield += maxShield;
-
                 }
             }
             //Assume we're not going to burn up until proven that we will
