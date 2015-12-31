@@ -602,62 +602,70 @@ namespace StageRecovery
                     .Select(a => a.assembly.GetExportedTypes())
                     .SelectMany(t => t)
                     .FirstOrDefault(t => t.FullName == "DeadlyReentry.ReentryPhysics") != null;*/
-
-            //For 1.0, check if the heating percent is > 0 (later we'll want to scale with that value)
-            bool DeadlyReentryInstalled = HighLogic.CurrentGame.Parameters.Difficulty.ReentryHeatScale > 0;
-
-            //Holder for the chance of burning up in atmosphere (through my non-scientific calculations)
-            float burnChance = 0f;
-            //If DR is installed, the DRMaxVelocity setting is above 0, and the surface speed is above the DRMaxV setting then we calculate the burnChance
-            if (DeadlyReentryInstalled && Settings.instance.DeadlyReentryMaxVelocity > 0 && vessel.srfSpeed > Settings.instance.DeadlyReentryMaxVelocity)
+            try
             {
-                //the burnChance is 2% per 1% that the surface speed is above the DRMaxV
-                burnChance = (float)(2 * ((vessel.srfSpeed / Settings.instance.DeadlyReentryMaxVelocity) - 1));
-                //Log a message alerting us to the speed and the burnChance
-                Debug.Log("[SR] DR velocity exceeded (" + vessel.srfSpeed + "/" + Settings.instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
-            }
+                //For 1.0, check if the heating percent is > 0 (later we'll want to scale with that value)
+                bool DeadlyReentryInstalled = HighLogic.CurrentGame.Parameters.Difficulty.ReentryHeatScale > 0;
 
-            if (burnChance == 0) return false;
-
-            //Holders for the total amount of ablative shielding available, and the maximum total
-            float totalHeatShield = 0f, maxHeatShield = 0f;
-            if (vessel.protoVessel != null)
-            {
-                foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                //Holder for the chance of burning up in atmosphere (through my non-scientific calculations)
+                float burnChance = 0f;
+                //If DR is installed, the DRMaxVelocity setting is above 0, and the surface speed is above the DRMaxV setting then we calculate the burnChance
+                if (DeadlyReentryInstalled && Settings.instance.DeadlyReentryMaxVelocity > 0 && vessel.srfSpeed > Settings.instance.DeadlyReentryMaxVelocity)
                 {
-                    if (p.modules != null && p.modules.Exists(mod => mod.moduleName == "ModuleAblator"))
-                    {
-                        //Grab the heat shield module
-                        ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
-                        //For stock 1.0
-                        //Determine the amount of shielding remaining
-                        float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
-                        //And the maximum amount of shielding
-                        float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
-                        //Add those to the totals for the craft
-                        totalHeatShield += shieldRemaining;
-                        maxHeatShield += maxShield;
+                    //the burnChance is 2% per 1% that the surface speed is above the DRMaxV
+                    burnChance = (float)(2 * ((vessel.srfSpeed / Settings.instance.DeadlyReentryMaxVelocity) - 1));
+                    //Log a message alerting us to the speed and the burnChance
+                    Debug.Log("[SR] DR velocity exceeded (" + vessel.srfSpeed + "/" + Settings.instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
+                }
 
+                if (burnChance == 0) return false;
+
+                //Holders for the total amount of ablative shielding available, and the maximum total
+                float totalHeatShield = 0f, maxHeatShield = 0f;
+                if (vessel.protoVessel != null)
+                {
+                    foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                    {
+                        if (p != null && p.modules != null && p.modules.Exists(mod => mod.moduleName == "ModuleAblator"))
+                        {
+                            //Grab the heat shield module
+                            ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
+                            //For stock 1.0
+                            //Determine the amount of shielding remaining
+                            float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
+                            //And the maximum amount of shielding
+                            float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
+                            //Add those to the totals for the craft
+                            totalHeatShield += shieldRemaining;
+                            maxHeatShield += maxShield;
+
+                        }
                     }
                 }
+                //Assume we're not going to burn up until proven that we will
+                bool burnIt = false;
+                //Well, we can't burn up unless the chance of doing so is greater than 0
+                if (burnChance > 0)
+                {
+                    //If there's heatshields on the vessel then reduce the chance by the current total/the max. Aka, up to 100%
+                    if (maxHeatShield > 0)
+                        burnChance -= (totalHeatShield / maxHeatShield);
+                    //Pick a random number between 0 and 1
+                    System.Random rand = new System.Random();
+                    double choice = rand.NextDouble();
+                    //If that's less than or equal to the chance of burning, then we burn (25% chance = 0.25, random must be below 0.25)
+                    burnIt = (choice <= burnChance);
+                    //Once again, more log messages to help with debugging of people's issues
+                    Debug.Log("[SR] Burn chance: " + burnChance + " rand: " + choice + " burning? " + burnIt);
+                }
+                return burnIt;
             }
-            //Assume we're not going to burn up until proven that we will
-            bool burnIt = false;
-            //Well, we can't burn up unless the chance of doing so is greater than 0
-            if (burnChance > 0)
+            catch (Exception e)
             {
-                //If there's heatshields on the vessel then reduce the chance by the current total/the max. Aka, up to 100%
-                if (maxHeatShield > 0)
-                    burnChance -= (totalHeatShield / maxHeatShield);
-                //Pick a random number between 0 and 1
-                System.Random rand = new System.Random();
-                double choice = rand.NextDouble();
-                //If that's less than or equal to the chance of burning, then we burn (25% chance = 0.25, random must be below 0.25)
-                burnIt = (choice <= burnChance);
-                //Once again, more log messages to help with debugging of people's issues
-                Debug.Log("[SR] Burn chance: " + burnChance + " rand: " + choice + " burning? " + burnIt);
+                Debug.Log("[SR] Exception while calculating burn chance. Assuming not burned up.");
+                Debug.LogException(e);
+                return false;
             }
-            return burnIt;
         }
 
         //This calculates and sets the three recovery percentages (Recovery, Distance, and Speed Percents) along with the distance from KSC
