@@ -456,6 +456,9 @@ namespace StageRecovery
                     totalThrust += e.maxThrust;
                     netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
                 }*/
+
+                Debug.Log("[SR] Controlled and has engines. TWR: "+(totalThrust / (9.81*totalMass)));
+
                 if (totalThrust < (totalMass * 9.81) * Settings.instance.MinTWR) //Need greater than 1 TWR to land. Planes would be different, but we ignore them. This isn't quite true with parachutes, btw.
                     return finalVelocity;
                 //Now we determine the netISP by taking the total thrust and dividing by the stuff we calculated earlier.
@@ -491,6 +494,8 @@ namespace StageRecovery
 
                 double finalMassRequired = totalMass * Math.Exp(-(1.5 * (finalVelocity-cutoff+2)) / (9.81 * netISP));
                 double massRequired = totalMass - finalMassRequired;
+
+                Debug.Log("[SR] Requires " + propsUsed.Count + " fuels. " + String.Join(", ", propsUsed.Keys.ToArray()));
 
                 //If the engine doesn't need fuel (ie, electric engines from firespitter) then we just say you land
                 if (propsUsed.Count == 0)
@@ -536,6 +541,7 @@ namespace StageRecovery
                     //If we don't have enough fuel, we determine how much we CAN use so that maybe we'll land slow enough for a partial refund
                     if (!enoughFuel)
                     {
+                        Debug.Log("[SR] Not enough fuel for full landing. Attempting partial landing.");
                         float limiterAmount = resources.ContainsKey(limitingFuelType) ? (float)resources[limitingFuelType] : 0;
                         float ratio1 = propsUsed[limitingFuelType];
                         foreach (KeyValuePair<string, float> entry in new Dictionary<string, float>(propAmounts))
@@ -577,7 +583,7 @@ namespace StageRecovery
                             }
                     //Calculate the total delta-v expended.
                     double totaldV = netISP * 9.81 * Math.Log(totalMass / (totalMass - massRemoved));
-                    //Divide that by 2.5 and subtract it from the velocity after parachutes.
+                    //Divide that by 1.5 and subtract it from the velocity after parachutes.
                     finalVelocity -= (float)(totaldV / 1.5);
                 }
             }
