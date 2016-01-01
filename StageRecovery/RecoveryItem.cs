@@ -632,16 +632,20 @@ namespace StageRecovery
                             ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
                             //For stock 1.0
                             //Determine the amount of shielding remaining
-                            float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
-                            //And the maximum amount of shielding
-                            float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
-                            //Add those to the totals for the craft
-                            totalHeatShield += shieldRemaining;
-                            maxHeatShield += maxShield;
+                            if (p.resources.Exists(r => r.resourceName == "Ablator"))
+                            {
+                                float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
+                                //And the maximum amount of shielding
+                                float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
+                                //Add those to the totals for the craft
+                                totalHeatShield += shieldRemaining;
+                                maxHeatShield += maxShield;
+                            }
 
                         }
                     }
                 }
+                Debug.Log("[SR] Found " + totalHeatShield + " ablator remaining with " + maxHeatShield + " total.");
                 //Assume we're not going to burn up until proven that we will
                 bool burnIt = false;
                 //Well, we can't burn up unless the chance of doing so is greater than 0
