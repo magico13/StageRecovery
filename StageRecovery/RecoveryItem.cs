@@ -630,11 +630,17 @@ namespace StageRecovery
                         {
                             //Grab the heat shield module
                             ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
-                            string ablativeRsc = heatShield.moduleValues.GetValue("ablativeResource");
+                            
+                            string ablativeRsc = "Ablator";
+                            if (p.partInfo.partPrefab != null && p.partInfo.partPrefab.Modules.Contains("ModuleAblator"))
+                                ablativeRsc = ((ModuleAblator)p.partInfo.partPrefab.Modules["ModuleAblator"]).ablativeResource;
+                           
                             //For stock 1.0
                             //Determine the amount of shielding remaining
+                            //Debug.Log("[SR] Looking for resource " + ablativeRsc);
                             if (p.resources.Exists(r => r.resourceName == ablativeRsc))
                             {
+                              //  Debug.Log("[SR] Found resource " + ablativeRsc);
                                 float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == ablativeRsc).resourceValues.GetValue("amount"));
                                 //And the maximum amount of shielding
                                 float maxShield = float.Parse(p.resources.Find(r => r.resourceName == ablativeRsc).resourceValues.GetValue("maxAmount"));
