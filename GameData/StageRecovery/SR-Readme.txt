@@ -25,6 +25,9 @@ Changelog:
 - Improved the Editor Helper. Now splits the vessel into individual stages and provides velocity estimates for each stage. Will be improved after receiving feedback
 - New setting to completely remove all SR buttons, accessible only through the config file
 
+1.5.8 - (11/09/2015)
+- Updated to KSP 1.0.5
+
 1.5.7 - (07/11/2015)
 - Fixed issues with kerbal recovery causing lost levels
 - Fixed compatibility issue with RSS (checking only for Kerbin)
