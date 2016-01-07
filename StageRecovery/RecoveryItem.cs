@@ -306,8 +306,14 @@ namespace StageRecovery
                         stageControllable = true;
                 }
             }
+            if (!stageControllable)
+            {
+                //double check that there aren't any probe cores
+                stageControllable = vessel.GetVesselCrew().Count > 0 || vessel.protoVessel.protoPartSnapshots.Exists(pps => pps.modules.Exists(m => m.moduleName == "ModuleCommand") && pps.partInfo.partPrefab.CrewCapacity == 0);
+            }
             try
             {
+                
                 if (stageControllable && Settings.instance.UseUpgrades)
                 {
                     stageControllable = vessel.GetVesselCrew().Exists(c => c.experienceTrait.Title == "Pilot") || KerbalsOnboard.Exists(pcm => pcm.experienceTrait.Title == "Pilot");
