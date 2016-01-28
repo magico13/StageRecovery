@@ -264,7 +264,7 @@ namespace StageRecovery
                 return false;
 
             //If the vessel is around the home planet and the periapsis is below 23km, then we add it to the watch list
-            if (ves != null && ves.protoVessel.GetVesselCrew().Count > 0 && ves.orbit != null && ves.mainBody == Planetarium.fetch.Home && ves.orbit.PeA < cutoffAlt && !ves.isEVA && FlightGlobals.ActiveVessel != ves)
+            if (ves != null && FlightGlobals.ActiveVessel != ves && ves.situation != Vessel.Situations.LANDED && ves.situation != Vessel.Situations.PRELAUNCH && ves.situation != Vessel.Situations.SPLASHED && ves.protoVessel.GetVesselCrew().Count > 0 && ves.orbit != null && ves.mainBody == Planetarium.fetch.Home && ves.orbit.PeA < cutoffAlt && !ves.isEVA)
             {
                 if (instance.StageWatchList.Contains(ves.id))
                     return true;
