@@ -100,7 +100,7 @@ namespace StageRecovery
               //  if (!ToolbarManager.ToolbarAvailable)
                 GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
 
-                cutoffAlt = ComputeCutoffAlt(Planetarium.fetch.Home, 0.01F)+100;
+                cutoffAlt = PhysicsHelpers.ComputeCutoffAlt(Planetarium.fetch.Home, 0.01F)+100;
                 Debug.Log("[SR] Determined cutoff altitude to be " + cutoffAlt);
 
                 //Set the eventAdded flag to true so this code doesn't run again
@@ -241,22 +241,7 @@ namespace StageRecovery
             }
         }
 
-        public static float ComputeCutoffAlt(CelestialBody body, float cutoffDensity, float stepSize=100)
-        {
-            //This unfortunately doesn't seem to be coming up with the right altitude for Kerbin (~23km, it finds ~27km)
-            double dens = 0;
-            float alt = (float)body.atmosphereDepth;
-            while (alt > 0)
-            {
-                dens = body.GetDensity(FlightGlobals.getStaticPressure(alt, body), body.atmosphereTemperatureCurve.Evaluate(alt)); //body.atmospherePressureCurve.Evaluate(alt)
-                //Debug.Log("[SR] Alt: " + alt + " Pres: " + dens);
-                if (dens < cutoffDensity)
-                    alt -= stepSize;
-                else
-                    break;
-            }
-            return alt;
-        }
+
 
         public static bool WatchVessel(Vessel ves)
         {
@@ -302,20 +287,6 @@ namespace StageRecovery
                 lvl = 2;
             }
             return lvl;
-        }
-
-        //Function to estimate the final velocity given a stage's mass and parachute info
-        public static double VelocityEstimate(double mass, double chuteInfo, bool RealChute = false)
-        {
-            if (chuteInfo <= 0)
-                return 200;
-            if (mass <= 0)
-                return 0;
-
-            if (!RealChute) //This is by trial and error
-                return (63 * Math.Pow(mass / chuteInfo, 0.4));
-            else //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                return Math.Sqrt((8000 * mass * 9.8) / (1.223 * Math.PI * chuteInfo));
         }
 
         //Helper function that I found on StackExchange that helps immensly with dealing with Reflection. I'm not that good at reflection (accessing other mod's functions and data)

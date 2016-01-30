@@ -110,11 +110,12 @@ namespace StageRecovery
         //This function/method/thing calculates the terminal velocity of the Stage
         private float DetermineTerminalVelocity()
         {
+            double totalCdTimesA = 0;
             float v = 0;
             float totalMass = 0;
            // float dragCoeff = 0;
-            float RCParameter = 0;
-            double totalParachuteArea = 0;
+           // float RCParameter = 0;
+           // double totalParachuteArea = 0;
             bool realChuteInUse = false;
             try
             {
@@ -163,7 +164,7 @@ namespace StageRecovery
                                 float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
                                 //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
                                 //But it works perfectly for mutiple identical parachutes (the normal case)
-                                RCParameter += dragC * (float)Math.Pow(diameter, 2);
+                                totalCdTimesA += (float)(dragC * Math.Pow(diameter/2.0, 2) * Math.PI);
 
                             }
                             //This is a parachute also
@@ -177,12 +178,14 @@ namespace StageRecovery
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
                         float diameter = float.Parse(realChute.moduleValues.GetValue("deployedDiameter"));
                         float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
-                        RCParameter += dragC * (float)Math.Pow(diameter, 2);
+                        totalCdTimesA += dragC * (float)Math.Pow(diameter, 2);
 
                         realChuteInUse = true;
                     }
                     else if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
                     {
+                        double area = 0;
+                        double coefficient = 1;
                         double scale = 1.0;
                         //check for Tweakscale and modify the area appropriately
                         if (ModuleNames.Contains("TweakScale"))
@@ -201,12 +204,51 @@ namespace StageRecovery
                             ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
                             mp.Load(ppms.moduleValues);
                             //totalParachuteArea += mp.areaDeployed;
-                            totalParachuteArea += mp.areaDeployed * Math.Pow(scale, 2);
+                            area = mp.areaDeployed * Math.Pow(scale, 2);
                         }
                         else
                         {
-                            totalParachuteArea += GetParachuteDragFromPart(p.partInfo) * Math.Pow(scale, 2);
+                            area = GetParachuteDragFromPart(p.partInfo) * Math.Pow(scale, 2);
                         }
+
+                        if (p.partRef != null)
+                        {
+                            Debug.Log("[SR] PartRef != null on part "+p.partInfo.name);
+                            coefficient = p.partRef.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.YP));
+                            Debug.Log("[SR] drag coefficient " + p.partRef.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.XN)));
+                            Debug.Log("[SR] drag coefficient " + p.partRef.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.XP)));
+                            Debug.Log("[SR] drag coefficient " + p.partRef.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.YN)));
+                            Debug.Log("[SR] drag coefficient " + p.partRef.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.YP)));
+                            Debug.Log("[SR] drag coefficient " + p.partRef.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.ZN)));
+                            Debug.Log("[SR] drag coefficient " + p.partRef.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.ZP)));
+
+                        }
+                        else if (p.partInfo.partPrefab != null)
+                        {
+                            coefficient = p.partInfo.partPrefab.DragCubes.DragCoeff;
+                            Debug.Log("[SR] PartPrefab != null and drag coefficient is " + coefficient + " for part " + p.partInfo.name);
+                            Part prefab = p.partInfo.partPrefab;
+                            //prefab.DragCubes.ForceUpdate(false, false);
+                            //string names = "";
+                            //prefab.DragCubes.Cubes.ForEach((cube) => names += cube.Name+", ");
+                            DragCube dragCube = prefab.DragCubes.Cubes.FirstOrDefault(c => c.Name == "DEPLOYED");
+                            //Debug.Log("[SR] Cube names: "+names);
+                            foreach (float drag in dragCube.Drag)
+                                Debug.Log("[SR] drag coefficient " + drag);
+                            Debug.Log("[SR] weight: "+dragCube.Weight);
+                            foreach (float a in dragCube.Area)
+                                Debug.Log("[SR] area " + a);
+
+                            Debug.Log("[SR] Precalculated area: " + area);
+                            /*Debug.Log("[SR] drag coefficient " + prefab.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.XP)));
+                            Debug.Log("[SR] drag coefficient " + prefab.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.YN)));
+                            Debug.Log("[SR] drag coefficient " + prefab.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.YP)));
+                            Debug.Log("[SR] drag coefficient " + prefab.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.ZN)));
+                            Debug.Log("[SR] drag coefficient " + prefab.DragCubes.GetCubeCoeffDir(DragCubeList.GetFaceDirection(DragCube.DragFace.ZP)));
+                             */
+                        }
+
+                        totalCdTimesA += area * coefficient;
                         //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
                        // dragCoeff += p.mass * drag;
                         //This is most definitely a parachute part
@@ -226,6 +268,8 @@ namespace StageRecovery
                         //totalParachuteArea += 0.01;
                    // }
                 }
+                //TODO: This
+                //double[] eventData = APIManager.instance.ParachuteDragProcessing.Fire(vessel);
             }
             catch (Exception e)
             {
@@ -236,7 +280,7 @@ namespace StageRecovery
             {
             	//This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
             	//v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
-                v = (float)StageRecovery.VelocityEstimate(totalMass, RCParameter, true);
+                v = (float)PhysicsHelpers.VelocityEstimate(totalMass, totalCdTimesA, true);
             }
             else
             {
@@ -247,7 +291,7 @@ namespace StageRecovery
 	            //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
 	
 	            //v = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
-                v = (float)StageRecovery.VelocityEstimate(totalMass, totalParachuteArea, false);
+                v = (float)PhysicsHelpers.VelocityEstimate(totalMass, totalCdTimesA, false);
             }
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
             Debug.Log("[SR] Vt: " + v);
