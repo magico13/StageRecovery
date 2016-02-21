@@ -31,7 +31,6 @@ namespace StageRecovery
         public RecoveryProcessingEvent OnRecoveryProcessingStart = new RecoveryProcessingEvent();
         public RecoveryProcessingEvent OnRecoveryProcessingFinish = new RecoveryProcessingEvent();
 
-        public DragForceProcessingEvent ParachuteDragProcessing = new DragForceProcessingEvent();
 
         public bool SREnabled
         {
@@ -103,40 +102,6 @@ namespace StageRecovery
             //Loop through the list of listening methods and Invoke them.
             foreach (Action<Vessel> method in listeningMethods)
                 method.Invoke(vessel);
-        }
-    }
-
-    public class DragForceProcessingEvent
-    {
-        //This is the list of methods that should be activated when the event fires
-        private List<Func<Vessel, double>> listeningMethods = new List<Func<Vessel, double>>();
-
-        //This adds an event to the List of listening methods
-        public void Add(Func<Vessel, double> method)
-        {
-            if (!listeningMethods.Contains(method))
-                listeningMethods.Add(method);
-        }
-
-        //This removes and event from the List
-        public void Remove(Func<Vessel, double> method)
-        {
-            //We also only remove it if it's actually in the list.
-            if (listeningMethods.Contains(method))
-                listeningMethods.Remove(method);
-        }
-
-        //This fires the event off, activating all the listening methods.
-        public double Fire(Vessel vessel)
-        {
-            double returnValue = 0;
-            //Loop through the list of listening methods and Invoke them.
-            foreach (Func<Vessel, double> method in listeningMethods)
-            {
-                returnValue += method.Invoke(vessel);
-            }
-            //return the total area*Cd (parachutes) [or dV (powered recovery)?]
-            return returnValue;
         }
     }
 }

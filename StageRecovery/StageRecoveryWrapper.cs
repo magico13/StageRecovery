@@ -128,23 +128,6 @@ namespace StageRecovery
             System.Reflection.MethodInfo removeMethod = successList.GetType().GetMethod("Remove");
             removeMethod.Invoke(successList, new object[] { method });
         }
-
-        /* Adds a listener to the ParachuteDragProccessing Event. When parachute drag is being processed, all listeners
-         * are called and their drag forces are totalled for the final V_t calculation */
-        public static void AddParachuteDragProcessingListener(Func<Vessel, double> method)
-        {
-            object successList = GetMemberInfoValue(SRType.GetMember("ParachuteDragProcessing")[0], Instance);
-            System.Reflection.MethodInfo addMethod = successList.GetType().GetMethod("Add");
-            addMethod.Invoke(successList, new object[] { method });
-        }
-
-        /* Removes a listener from the ParachuteDragProcessing Event. */
-        public static void RemoveParachuteDragProcessingListener(Func<Vessel, double> method)
-        {
-            object successList = GetMemberInfoValue(SRType.GetMember("ParachuteDragProcessing")[0], Instance);
-            System.Reflection.MethodInfo addMethod = successList.GetType().GetMethod("Remove");
-            addMethod.Invoke(successList, new object[] { method });
-        }
         #endregion
 
         #region InternalFunctions

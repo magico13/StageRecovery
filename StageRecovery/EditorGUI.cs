@@ -314,9 +314,9 @@ namespace StageRecovery
         private double GetVelocity(bool dry=true)
         {
             if (dry)
-                return PhysicsHelpers.VelocityEstimate(dryMass, chuteArea);
+                return StageRecovery.VelocityEstimate(dryMass, chuteArea);
             else
-                return PhysicsHelpers.VelocityEstimate(mass, chuteArea);
+                return StageRecovery.VelocityEstimate(mass, chuteArea);
         }
 
         public double GetRecoveryPercent(bool dry=true)
