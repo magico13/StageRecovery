@@ -11,6 +11,10 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.6.3 (02/21/2016)
+- Fix for kerbals being killed in landed vessels
+- MechJeb should appear as a valid control source for landed recovery (untested)
+
 1.6.2 (01/02/2016)
 - Fix for things below 23km not being added to Recovery Queue
 - Fix for ModuleAblators that don't use Ablator resource

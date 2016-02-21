@@ -322,7 +322,7 @@ namespace StageRecovery
                     else
                     {
                         Debug.Log("[SR] No kerbal pilot found, searching for a probe core...");
-                        stageControllable = vessel.protoVessel.protoPartSnapshots.Find(p => p.modules.Find(m => m.moduleName == "ModuleSAS") != null) != null;
+                        stageControllable = vessel.protoVessel.protoPartSnapshots.Exists(p => p.modules.Exists(m => m.moduleName == "ModuleSAS" || m.moduleName == "MechJebCore"));
                         if (stageControllable)
                             Debug.Log("[SR] Found an SAS compatible probe core!");
                         else
