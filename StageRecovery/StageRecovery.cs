@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using KSP;
 using UnityEngine;
-using System.Collections;
+using KSP.UI.Screens;
 
 namespace StageRecovery
 {
@@ -45,7 +43,12 @@ namespace StageRecovery
                 Settings.instance = new Settings();
 
             //Needed to start doing things with GUIs
-            RenderingManager.AddToPostDrawQueue(0, OnDraw);
+            //RenderingManager.AddToPostDrawQueue(0, OnDraw);
+        }
+
+        private void OnGUI()
+        {
+            OnDraw();
         }
 
         //Also needed for GUIs. Not sure why, but this is how KCT was given to me so that's the method I use
@@ -97,7 +100,7 @@ namespace StageRecovery
                 GameEvents.onVesselGoOnRails.Add(VesselUnloadEvent);
                 //GameEvents..Add(DecoupleEvent);
                 //If Blizzy's toolbar isn't available, use the stock one
-              //  if (!ToolbarManager.ToolbarAvailable)
+                //if (!ToolbarManager.ToolbarAvailable)
                 GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
 
                 cutoffAlt = ComputeCutoffAlt(Planetarium.fetch.Home, 0.01F)+100;
@@ -287,7 +290,6 @@ namespace StageRecovery
             Debug.Log("[SR] Adding funds: " + toAdd + ", New total: " + Funding.Instance.Funds);
             return (Funding.Instance.Funds);
         }
-
 
         public static int BuildingUpgradeLevel(SpaceCenterFacility facility)
         {

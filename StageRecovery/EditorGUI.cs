@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
+
 namespace StageRecovery
 {
     public class EditorGUI
@@ -12,6 +13,7 @@ namespace StageRecovery
         public bool showEditorGUI = false;
         bool highLight = false, tanksDry = true;
         public Rect EditorGUIRect = new Rect(Screen.width / 3, Screen.height / 3, 250, 1);
+
         public void DrawEditorGUI(int windowID)
         {
             GUILayout.BeginVertical();
@@ -188,7 +190,6 @@ namespace StageRecovery
             }
 
             ConsolidateStages();
-
             Debug.Log("[SR] Found " + stages.Count + " stages!");
         }
 
