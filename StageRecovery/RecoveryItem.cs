@@ -991,26 +991,26 @@ namespace StageRecovery
             if (recovered && Settings.instance.ShowSuccessMessages)
             {
                 //Start adding some in-game display messages about the return
-				msg.AppendLine("<#8BED8B>Stage '" + StageName + "' recovered " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
+				msg.AppendLine("<color=#8BED8B>Stage '" + StageName + "' recovered " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
 
                 
 				//msg.AppendLine("\n");
                 //List the percent returned and break it down into distance and speed percentages
-				msg.AppendLine("Recovery percentage: <#8BED8B>" + Math.Round(100 * RecoveryPercent, 1) + "%</>");
-				msg.AppendLine("<#8BED8B>" + Math.Round(100 * DistancePercent, 1) + "%</> distance");
-				msg.AppendLine("<#8BED8B>" + Math.Round(100 * SpeedPercent, 1) + "%</> speed");
+				msg.AppendLine("Recovery percentage: <color=#8BED8B>" + Math.Round(100 * RecoveryPercent, 1) + "%</color>");
+				msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * DistancePercent, 1) + "%</color> distance");
+				msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * SpeedPercent, 1) + "%</color> speed");
 				msg.AppendLine("");
                 //List the total refunds for parts, fuel, and the combined total
-                msg.AppendLine("Total refunds: <#B4D455>£" + FundsReturned + "</>");
-				msg.AppendLine("Total refunded for parts: <#B4D455>£" + DryReturns + "</>");
-				msg.AppendLine("Total refunded for fuel: <#B4D455>£" + FuelReturns + "</>");
-                msg.AppendLine("Stage value: <#B4D455>£" + FundsOriginal + "</>");
+                msg.AppendLine("Total refunds: <color=#B4D455>£" + FundsReturned + "</color>");
+				msg.AppendLine("Total refunded for parts: <color=#B4D455>£" + DryReturns + "</color>");
+				msg.AppendLine("Total refunded for fuel: <color=#B4D455>£" + FuelReturns + "</color>");
+                msg.AppendLine("Stage value: <color=#B4D455>£" + FundsOriginal + "</color>");
 
                 if (KerbalsOnboard.Count > 0)
                 {
                     msg.AppendLine("\nKerbals recovered:");
                     foreach (ProtoCrewMember kerbal in KerbalsOnboard)
-                        msg.AppendLine("<#E0D503>" + kerbal.name +"</>");
+                        msg.AppendLine("<color=#E0D503>" + kerbal.name + "</color>");
                 }
                 if (ScienceExperiments.Count > 0)
                 {
@@ -1025,9 +1025,9 @@ namespace StageRecovery
                     msg.AppendLine(ParachuteModule + " Module used.");
                 //Display the terminal velocity (Vt) and what is needed to have any recovery
                 if (Settings.instance.FlatRateModel)
-					msg.AppendLine("Terminal velocity of <#8BED8B>" + Math.Round(Vt, 2) + "</> (less than " + Settings.instance.CutoffVelocity + " needed)");
+					msg.AppendLine("Terminal velocity of <color=#8BED8B>" + Math.Round(Vt, 2) + "</color> (less than " + Settings.instance.CutoffVelocity + " needed)");
                 else
-					msg.AppendLine("Terminal velocity of <#8BED8B>" + Math.Round(Vt, 2) + "</> (less than " + Settings.instance.HighCut + " needed)");
+					msg.AppendLine("Terminal velocity of <color=#8BED8B>" + Math.Round(Vt, 2) + "</color> (less than " + Settings.instance.HighCut + " needed)");
 
                 if (poweredRecovery)
                 {
@@ -1037,7 +1037,7 @@ namespace StageRecovery
                 msg.AppendLine("\nStage contained the following parts:");
                 for (int i = 0; i < PartsRecovered.Count; i++)
                 {
-                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <#B4D455>£" + (PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent) + "</>");
+                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <color=#B4D455>£" + (PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent) + "</color>");
                 }
 
                 //Setup and then post the message
@@ -1046,7 +1046,7 @@ namespace StageRecovery
             }
             else if (!recovered && Settings.instance.ShowFailureMessages)
             {
-                msg.AppendLine("<#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
+                msg.AppendLine("<color=#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
                 
                 //If we're career mode (MONEY!) then we also let you know the (why do I say 'we'? It's only me working on this) total cost of the parts
                 if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
@@ -1060,7 +1060,7 @@ namespace StageRecovery
                         totalCost += Math.Max(ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet), 0);
                     }
                     //Alert the user to what the total value was (without modifiers)
-                    msg.AppendLine("It was valued at <#FF9900>" + totalCost + "</> Funds."); //ED0B0B
+                    msg.AppendLine("It was valued at <color=#FF9900>" + totalCost + "</color> Funds."); //ED0B0B
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
@@ -1068,7 +1068,7 @@ namespace StageRecovery
                 //Display which module was used for recovery
                 msg.AppendLine(ParachuteModule + " Module used.");
                 //Display the terminal velocity (Vt) and what is needed to have any recovery
-                msg.AppendLine("Terminal velocity of <#FF9900>" + Math.Round(Vt, 2) + "</> (less than " + (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut) + " needed)");
+                msg.AppendLine("Terminal velocity of <color=#FF9900>" + Math.Round(Vt, 2) + "</color> (less than " + (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut) + " needed)");
                 
                 //If it failed because of burning up (can be in addition to speed) then we'll let you know
                 if (burnedUp)
