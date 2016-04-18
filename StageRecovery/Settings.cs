@@ -7,14 +7,15 @@ using KSP.UI.Screens;
 namespace StageRecovery
 {
     //The settings class. It handles all interactions with the settings file and is related to the GUI for changing the settings.
-    public class Settings
+    public sealed class Settings
     {
         //This is the Settings instance. Only one exists and it's how we interact with the settings
-        public static Settings instance;
+        private static readonly Settings instance = new Settings();
+
         //This is the instance of the SettingsGUI, where we can change settings in game. This is how we interact with that class.
         public SettingsGUI gui = new SettingsGUI();
         //The path for the settings file (Config.txt)
-        protected String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
+        private String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent]
         public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride;
@@ -26,7 +27,7 @@ namespace StageRecovery
         public IgnoreList BlackList = new IgnoreList();
 
         //The constructor for the settings class. It sets the values to default (which are then replaced when Load() is called)
-        public Settings()
+        private Settings()
         {
             SREnabled = true;
             RecoveryModifier = 0.75f;
@@ -50,6 +51,14 @@ namespace StageRecovery
 
             RecoveredStages = new List<RecoveryItem>();
             DestroyedStages = new List<RecoveryItem>();
+        }
+
+        public static Settings Instance
+        {
+            get
+            {
+                return instance;
+            }
         }
 
         //Loads the settings from the file

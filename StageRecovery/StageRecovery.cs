@@ -25,8 +25,8 @@ namespace StageRecovery
         //Needed to instantiate the Blizzy Toolbar button
         internal StageRecovery()
         {
-            if (ToolbarManager.ToolbarAvailable && Settings.instance != null && Settings.instance.UseToolbarMod)
-                Settings.instance.gui.AddToolbarButton();
+            if (ToolbarManager.ToolbarAvailable && Settings.Instance != null && Settings.Instance.UseToolbarMod)
+                Settings.Instance.gui.AddToolbarButton();
         }
 
         //Fired when the mod loads each scene
@@ -39,8 +39,8 @@ namespace StageRecovery
                 return;
 
             //Create a new Settings instance if one doesn't exist
-            if (Settings.instance == null)
-                Settings.instance = new Settings();
+            //if (Settings.Instance == null)
+            //    Settings.Instance = new Settings();
 
             //Needed to start doing things with GUIs
             //RenderingManager.AddToPostDrawQueue(0, OnDraw);
@@ -54,35 +54,35 @@ namespace StageRecovery
         //Also needed for GUIs. Not sure why, but this is how KCT was given to me so that's the method I use
         private void OnDraw()
         {
-            Settings.instance.gui.SetGUIPositions(OnWindow);
+            Settings.Instance.gui.SetGUIPositions(OnWindow);
         }
 
         //Once again, GUIs
         private void OnWindow(int windowID)
         {
-            Settings.instance.gui.DrawGUIs(windowID);
+            Settings.Instance.gui.DrawGUIs(windowID);
         }
 
         //When the scene changes and the mod is destroyed
         public void OnDestroy()
         {
             //If we're in the MainMenu, don't do anything
-            if (forbiddenScenes.Contains(HighLogic.LoadedScene) || Settings.instance == null || Settings.instance.gui == null)
+            if (forbiddenScenes.Contains(HighLogic.LoadedScene) || Settings.Instance == null || Settings.Instance.gui == null)
                 return;
 
             //Remove the button from the stock toolbar
-            if (Settings.instance.gui.SRButtonStock != null)
-                ApplicationLauncher.Instance.RemoveModApplication(Settings.instance.gui.SRButtonStock);
+            if (Settings.Instance.gui.SRButtonStock != null)
+                ApplicationLauncher.Instance.RemoveModApplication(Settings.Instance.gui.SRButtonStock);
             //Remove the button from Blizzy's toolbar
-            if (Settings.instance.gui.SRToolbarButton != null)
-                Settings.instance.gui.SRToolbarButton.Destroy();
+            if (Settings.Instance.gui.SRToolbarButton != null)
+                Settings.Instance.gui.SRToolbarButton.Destroy();
         }
 
         //Fired when the mod loads each scene
         public void Start()
         {
-            if (Settings.instance != null)
-                Settings.instance.gui.hideAll();
+            if (Settings.Instance != null)
+                Settings.Instance.gui.hideAll();
 
             //If we're in the MainMenu, don't do anything
             if (forbiddenScenes.Contains(HighLogic.LoadedScene))
@@ -101,7 +101,7 @@ namespace StageRecovery
                 //GameEvents..Add(DecoupleEvent);
                 //If Blizzy's toolbar isn't available, use the stock one
                 //if (!ToolbarManager.ToolbarAvailable)
-                GameEvents.onGUIApplicationLauncherReady.Add(Settings.instance.gui.OnGUIAppLauncherReady);
+                GameEvents.onGUIApplicationLauncherReady.Add(Settings.Instance.gui.OnGUIAppLauncherReady);
 
                 cutoffAlt = ComputeCutoffAlt(Planetarium.fetch.Home, 0.01F)+100;
                 Debug.Log("[SR] Determined cutoff altitude to be " + cutoffAlt);
@@ -110,20 +110,20 @@ namespace StageRecovery
                 eventAdded = true;
             }
             //Load the settings from file
-            Settings.instance.Load();
+            Settings.Instance.Load();
             //Confine the RecoveryModifier to be between 0 and 1
-            if (Settings.instance.RecoveryModifier > 1) Settings.instance.RecoveryModifier = 1;
-            if (Settings.instance.RecoveryModifier < 0) Settings.instance.RecoveryModifier = 0;
+            if (Settings.Instance.RecoveryModifier > 1) Settings.Instance.RecoveryModifier = 1;
+            if (Settings.Instance.RecoveryModifier < 0) Settings.Instance.RecoveryModifier = 0;
             //Save the settings file (in case it doesn't exist yet). I suppose this is somewhat unnecessary if the file exists
-            Settings.instance.Save();
+            Settings.Instance.Save();
 
             //Load and resave the BlackList. The save ensures that the file will be created if it doesn't exist.
-            Settings.instance.BlackList.Load();
-            Settings.instance.BlackList.Save();
+            Settings.Instance.BlackList.Load();
+            Settings.Instance.BlackList.Save();
 
             if (!HighLogic.LoadedSceneIsFlight)
             {
-                Settings.instance.ClearStageLists();
+                Settings.Instance.ClearStageLists();
             }
 
             if (HighLogic.LoadedSceneIsFlight)
@@ -151,7 +151,7 @@ namespace StageRecovery
         public void VesselUnloadEvent(Vessel vessel)
         {
             //If we're disabled, just return
-            if (!Settings.instance.SREnabled)
+            if (!Settings.Instance.SREnabled)
                 return;
 
             //If the vessel or the protovessel are null then we surely can't do anything with them
@@ -161,7 +161,7 @@ namespace StageRecovery
             ProtoVessel pv = vessel.protoVessel;
 
             //If we aren't supposed to recover clamps, then don't try.
-            if (Settings.instance.RecoverClamps)
+            if (Settings.Instance.RecoverClamps)
             {
                 //If we've already recovered the clamps, then no need to try again
                 if (clampsRecovered.Find(a => a.id == vessel.id) != null)
@@ -186,7 +186,7 @@ namespace StageRecovery
                     AddFunds(totalRefund);
                     //Fire the successful recovery event. Even though this isn't a stage we still need to do this for things like KCT to recover the parts. 
                     //Can be averted with stock functions if I can get them working properly
-                    APIManager.instance.RecoverySuccessEvent.Fire(vessel, new float[] { 100, totalRefund, 0 }, "SUCCESS");
+                    APIManager.Instance.RecoverySuccessEvent.Fire(vessel, new float[] { 100, totalRefund, 0 }, "SUCCESS");
                     //And then we try a bunch of things to make sure the clamps are removed (remove it from the flight state, kill it, and destroy it)
                     HighLogic.CurrentGame.flightState.protoVessels.Remove(pv);
                     vessel.Die();
@@ -196,7 +196,7 @@ namespace StageRecovery
             }
             
             //If it's a stage that will be destroyed, we need to manually recover the Kerbals
-            if (Settings.instance.RecoverKerbals && pv.GetVesselCrew().Count > 0)
+            if (Settings.Instance.RecoverKerbals && pv.GetVesselCrew().Count > 0)
             {
                 //Check if the conditions for vessel destruction are met
                 if (vessel != FlightGlobals.ActiveVessel && !vessel.isEVA && vessel.mainBody == Planetarium.fetch.Home && pv.situation != Vessel.Situations.LANDED && vessel.atmDensity >= 0.01) //unloading in > 0.01 atm and not landed //pv.altitude < vessel.mainBody.atmosphereDepth
@@ -294,7 +294,7 @@ namespace StageRecovery
         public static int BuildingUpgradeLevel(SpaceCenterFacility facility)
         {
             int lvl = 0;
-            if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Settings.instance.UseUpgrades)
+            if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Settings.Instance.UseUpgrades)
             {
                 lvl = (int)(2 * ScenarioUpgradeableFacilities.GetFacilityLevel(facility));
             }
@@ -359,7 +359,7 @@ namespace StageRecovery
         private void VesselDestroyEvent(Vessel v)
         {
             //If we're disabled, just return
-            if (!Settings.instance.SREnabled)
+            if (!Settings.Instance.SREnabled)
                 return;
 
             if (!sceneChangeComplete)
@@ -391,7 +391,7 @@ namespace StageRecovery
                 bool OnlyBlacklistedItems = true;
                 foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
                 {
-                    if (!Settings.instance.BlackList.Contains(pps.partInfo.title))
+                    if (!Settings.Instance.BlackList.Contains(pps.partInfo.title))
                     {
                         OnlyBlacklistedItems = false;
                         break;
@@ -400,7 +400,7 @@ namespace StageRecovery
                 if (OnlyBlacklistedItems) return;
 
                 //If we got this far, we can assume we're going to be attempting to recover the vessel, so we should fire the processing event
-                APIManager.instance.OnRecoveryProcessingStart.Fire(v);
+                APIManager.Instance.OnRecoveryProcessingStart.Fire(v);
 
                 //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
                 Debug.Log("[SR] Searching in RecoveryQueue (" + instance.RecoveryQueue.Count + ") for " + v.id);
@@ -421,7 +421,7 @@ namespace StageRecovery
                 //Post a message to the stock message system, if people are still using that.
                 Stage.PostStockMessage();
 
-                APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
+                APIManager.Instance.OnRecoveryProcessingFinish.Fire(v);
             }
         }
     }
