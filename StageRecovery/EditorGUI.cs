@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
+
 namespace StageRecovery
 {
     public class EditorGUI
@@ -12,6 +13,7 @@ namespace StageRecovery
         public bool showEditorGUI = false;
         bool highLight = false, tanksDry = true;
         public Rect EditorGUIRect = new Rect(Screen.width / 3, Screen.height / 3, 250, 1);
+
         public void DrawEditorGUI(int windowID)
         {
             GUILayout.BeginVertical();
@@ -188,7 +190,6 @@ namespace StageRecovery
             }
 
             ConsolidateStages();
-
             Debug.Log("[SR] Found " + stages.Count + " stages!");
         }
 
@@ -323,17 +324,17 @@ namespace StageRecovery
         {
             double Vt = GetVelocity(dry);
             bool recovered = false;
-            if (Settings.instance.FlatRateModel)
-                recovered = Vt < Settings.instance.CutoffVelocity;
+            if (Settings.Instance.FlatRateModel)
+                recovered = Vt < Settings.Instance.CutoffVelocity;
             else
-                recovered = Vt < Settings.instance.HighCut;
+                recovered = Vt < Settings.Instance.HighCut;
 
             if (!recovered)
                 return 0;
 
             double recoveryPercent = 0;
-            if (recovered && Settings.instance.FlatRateModel) recoveryPercent = 1;
-            else if (recovered && !Settings.instance.FlatRateModel) recoveryPercent = RecoveryItem.GetVariableRecoveryValue(Vt);
+            if (recovered && Settings.Instance.FlatRateModel) recoveryPercent = 1;
+            else if (recovered && !Settings.Instance.FlatRateModel) recoveryPercent = RecoveryItem.GetVariableRecoveryValue(Vt);
 
             return Math.Round(100 * recoveryPercent, 2);
         }
@@ -342,9 +343,9 @@ namespace StageRecovery
         {
             double vel = dry ? EmptyVelocity : FullVelocity;
             UnityEngine.Color stageColor = UnityEngine.Color.red;
-            if (vel < Settings.instance.HighCut)
+            if (vel < Settings.Instance.HighCut)
                 stageColor = UnityEngine.Color.yellow;
-            if (vel < Settings.instance.LowCut)
+            if (vel < Settings.Instance.LowCut)
                 stageColor = UnityEngine.Color.green;
             //Part p = parts[0];
             foreach (Part p in parts)

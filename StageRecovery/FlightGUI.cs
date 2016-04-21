@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace StageRecovery
@@ -30,14 +29,14 @@ namespace StageRecovery
             int temp = firstToolbarIndex;
             //firstToolbarIndex = GUILayout.Toolbar(firstToolbarIndex, new string[] { "Recovered", "Destroyed" });
             GUILayout.BeginHorizontal();
-            bool active = GUILayout.Toggle(firstToolbarIndex == 0, "Recovered" + (Settings.instance.RecoveredStages.Count > 0 ? " ("+Settings.instance.RecoveredStages.Count+")" : ""), GUI.skin.button);
+            bool active = GUILayout.Toggle(firstToolbarIndex == 0, "Recovered" + (Settings.Instance.RecoveredStages.Count > 0 ? " ("+Settings.Instance.RecoveredStages.Count+")" : ""), GUI.skin.button);
             if (!active && firstToolbarIndex == 0)
                 firstToolbarIndex = -1;
             else if (active)
                 firstToolbarIndex = 0;
 
 
-            active = GUILayout.Toggle(firstToolbarIndex == 1, "Destroyed" + (Settings.instance.DestroyedStages.Count > 0 ? " (" + Settings.instance.DestroyedStages.Count + ")" : ""), GUI.skin.button);
+            active = GUILayout.Toggle(firstToolbarIndex == 1, "Destroyed" + (Settings.Instance.DestroyedStages.Count > 0 ? " (" + Settings.Instance.DestroyedStages.Count + ")" : ""), GUI.skin.button);
             if (!active && firstToolbarIndex == 1)
                 firstToolbarIndex = -1;
             else if (active)
@@ -65,7 +64,7 @@ namespace StageRecovery
                 //List all recovered stages
                 if (firstToolbarIndex == 0)
                 {
-                    foreach (RecoveryItem stage in Settings.instance.RecoveredStages)
+                    foreach (RecoveryItem stage in Settings.Instance.RecoveredStages)
                     {
                         string buttonText = stage.StageName;
                         if (stage == selectedStage)
@@ -91,7 +90,7 @@ namespace StageRecovery
                 //List all destroyed stages
                 else if (firstToolbarIndex == 1)
                 {
-                    foreach (RecoveryItem stage in Settings.instance.DestroyedStages)
+                    foreach (RecoveryItem stage in Settings.Instance.DestroyedStages)
                     {
                         string buttonText = stage.StageName;
                         if (stage == selectedStage)
@@ -120,9 +119,9 @@ namespace StageRecovery
                     if (deleteThis == selectedStage)
                         NullifySelected();
                     if (firstToolbarIndex == 0)
-                        Settings.instance.RecoveredStages.Remove(deleteThis);
+                        Settings.Instance.RecoveredStages.Remove(deleteThis);
                     else
-                        Settings.instance.DestroyedStages.Remove(deleteThis);
+                        Settings.Instance.DestroyedStages.Remove(deleteThis);
                 }
 
                 //End the list of stages
@@ -246,14 +245,14 @@ namespace StageRecovery
             GUILayout.Label("Parachute Module used: " + selectedStage.ParachuteModule);
             GUILayout.Label("Terminal velocity: "+selectedStage.Vt + " m/s");
             //List the Vt required for maximal/partial recovery
-            if (Settings.instance.FlatRateModel)
+            if (Settings.Instance.FlatRateModel)
             {
-                GUILayout.Label("Maximum velocity for recovery: " + Settings.instance.CutoffVelocity + " m/s");
+                GUILayout.Label("Maximum velocity for recovery: " + Settings.Instance.CutoffVelocity + " m/s");
             }
             else
             {
-                GUILayout.Label("Maximum velocity for recovery: " + Settings.instance.HighCut + " m/s");
-                GUILayout.Label("Maximum velocity for total recovery: " + Settings.instance.LowCut + " m/s");
+                GUILayout.Label("Maximum velocity for recovery: " + Settings.Instance.HighCut + " m/s");
+                GUILayout.Label("Maximum velocity for total recovery: " + Settings.Instance.LowCut + " m/s");
             }
 
             //List the percent refunded, broken down into distance and speed amounts
