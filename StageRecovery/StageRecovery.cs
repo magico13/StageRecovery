@@ -54,7 +54,8 @@ namespace StageRecovery
         //Also needed for GUIs. Not sure why, but this is how KCT was given to me so that's the method I use
         private void OnDraw()
         {
-            Settings.Instance.gui.SetGUIPositions(OnWindow);
+            if (Settings.Instance != null && Settings.Instance.gui != null)
+                Settings.Instance.gui.SetGUIPositions(OnWindow);
         }
 
         //Once again, GUIs

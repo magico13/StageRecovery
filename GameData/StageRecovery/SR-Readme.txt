@@ -11,6 +11,9 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.6.4 (04/20/2016)
+- Update to 1.1. No other changes. Thank you rem0230 and Cerebrate for all of your assistance!
+
 1.6.3 (02/21/2016)
 - Fix for kerbals being killed in landed vessels
 - MechJeb should appear as a valid control source for landed recovery (untested)
