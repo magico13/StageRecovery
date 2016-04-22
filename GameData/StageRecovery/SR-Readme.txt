@@ -11,7 +11,10 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
-1.6.4 (04/20/2016)
+1.6.4.1-pre (04/22/2016)
+- Fixed to work with RealChutes v1.4 for KSP 1.1 (though there might be some issues with estimates)
+
+1.6.4-pre (04/20/2016)
 - Update to 1.1. No other changes. Thank you rem0230 and Cerebrate for all of your assistance!
 
 1.6.3 (02/21/2016)
