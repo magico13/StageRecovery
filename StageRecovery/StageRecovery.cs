@@ -187,7 +187,7 @@ namespace StageRecovery
                     AddFunds(totalRefund);
                     //Fire the successful recovery event. Even though this isn't a stage we still need to do this for things like KCT to recover the parts. 
                     //Can be averted with stock functions if I can get them working properly
-                    APIManager.Instance.RecoverySuccessEvent.Fire(vessel, new float[] { 100, totalRefund, 0 }, "SUCCESS");
+                    APIManager.instance.RecoverySuccessEvent.Fire(vessel, new float[] { 100, totalRefund, 0 }, "SUCCESS");
                     //And then we try a bunch of things to make sure the clamps are removed (remove it from the flight state, kill it, and destroy it)
                     HighLogic.CurrentGame.flightState.protoVessels.Remove(pv);
                     vessel.Die();
@@ -401,7 +401,7 @@ namespace StageRecovery
                 if (OnlyBlacklistedItems) return;
 
                 //If we got this far, we can assume we're going to be attempting to recover the vessel, so we should fire the processing event
-                APIManager.Instance.OnRecoveryProcessingStart.Fire(v);
+                APIManager.instance.OnRecoveryProcessingStart.Fire(v);
 
                 //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
                 Debug.Log("[SR] Searching in RecoveryQueue (" + instance.RecoveryQueue.Count + ") for " + v.id);
@@ -422,7 +422,7 @@ namespace StageRecovery
                 //Post a message to the stock message system, if people are still using that.
                 Stage.PostStockMessage();
 
-                APIManager.Instance.OnRecoveryProcessingFinish.Fire(v);
+                APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
             }
         }
     }

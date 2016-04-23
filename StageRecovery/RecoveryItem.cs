@@ -961,9 +961,9 @@ namespace StageRecovery
             float[] infoArray = new float[] { SpeedPercent, FundsReturned, ScienceRecovered };
             //Fire the RecoverySuccessEvent if recovered or the RecoveryFailureEvent if destroyed
             if (recovered)
-                APIManager.Instance.RecoverySuccessEvent.Fire(vessel, infoArray, ReasonForFailure);
+                APIManager.instance.RecoverySuccessEvent.Fire(vessel, infoArray, ReasonForFailure);
             else
-                APIManager.Instance.RecoveryFailureEvent.Fire(vessel, infoArray, ReasonForFailure);
+                APIManager.instance.RecoveryFailureEvent.Fire(vessel, infoArray, ReasonForFailure);
         }
 
         //Adds the Stage to the appropriate List (Recovered vs Destroyed)

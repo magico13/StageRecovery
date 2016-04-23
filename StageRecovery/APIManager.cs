@@ -11,15 +11,15 @@ namespace StageRecovery
     public sealed class APIManager
     {
         //This is the actual instance. It gets instantiated when someone calls for it, below.
-        private static readonly APIManager instance = new APIManager();
+        private static readonly APIManager instance_ = new APIManager();
 
         //This is the public reference to the instance. Nobody else can change the instance, it's read only.
-        public static APIManager Instance
+        public static APIManager instance
         {
             //get and set let you get the value or set the value. Providing only one (here: get) makes it read only or write only.
             get
             {
-                return instance;
+                return instance_;
             }
         }
 
