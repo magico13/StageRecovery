@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using KSP.UI.Screens;
+using System.Reflection;
 
 namespace StageRecovery
 {
@@ -176,9 +177,39 @@ namespace StageRecovery
                     else if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
                     {
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
-                        float diameter = float.Parse(realChute.moduleValues.GetValue("deployedDiameter"));
+                        float diameter = 0.0F; //realChute.moduleValues.GetValue("deployedDiameter")
+
+                        if (realChute.moduleRef != null)
+                        {
+                            try
+                            {
+                                diameter = realChute.moduleRef.Fields.GetValue<float>("deployedDiameter");
+                                Debug.Log($"[SR] Diameter is {diameter}.");
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError("[SR] Exception while finding deployedDiameter for RealChuteFAR module on moduleRef.");
+                                Debug.LogException(e);
+                            }
+                        }
+                        else
+                        {
+                            Debug.Log("[SR] moduleRef is null, attempting workaround to find diameter.");
+                            object dDefault = p.partInfo.partPrefab.Modules["RealChuteFAR"]?.Fields?.GetValue("deployedDiameter"); //requires C# 6
+                            if (dDefault != null)
+                            {
+                                diameter = Convert.ToSingle(dDefault);
+                                Debug.Log($"[SR] Workaround gave a diameter of {diameter}.");
+                            }
+                            else
+                            {
+                                Debug.Log("[SR] Couldn't get default value, setting to 0 and calling it a day.");
+                                diameter = 0.0F;
+                            }
+
+                        }
                         float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
-                        RCParameter += dragC * (float)Math.Pow(diameter, 2);
+                        RCParameter += dragC * Mathf.Pow(diameter, 2);
 
                         realChuteInUse = true;
                     }
