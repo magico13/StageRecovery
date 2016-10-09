@@ -207,7 +207,8 @@ namespace StageRecovery
                 foreach (Part part in checking.children)
                 {
                     //search for decouplers
-                    if (part.Modules.Contains("ModuleDecouple") || part.Modules.Contains("ModuleAnchoredDecoupler"))
+                    //if (part.Modules.Contains("ModuleDecouple") || part.Modules.Contains("ModuleAnchoredDecoupler"))
+                    if (part.FindModulesImplementing<IStageSeparator>().Count > 0)
                     {
                         stage.decouplers.Add(part);
                     }
