@@ -294,9 +294,10 @@ namespace StageRecovery
             foreach (ProtoPartResourceSnapshot resource in resources)
             {
                 //Get the ConfigNode which contains the resource information (amount, name, etc)
-                ConfigNode RCN = resource.resourceValues;
+                //                ConfigNode RCN = resource.resourceValues;
                 //Extract the amount information
-                double amount = double.Parse(RCN.GetValue("amount"));
+                //                double amount = double.Parse(RCN.GetValue("amount"));
+                double amount = resource.amount;
                 //Using the name of the resource, find it in the PartResourceLibrary
                 PartResourceDefinition RD = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
                 //The mass of that resource is the amount times the density
@@ -456,7 +457,8 @@ namespace StageRecovery
                     //Loop through the resources, tracking the number and mass
                     foreach (ProtoPartResourceSnapshot rsc in p.resources)
                     {
-                        double amt = double.Parse(rsc.resourceValues.GetValue("amount"));
+//                        double amt = double.Parse(rsc.resourceValues.GetValue("amount"));
+                        double amt = rsc.amount;
                         //Debug.Log("[SR] Adding " + amt + " of " + rsc.resourceName + ". density: " + rsc.resourceRef.info.density);
                         if (!resources.ContainsKey(rsc.resourceName))
                         {
@@ -599,7 +601,9 @@ namespace StageRecovery
                             if (propsUsed.ContainsKey(r.resourceName))
                             {
                                 float density = PartResourceLibrary.Instance.GetDefinition(r.resourceName).density;
-                                float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
+//                                float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
+                                double amountInPart = r.amount;
+
                                 //If there's more in the part then what we need, reduce what's in the part and set the amount we need to 0
                                 if (amountInPart > propAmounts[r.resourceName])
                                 {
@@ -610,12 +614,13 @@ namespace StageRecovery
                                 //If there's less in the part than what we need, drain the part and lower the amount we need by that much
                                 else
                                 {
-                                    massRemoved += amountInPart * density;
-                                    propAmounts[r.resourceName] -= amountInPart;
+                                    massRemoved += (float)amountInPart * density;
+                                    propAmounts[r.resourceName] -= (float)amountInPart;
                                     amountInPart = 0;
                                 }
                                 //Set the new fuel values in the part (the ONLY time we modify the recovered stage)
-                                r.resourceValues.SetValue("amount", amountInPart.ToString());
+//                                r.resourceValues.SetValue("amount", amountInPart.ToString());
+                                r.amount = amountInPart;
                                 if (r.resourceRef != null)
                                     r.resourceRef.amount = amountInPart;
                             }
@@ -678,10 +683,13 @@ namespace StageRecovery
                             //Debug.Log("[SR] Looking for resource " + ablativeRsc);
                             if (p.resources.Exists(r => r.resourceName == ablativeRsc))
                             {
-                              //  Debug.Log("[SR] Found resource " + ablativeRsc);
-                                float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == ablativeRsc).resourceValues.GetValue("amount"));
+                                //  Debug.Log("[SR] Found resource " + ablativeRsc);
+                                //                                float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == ablativeRsc).resourceValues.GetValue("amount"));
+
+                                float shieldRemaining = (float)p.resources.Find(r => r.resourceName == ablativeRsc).amount;
                                 //And the maximum amount of shielding
-                                float maxShield = float.Parse(p.resources.Find(r => r.resourceName == ablativeRsc).resourceValues.GetValue("maxAmount"));
+                                //                                float maxShield = float.Parse(p.resources.Find(r => r.resourceName == ablativeRsc).resourceValues.GetValue("maxAmount"));
+                                float maxShield = (float)p.resources.Find(r => r.resourceName == ablativeRsc).maxAmount;
                                 //Add those to the totals for the craft
                                 totalHeatShield += shieldRemaining;
                                 maxHeatShield += maxShield;
