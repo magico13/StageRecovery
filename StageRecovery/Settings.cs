@@ -15,9 +15,9 @@ namespace StageRecovery
         //This is the instance of the SettingsGUI, where we can change settings in game. This is how we interact with that class.
         public SettingsGUI gui = new SettingsGUI();
 
-        private static string pluginDataPath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/PluginData";
+        private string pluginDataPath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/PluginData";
         //The path for the settings file (Config.txt)
-        private string filePath = pluginDataPath + "/Config.txt";
+        private string filePath = "";
 
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent]
@@ -32,6 +32,8 @@ namespace StageRecovery
         //The constructor for the settings class. It sets the values to default (which are then replaced when Load() is called)
         private Settings()
         {
+            filePath = pluginDataPath + "/Config.txt";
+
             SREnabled = true;
             RecoveryModifier = 0.75f;
             RecoverKerbals = true;
