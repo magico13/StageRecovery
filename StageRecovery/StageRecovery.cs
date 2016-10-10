@@ -14,8 +14,11 @@ namespace StageRecovery
         private static bool eventAdded = false;
         private static bool sceneChangeComplete = false;
 
-        private List<RecoveryItem> RecoveryQueue = new List<RecoveryItem>();
-        private List<Guid> StageWatchList = new List<Guid>();
+        private List<RecoveryItem> RecoveryQueue = new List<RecoveryItem>(); //Vessels added to this are pre-recovered
+        private List<Guid> StageWatchList = new List<Guid>(); //Vessels added to this list are watched for pre-recovery
+        private static Dictionary<Guid, double> RecoverAttemptLog = new Dictionary<Guid, double>(); //Vessel guid <-> UT at time of recovery. For checking for duplicates. UT is so we can clear if we revert. 
+            //We persist this throughout a whole gaming session just so it isn't wiped out by scene changes
+
 
         private static double cutoffAlt = 23000;
 
@@ -132,6 +135,22 @@ namespace StageRecovery
                 foreach (Vessel v in FlightGlobals.Vessels)
                     WatchVessel(v);
             }
+
+            //Remove anything that happens in the future
+            List<Guid> removeList = new List<Guid>();
+            double currentUT = Planetarium.GetUniversalTime();
+            foreach (KeyValuePair<Guid, double> logItem in RecoverAttemptLog)
+            {
+                if (logItem.Value >= currentUT)
+                {
+                    removeList.Add(logItem.Key);
+                }
+            }
+            foreach (Guid removeItem in removeList)
+            {
+                RecoverAttemptLog.Remove(removeItem);
+            }
+            //end future removal
 
             sceneChangeComplete = true;
         }
@@ -384,11 +403,14 @@ namespace StageRecovery
                 // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
             }
 
-            //Our criteria for even attempting recovery. Broken down: vessel exists, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is within atmosphere,
+            //Our criteria for even attempting recovery. Broken down: vessel exists, hasn't had recovery attempted, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is within atmosphere,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)
-            if (v != null && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && (v.mainBody == Planetarium.fetch.Home) && (!v.loaded || v.packed) && (v.altitude < v.mainBody.atmosphereDepth) &&
+            if (v != null && !RecoverAttemptLog.ContainsKey(v.id) && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && (v.mainBody == Planetarium.fetch.Home) && (!v.loaded || v.packed) && (v.altitude < v.mainBody.atmosphereDepth) &&
                (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL || v.situation == Vessel.Situations.ORBITING) && !v.isEVA && v.altitude > 100)
             {
+                //Indicate that we've at least attempted recovery of this vessel
+                RecoverAttemptLog.Add(v.id, Planetarium.GetUniversalTime());
+
                 bool OnlyBlacklistedItems = true;
                 foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
                 {
@@ -413,7 +435,9 @@ namespace StageRecovery
                     Debug.Log("[SR] Found vessel in the RecoveryQueue.");
                 }
                 else
+                {
                     Stage = new RecoveryItem(v);
+                }
                 Stage.Process();
                 //Fire the pertinent RecoveryEvent (success or failure). Aka, make the API do its work
                 Stage.FireEvent();
