@@ -1038,6 +1038,10 @@ namespace StageRecovery
 				msg.AppendLine("Recovery percentage: <color=#8BED8B>" + Math.Round(100 * RecoveryPercent, 1) + "%</color>");
 				msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * DistancePercent, 1) + "%</color> distance");
 				msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * SpeedPercent, 1) + "%</color> speed");
+                if (Settings.Instance.GlobalModifier != 1.0f)
+                {
+                    msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * Settings.Instance.GlobalModifier, 1) + "%</color> global modifier");
+                }
 				msg.AppendLine("");
                 //List the total refunds for parts, fuel, and the combined total
                 msg.AppendLine("Total refunds: <color=#B4D455>£" + FundsReturned + "</color>");

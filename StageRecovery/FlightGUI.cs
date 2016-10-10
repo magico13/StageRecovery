@@ -259,6 +259,10 @@ namespace StageRecovery
             GUILayout.Label("\nPercent refunded: "+ Math.Round(100*selectedStage.RecoveryPercent, 2) + "%");
             GUILayout.Label("    --Distance: " + Math.Round(100 * selectedStage.DistancePercent, 2) + "%");
             GUILayout.Label("    --Speed: " + Math.Round(100 * selectedStage.SpeedPercent, 2) + "%");
+            if (Settings.Instance.GlobalModifier != 1.0F)
+            {
+                GUILayout.Label("    --Global: " + Math.Round(100 * Settings.Instance.GlobalModifier, 2) + "%");
+            }
             GUILayout.Label("Total refunds: " + Math.Round(selectedStage.FundsReturned, 2));
             GUILayout.Label("Total value: " + Math.Round(selectedStage.FundsOriginal, 2));
 
