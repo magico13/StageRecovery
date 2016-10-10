@@ -780,7 +780,7 @@ namespace StageRecovery
             else
                 DistancePercent = Settings.Instance.DistanceOverride;
             //Combine the modifier from the velocity and the modifier from distance together
-            RecoveryPercent = SpeedPercent * DistancePercent;
+            RecoveryPercent = SpeedPercent * DistancePercent * Settings.Instance.GlobalModifier;
 
             //Debug.Log("[SR] Vessel Lat/Lon: " + vessel.latitude + "/" + vessel.longitude);
             //Debug.Log("[SR] KSC Lat/Lon: " + SpaceCenter.Instance.Latitude + "/" + SpaceCenter.Instance.Longitude);

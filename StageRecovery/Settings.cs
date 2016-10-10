@@ -21,7 +21,7 @@ namespace StageRecovery
 
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent]
-        public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride;
+        public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride, GlobalModifier;
         [Persistent]
         public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod, HideButton;
 
@@ -49,6 +49,8 @@ namespace StageRecovery
             UseUpgrades = true;
             UseToolbarMod = true;
             DistanceOverride = -1.0f;
+            GlobalModifier = 1.0f;
+
 
             HideButton = false;
 

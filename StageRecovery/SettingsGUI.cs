@@ -28,7 +28,7 @@ namespace StageRecovery
         //The reason for this is that you can't enter decimal values easily since typing "2." gets changed to "2" when to do a toString() ("25" then "2.5" will work though)
         private string DRMaxVel, minTWR;
         //The exception is for sliders
-        private float recMod, cutoff, lowCut, highCut;
+        private float recMod, cutoff, lowCut, highCut, globMod;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
         private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades, useToolbar;
 
@@ -222,6 +222,7 @@ namespace StageRecovery
             minTWR = Settings.Instance.MinTWR.ToString();
             useUpgrades = Settings.Instance.UseUpgrades;
             useToolbar = Settings.Instance.UseToolbarMod;
+            globMod = Settings.Instance.GlobalModifier;
             showWindow = true;
         }
 
@@ -233,6 +234,10 @@ namespace StageRecovery
 
             //Whether the mod is enabled or not
             enabled = GUILayout.Toggle(enabled, " Mod Enabled");
+
+            //A global modifier that affects returns
+            GUILayout.Label("Global Modifier: "+Math.Round(100*globMod) + "%");
+            globMod = (float)Math.Round(GUILayout.HorizontalSlider(globMod, 0, 1), 3);
 
             //We can toggle the Flat Rate Model on and off with a toggle
             flatRate = GUILayout.Toggle(flatRate, flatRate ? "Flat Rate Model" : "Variable Rate Model");
@@ -321,6 +326,7 @@ namespace StageRecovery
                 Settings.Instance.UseToolbarMod = useToolbar;
                 if (!float.TryParse(minTWR, out Settings.Instance.MinTWR))
                     Settings.Instance.MinTWR = 1.0f;
+                Settings.Instance.GlobalModifier = globMod;
                 //Finally we save the settings to the file
                 Settings.Instance.Save();
             }
