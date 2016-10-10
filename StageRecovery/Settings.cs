@@ -14,8 +14,11 @@ namespace StageRecovery
 
         //This is the instance of the SettingsGUI, where we can change settings in game. This is how we interact with that class.
         public SettingsGUI gui = new SettingsGUI();
+
+        private static string pluginDataPath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/PluginData";
         //The path for the settings file (Config.txt)
-        private String filePath = KSPUtil.ApplicationRootPath + "GameData/StageRecovery/Config.txt";
+        private string filePath = pluginDataPath + "/Config.txt";
+
         //The persistent values are saved to the file and read in by them. They are saved as Name = Value and separated by new lines
         [Persistent]
         public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride;
@@ -75,6 +78,8 @@ namespace StageRecovery
         public void Save()
         {
             ConfigNode cnTemp = ConfigNode.CreateConfigFromObject(this, new ConfigNode());
+            //create the file path if needed
+            System.IO.Directory.CreateDirectory(pluginDataPath);
             cnTemp.Save(filePath);
         }
 
