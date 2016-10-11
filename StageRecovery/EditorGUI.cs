@@ -122,6 +122,8 @@ namespace StageRecovery
                     double pChutes = 0;
                     if (part.Modules.Contains("RealChuteModule"))
                     {
+                        if (!realChuteInUse)
+                            current.chuteArea = 0; //reset
                         PartModule realChute = part.Modules["RealChuteModule"];
                         ConfigNode rcNode = new ConfigNode();
                         realChute.Save(rcNode);
@@ -152,36 +154,63 @@ namespace StageRecovery
                             float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("DragCoefficient")[0], materialObject);
                             //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
                             //But it works perfectly for mutiple identical parachutes (the normal case)
-                            pChutes += dragC * (float)Math.Pow(diameter, 2);
+                            pChutes += dragC * Math.Pow(diameter, 2) * Math.PI / 4.0;
                         }
                         realChuteInUse = true;
                     }
                     else if (part.Modules.Contains("RealChuteFAR")) //RealChute Lite for FAR
                     {
+                        if (!realChuteInUse)
+                            current.chuteArea = 0; //reset
                         PartModule realChute = part.Modules["RealChuteFAR"];
                         float diameter = (float)realChute.Fields.GetValue("deployedDiameter");
                         // = float.Parse(realChute.moduleValues.GetValue("deployedDiameter"));
                         float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
-                        pChutes += dragC * (float)Math.Pow(diameter, 2);
+                        pChutes += dragC * Math.Pow(diameter, 2) * Math.PI / 4.0;
 
                         realChuteInUse = true;
                     }
                     else if (!realChuteInUse && part.Modules.Contains("ModuleParachute"))
                     {
-                        double scale = 1.0;
-                        //check for Tweakscale and modify the area appropriately
-                        if (part.Modules.Contains("TweakScale"))
-                        {
-                            PartModule tweakScale = part.Modules["TweakScale"];
-                            double currentScale = 100, defaultScale = 100;
-                            double.TryParse(tweakScale.Fields.GetValue("currentScale").ToString(), out currentScale);
-                            double.TryParse(tweakScale.Fields.GetValue("defaultScale").ToString(), out defaultScale);
-                            scale = currentScale / defaultScale;
-                        }
+                        //double scale = 1.0;
+                        ////check for Tweakscale and modify the area appropriately
+                        //if (part.Modules.Contains("TweakScale"))
+                        //{
+                        //    PartModule tweakScale = part.Modules["TweakScale"];
+                        //    double currentScale = 100, defaultScale = 100;
+                        //    double.TryParse(tweakScale.Fields.GetValue("currentScale").ToString(), out currentScale);
+                        //    double.TryParse(tweakScale.Fields.GetValue("defaultScale").ToString(), out defaultScale);
+                        //    scale = currentScale / defaultScale;
+                        //}
 
                         ModuleParachute mp = (ModuleParachute)part.Modules["ModuleParachute"];
                         //dragCoeff += part.mass * mp.fullyDeployedDrag;
-                        pChutes += mp.areaDeployed * Math.Pow(scale, 2);
+
+                        //Credit to m4v and RCSBuildAid: https://github.com/m4v/RCSBuildAid/blob/master/Plugin/CoDMarker.cs
+                        DragCubeList dragCubes = part.DragCubes;
+                        dragCubes.SetCubeWeight("DEPLOYED", 1);
+                        dragCubes.SetCubeWeight("SEMIDEPLOYED", 0);
+                        dragCubes.SetCubeWeight("PACKED", 0);
+                        dragCubes.SetOcclusionMultiplier(0);
+                        Quaternion rotation = Quaternion.LookRotation(part.partTransform.InverseTransformDirection(Vector3d.up));
+                        dragCubes.SetDragVectorRotation(rotation);
+                    }
+                    //account for other part drag
+                    if (!realChuteInUse)
+                    {
+                        if (!part.ShieldedFromAirstream)
+                        {
+                            DragCubeList dragCubes = part.DragCubes;
+                            dragCubes.ForceUpdate(false, true);
+                            dragCubes.SetDragWeights();
+                            dragCubes.SetPartOcclusion();
+                            dragCubes.SetDrag(-part.partTransform.InverseTransformDirection(Vector3d.down), 0.03f); //mach 0.03, or about 10m/s
+
+                            double dragCoeff = dragCubes.AreaDrag * PhysicsGlobals.DragCubeMultiplier;
+
+                            pChutes += dragCoeff * PhysicsGlobals.DragMultiplier;
+
+                        }
                     }
 
                     current.chuteArea += pChutes;

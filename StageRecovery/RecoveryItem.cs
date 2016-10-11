@@ -116,7 +116,7 @@ namespace StageRecovery
             float totalMass = 0;
            // float dragCoeff = 0;
             float RCParameter = 0;
-            double totalParachuteArea = 0;
+            //double totalParachuteArea = 0;
             bool realChuteInUse = false;
             try
             {
@@ -135,6 +135,8 @@ namespace StageRecovery
 
                     if (ModuleNames.Contains("RealChuteModule"))
                     {
+                        if (!realChuteInUse)
+                            RCParameter = 0;
                         //First off, get the PPMS since we'll need that
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
                         //Assuming that's not somehow null, then we continue
@@ -155,17 +157,19 @@ namespace StageRecovery
                                 float diameter = float.Parse(chute.GetValue("deployedDiameter"));
                                 //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
                                 string mat = chute.GetValue("material");
+
                                 //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
                                 System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
                                 //In order to invoke the method, we need to grab the active instance of the material library
                                 object MatLibraryInstance = matLibraryType.GetProperty("Instance").GetValue(null, null);
+
                                 //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
                                 object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
                                 //With that material object we can extract the dragCoefficient using the helper function above.
                                 float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("DragCoefficient")[0], materialObject);
                                 //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
                                 //But it works perfectly for mutiple identical parachutes (the normal case)
-                                RCParameter += dragC * (float)Math.Pow(diameter, 2);
+                                RCParameter += (float)(dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
 
                             }
                             //This is a parachute also
@@ -176,6 +180,8 @@ namespace StageRecovery
                     }
                     else if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
                     {
+                        if (!realChuteInUse)
+                            RCParameter = 0;
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
                         float diameter = 0.0F; //realChute.moduleValues.GetValue("deployedDiameter")
 
@@ -194,6 +200,7 @@ namespace StageRecovery
                         }
                         else
                         {
+                            
                             Debug.Log("[SR] moduleRef is null, attempting workaround to find diameter.");
                             object dDefault = p.partInfo.partPrefab.Modules["RealChuteFAR"]?.Fields?.GetValue("deployedDiameter"); //requires C# 6
                             if (dDefault != null)
@@ -209,54 +216,91 @@ namespace StageRecovery
 
                         }
                         float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
-                        RCParameter += dragC * Mathf.Pow(diameter, 2);
+                        RCParameter += (float)(dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
 
                         realChuteInUse = true;
                     }
                     else if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
                     {
-                        double scale = 1.0;
-                        //check for Tweakscale and modify the area appropriately
-                        if (ModuleNames.Contains("TweakScale"))
-                        {
-                            ConfigNode tweakScale = p.modules.Find(m => m.moduleName == "TweakScale").moduleValues;
-                            double currentScale = 100, defaultScale = 100;
-                            double.TryParse(tweakScale.GetValue("currentScale"), out currentScale);
-                            double.TryParse(tweakScale.GetValue("defaultScale"), out defaultScale);
-                            scale = currentScale / defaultScale;
-                        }
+                        //double scale = 1.0;
+                        ////check for Tweakscale and modify the area appropriately
+                        //if (ModuleNames.Contains("TweakScale"))
+                        //{
+                        //    ConfigNode tweakScale = p.modules.Find(m => m.moduleName == "TweakScale").moduleValues;
+                        //    double currentScale = 100, defaultScale = 100;
+                        //    double.TryParse(tweakScale.GetValue("currentScale"), out currentScale);
+                        //    double.TryParse(tweakScale.GetValue("defaultScale"), out defaultScale);
+                        //    scale = currentScale / defaultScale;
+                        //}
 
-                        //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
-                        ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
-                        if (ppms.moduleRef != null)
+                        ////Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
+                        //ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
+                        //if (ppms.moduleRef != null)
+                        //{
+                        //    ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
+                        //    mp.Load(ppms.moduleValues);
+                        //    //totalParachuteArea += mp.areaDeployed;
+                        //    totalParachuteArea += mp.areaDeployed * Math.Pow(scale, 2);
+                        //}
+                        //else
+                        //{
+                        //    totalParachuteArea += GetParachuteDragFromPart(p.partInfo) * Math.Pow(scale, 2);
+                        //}
+
+                        //Credit to m4v and RCSBuildAid: https://github.com/m4v/RCSBuildAid/blob/master/Plugin/CoDMarker.cs
+                        Part part = p.partRef ?? p.partPrefab; //the part reference, or the part prefab
+                        DragCubeList dragCubes = part.DragCubes;
+                        dragCubes.SetCubeWeight("DEPLOYED", 1);
+                        dragCubes.SetCubeWeight("SEMIDEPLOYED", 0);
+                        dragCubes.SetCubeWeight("PACKED", 0);
+                        dragCubes.SetOcclusionMultiplier(0);
+                        Quaternion rotation = Quaternion.LookRotation(Vector3d.up);
+                        try
                         {
-                            ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
-                            mp.Load(ppms.moduleValues);
-                            //totalParachuteArea += mp.areaDeployed;
-                            totalParachuteArea += mp.areaDeployed * Math.Pow(scale, 2);
+                            rotation = Quaternion.LookRotation(part.partTransform?.InverseTransformDirection(Vector3d.up) ?? Vector3d.up);
                         }
-                        else
+                        catch (Exception e)
                         {
-                            totalParachuteArea += GetParachuteDragFromPart(p.partInfo) * Math.Pow(scale, 2);
+                            Debug.LogException(e);
                         }
-                        //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
-                       // dragCoeff += p.mass * drag;
-                        //This is most definitely a parachute part
-                     //   isParachute = true;
+                        dragCubes.SetDragVectorRotation(rotation);
+                    }
+                    if (!realChuteInUse)
+                    {
+                        Part part = p.partRef ?? p.partPrefab; //the part reference, or the part prefab
+                        DragCubeList dragCubes = part.DragCubes;
+                        dragCubes.ForceUpdate(false, true);
+                        dragCubes.SetDragWeights();
+                        dragCubes.SetPartOcclusion();
+
+                        Vector3 dir = Vector3d.up;
+                        try
+                        {
+                            dir = -part.partTransform?.InverseTransformDirection(Vector3d.down) ?? Vector3d.up;
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                        }
+                        dragCubes.SetDrag(dir, 0.03f); //mach 0.03, or about 10m/s
+
+                        double dragCoeff = dragCubes.AreaDrag * PhysicsGlobals.DragCubeMultiplier;
+
+                        RCParameter += (float)(dragCoeff * PhysicsGlobals.DragMultiplier);
                     }
                     //If the part has the RealChuteModule, we have to do some tricks to access it
-                    
+
                     //If the part isn't a parachute (no ModuleParachute or RealChuteModule)
-                   // if (!isParachute)
-                   // {
-                        //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
-                     /*   if (p.partRef != null)
-                            dragCoeff += p.mass * p.partRef.maximum_drag;
-                        //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
-                        else
-                            dragCoeff += p.mass * 0.2f;*/
-                        //totalParachuteArea += 0.01;
-                   // }
+                    // if (!isParachute)
+                    // {
+                    //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
+                    /*   if (p.partRef != null)
+                           dragCoeff += p.mass * p.partRef.maximum_drag;
+                       //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
+                       else
+                           dragCoeff += p.mass * 0.2f;*/
+                    //totalParachuteArea += 0.01;
+                    // }
                 }
             }
             catch (Exception e)
@@ -264,23 +308,26 @@ namespace StageRecovery
                 Debug.LogError("[SR] Error occured while trying to determine terminal velocity.");
                 Debug.LogException(e);
             }
-            if (realChuteInUse)
-            {
-            	//This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-            	//v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
-                v = (float)StageRecovery.VelocityEstimate(totalMass, RCParameter, true);
-            }
-            else
-            {
-	            //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
-	            //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
-	            //  dragCoeff = dragCoeff / (totalMass);
-	            //Calculate Vt by what the wiki says
-	            //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+
+            v = (float)StageRecovery.VelocityEstimate(totalMass, RCParameter);
+
+            //if (realChuteInUse)
+            //{
+            //	//This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
+            //	//v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
+            //    v = (float)StageRecovery.VelocityEstimate(totalMass, RCParameter);
+            //}
+            //else
+            //{
+	           // //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
+	           // //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
+	           // //  dragCoeff = dragCoeff / (totalMass);
+	           // //Calculate Vt by what the wiki says
+	           // //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
 	
-	            //v = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
-                v = (float)StageRecovery.VelocityEstimate(totalMass, totalParachuteArea, false);
-            }
+	           // //v = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
+            //    v = (float)StageRecovery.VelocityEstimate(totalMass, totalParachuteArea, false);
+            //}
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
             Debug.Log("[SR] Vt: " + v);
             return v;

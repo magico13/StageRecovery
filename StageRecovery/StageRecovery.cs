@@ -327,17 +327,18 @@ namespace StageRecovery
         }
 
         //Function to estimate the final velocity given a stage's mass and parachute info
-        public static double VelocityEstimate(double mass, double chuteInfo, bool RealChute = false)
+        public static double VelocityEstimate(double mass, double chuteAreaTimesCd)
         {
-            if (chuteInfo <= 0)
+            if (chuteAreaTimesCd <= 0)
                 return 200;
             if (mass <= 0)
                 return 0;
 
-            if (!RealChute) //This is by trial and error
-                return (63 * Math.Pow(mass / chuteInfo, 0.4));
-            else //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-                return Math.Sqrt((8000 * mass * 9.8) / (1.223 * Math.PI * chuteInfo));
+            CelestialBody home = Planetarium.fetch.Home;
+
+            return Math.Sqrt((2000 * mass * 9.81) / (home.GetDensity(home.GetPressure(0), home.GetTemperature(0)) * chuteAreaTimesCd));
+            //This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
+
         }
 
         //Helper function that I found on StackExchange that helps immensly with dealing with Reflection. I'm not that good at reflection (accessing other mod's functions and data)
