@@ -8,19 +8,17 @@ using KSP;
 namespace StageRecovery
 {
     //This class is the internal side of the API. You could use it to have a hard dependency if you wanted, but the Wrapper allows for soft dependencies.
-    public class APIManager
+    public sealed class APIManager
     {
         //This is the actual instance. It gets instantiated when someone calls for it, below.
-        private static APIManager instance_ = null;
+        private static readonly APIManager instance_ = new APIManager();
+
         //This is the public reference to the instance. Nobody else can change the instance, it's read only.
         public static APIManager instance
         {
             //get and set let you get the value or set the value. Providing only one (here: get) makes it read only or write only.
             get
             {
-                //If the instance is null we make a new one
-                if (instance_ == null) instance_ = new APIManager();
-                //Then we return the instance
                 return instance_;
             }
         }
@@ -36,7 +34,7 @@ namespace StageRecovery
         {
             get
             {
-                return Settings.instance.SREnabled;
+                return Settings.Instance.SREnabled;
             }
         }
 

@@ -11,6 +11,30 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.6.4 (05/02/2016)
+- Update to 1.1.2. No other significant changes. Thank you rem0230 and Cerebrate for all of your assistance!
+
+1.6.3 (02/21/2016)
+- Fix for kerbals being killed in landed vessels
+- MechJeb should appear as a valid control source for landed recovery (untested)
+
+1.6.2 (01/02/2016)
+- Fix for things below 23km not being added to Recovery Queue
+- Fix for ModuleAblators that don't use Ablator resource
+
+1.6.1 (12/29/2015)
+- Powered recovery should work correctly with pre-recovered Kerbals now
+
+1.6.0 (12/21/2015)
+- Hovering over Stock the SR icon in flight lets you preview the SR window
+- TweakScaled parachutes now supported
+- Tourists and other crew are pre-recovered while in the flight scene, preventing contract failure
+- Improved the Editor Helper. Now splits the vessel into individual stages and provides velocity estimates for each stage. Will be improved after receiving feedback
+- New setting to completely remove all SR buttons, accessible only through the config file
+
+1.5.8 - (11/09/2015)
+- Updated to KSP 1.0.5
+
 1.5.7 - (07/11/2015)
 - Fixed issues with kerbal recovery causing lost levels
 - Fixed compatibility issue with RSS (checking only for Kerbin)

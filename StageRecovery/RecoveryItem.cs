@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using KSP.UI.Screens;
+using System.Reflection;
 
 namespace StageRecovery
 {
@@ -14,10 +16,10 @@ namespace StageRecovery
             get
             {
                 if (burnedUp) return false;
-                if (Settings.instance.FlatRateModel)
-                    return Vt < Settings.instance.CutoffVelocity;
+                if (Settings.Instance.FlatRateModel)
+                    return Vt < Settings.Instance.CutoffVelocity;
                 else
-                    return Vt < Settings.instance.HighCut;
+                    return Vt < Settings.Instance.HighCut;
             }
         }
         public bool burnedUp, poweredRecovery, noControl;
@@ -25,7 +27,8 @@ namespace StageRecovery
         public float Vt = 0f;
         public List<string> ScienceExperiments = new List<string>();
         public float ScienceRecovered = 0;
-        public List<string> KerbalsOnboard = new List<string>();
+        //public List<string> KerbalsOnboard = new List<string>();
+        public List<ProtoCrewMember> KerbalsOnboard = new List<ProtoCrewMember>();
         public Dictionary<string, int> PartsRecovered = new Dictionary<string, int>();
         public Dictionary<string, float> Costs = new Dictionary<string, float>();
         public float FundsOriginal = 0, FundsReturned = 0, DryReturns = 0, FuelReturns = 0;
@@ -44,11 +47,16 @@ namespace StageRecovery
                     p.Pack();
             //Get the name
             StageName = vessel.vesselName;
+        }
+
+        public bool Process()
+        {
+            Debug.Log("[SR] Altitude: " + vessel.altitude);
             //Determine what the terminal velocity should be
             Vt = DetermineTerminalVelocity();
             //Try to perform a powered landing
             float vt_old = Vt;
-            if (Vt > (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut) && Settings.instance.PoweredRecovery)
+            if (Vt > (Settings.Instance.FlatRateModel ? Settings.Instance.CutoffVelocity : Settings.Instance.LowCut) && Settings.Instance.PoweredRecovery)
                 Vt = TryPoweredRecovery();
             poweredRecovery = (Vt < vt_old);
             //Determine if the stage should be burned up
@@ -58,11 +66,13 @@ namespace StageRecovery
             //Set the parts, costs, and refunds
             SetPartsAndFunds();
             //Recover Science if we're allowed
-            if (recovered && Settings.instance.RecoverScience)
+            if (recovered && Settings.Instance.RecoverScience)
                 ScienceRecovered = RecoverScience();
             //Recover Kerbals if we're allowed
-            //if (recovered && Settings.instance.RecoverKerbals)
+            //if (recovered && Settings.Instance.RecoverKerbals)
             KerbalsOnboard = RecoverKerbals();
+
+            return recovered;
         }
 
         public static double GetParachuteDragFromPart(AvailablePart parachute)
@@ -106,7 +116,7 @@ namespace StageRecovery
             float totalMass = 0;
            // float dragCoeff = 0;
             float RCParameter = 0;
-            double totalParachuteArea = 0;
+            //double totalParachuteArea = 0;
             bool realChuteInUse = false;
             try
             {
@@ -122,31 +132,11 @@ namespace StageRecovery
                     totalMass += p.mass;
                     //Add resource masses
                     totalMass += GetResourceMass(p.resources);
-                    //Assume the part isn't a parachute until proven a parachute
-                   // bool isParachute = false;
-                    //For instance, by having the ModuleParachute module
-                    if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
+
+                    if (ModuleNames.Contains("RealChuteModule"))
                     {
-                        //Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
-                        ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
-                        if (ppms.moduleRef != null)
-                        {
-                            ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
-                            mp.Load(ppms.moduleValues);
-                            totalParachuteArea += mp.areaDeployed;
-                        }
-                        else
-                        {
-                            totalParachuteArea += GetParachuteDragFromPart(p.partInfo);
-                        }
-                        //Add the part mass times the fully deployed drag (typically 500) to the dragCoeff variable (you'll see why later)
-                       // dragCoeff += p.mass * drag;
-                        //This is most definitely a parachute part
-                     //   isParachute = true;
-                    }
-                    //If the part has the RealChuteModule, we have to do some tricks to access it
-                    else if (ModuleNames.Contains("RealChuteModule"))
-                    {
+                        if (!realChuteInUse)
+                            RCParameter = 0;
                         //First off, get the PPMS since we'll need that
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
                         //Assuming that's not somehow null, then we continue
@@ -155,7 +145,7 @@ namespace StageRecovery
                             //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
                             Type matLibraryType = AssemblyLoader.loadedAssemblies
                                 .SelectMany(a => a.assembly.GetExportedTypes())
-                                .SingleOrDefault(t => t.FullName == "RealChute.Libraries.MaterialsLibrary");
+                                .SingleOrDefault(t => t.FullName == "RealChute.Libraries.MaterialsLibrary.MaterialsLibrary");
 
                             //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
                             //We get that from the PPMS 
@@ -167,46 +157,150 @@ namespace StageRecovery
                                 float diameter = float.Parse(chute.GetValue("deployedDiameter"));
                                 //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
                                 string mat = chute.GetValue("material");
+
                                 //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
                                 System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
                                 //In order to invoke the method, we need to grab the active instance of the material library
-                                object MatLibraryInstance = matLibraryType.GetProperty("instance").GetValue(null, null);
+                                object MatLibraryInstance = matLibraryType.GetProperty("Instance").GetValue(null, null);
+
                                 //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
                                 object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
                                 //With that material object we can extract the dragCoefficient using the helper function above.
-                                float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("dragCoefficient")[0], materialObject);
+                                float dragC = (float)StageRecovery.GetMemberInfoValue(materialObject.GetType().GetMember("DragCoefficient")[0], materialObject);
                                 //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
                                 //But it works perfectly for mutiple identical parachutes (the normal case)
-                                RCParameter += dragC * (float)Math.Pow(diameter, 2);
+                                RCParameter += (float)(dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
 
                             }
                             //This is a parachute also
-                           // isParachute = true;
+                            // isParachute = true;
                             //It's existence means that RealChute is installed and in use on the craft (you could have it installed and use stock chutes, so we only check if it's on the craft)
                             realChuteInUse = true;
                         }
                     }
-
                     else if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
                     {
+                        if (!realChuteInUse)
+                            RCParameter = 0;
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
-                        float diameter = float.Parse(realChute.moduleValues.GetValue("deployedDiameter"));
+                        float diameter = 0.0F; //realChute.moduleValues.GetValue("deployedDiameter")
+
+                        if (realChute.moduleRef != null)
+                        {
+                            try
+                            {
+                                diameter = realChute.moduleRef.Fields.GetValue<float>("deployedDiameter");
+                                Debug.Log($"[SR] Diameter is {diameter}.");
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError("[SR] Exception while finding deployedDiameter for RealChuteFAR module on moduleRef.");
+                                Debug.LogException(e);
+                            }
+                        }
+                        else
+                        {
+                            
+                            Debug.Log("[SR] moduleRef is null, attempting workaround to find diameter.");
+                            object dDefault = p.partInfo.partPrefab.Modules["RealChuteFAR"]?.Fields?.GetValue("deployedDiameter"); //requires C# 6
+                            if (dDefault != null)
+                            {
+                                diameter = Convert.ToSingle(dDefault);
+                                Debug.Log($"[SR] Workaround gave a diameter of {diameter}.");
+                            }
+                            else
+                            {
+                                Debug.Log("[SR] Couldn't get default value, setting to 0 and calling it a day.");
+                                diameter = 0.0F;
+                            }
+
+                        }
                         float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
-                        RCParameter += dragC * (float)Math.Pow(diameter, 2);
+                        RCParameter += (float)(dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
 
                         realChuteInUse = true;
                     }
+                    else if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
+                    {
+                        //double scale = 1.0;
+                        ////check for Tweakscale and modify the area appropriately
+                        //if (ModuleNames.Contains("TweakScale"))
+                        //{
+                        //    ConfigNode tweakScale = p.modules.Find(m => m.moduleName == "TweakScale").moduleValues;
+                        //    double currentScale = 100, defaultScale = 100;
+                        //    double.TryParse(tweakScale.GetValue("currentScale"), out currentScale);
+                        //    double.TryParse(tweakScale.GetValue("defaultScale"), out defaultScale);
+                        //    scale = currentScale / defaultScale;
+                        //}
+
+                        ////Find the ModuleParachute (find it in the module list by checking for a module with the name ModuleParachute)
+                        //ProtoPartModuleSnapshot ppms = p.modules.First(mod => mod.moduleName == "ModuleParachute");
+                        //if (ppms.moduleRef != null)
+                        //{
+                        //    ModuleParachute mp = (ModuleParachute)ppms.moduleRef;
+                        //    mp.Load(ppms.moduleValues);
+                        //    //totalParachuteArea += mp.areaDeployed;
+                        //    totalParachuteArea += mp.areaDeployed * Math.Pow(scale, 2);
+                        //}
+                        //else
+                        //{
+                        //    totalParachuteArea += GetParachuteDragFromPart(p.partInfo) * Math.Pow(scale, 2);
+                        //}
+
+                        //Credit to m4v and RCSBuildAid: https://github.com/m4v/RCSBuildAid/blob/master/Plugin/CoDMarker.cs
+                        Part part = p.partRef ?? p.partPrefab; //the part reference, or the part prefab
+                        DragCubeList dragCubes = part.DragCubes;
+                        dragCubes.SetCubeWeight("DEPLOYED", 1);
+                        dragCubes.SetCubeWeight("SEMIDEPLOYED", 0);
+                        dragCubes.SetCubeWeight("PACKED", 0);
+                        dragCubes.SetOcclusionMultiplier(0);
+                        Quaternion rotation = Quaternion.LookRotation(Vector3d.up);
+                        try
+                        {
+                            rotation = Quaternion.LookRotation(part.partTransform?.InverseTransformDirection(Vector3d.up) ?? Vector3d.up);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                        }
+                        dragCubes.SetDragVectorRotation(rotation);
+                    }
+                    if (!realChuteInUse)
+                    {
+                        Part part = p.partRef ?? p.partPrefab; //the part reference, or the part prefab
+                        DragCubeList dragCubes = part.DragCubes;
+                        dragCubes.ForceUpdate(false, true);
+                        dragCubes.SetDragWeights();
+                        dragCubes.SetPartOcclusion();
+
+                        Vector3 dir = Vector3d.up;
+                        try
+                        {
+                            dir = -part.partTransform?.InverseTransformDirection(Vector3d.down) ?? Vector3d.up;
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                        }
+                        dragCubes.SetDrag(dir, 0.03f); //mach 0.03, or about 10m/s
+
+                        double dragCoeff = dragCubes.AreaDrag * PhysicsGlobals.DragCubeMultiplier;
+
+                        RCParameter += (float)(dragCoeff * PhysicsGlobals.DragMultiplier);
+                    }
+                    //If the part has the RealChuteModule, we have to do some tricks to access it
+
                     //If the part isn't a parachute (no ModuleParachute or RealChuteModule)
-                   // if (!isParachute)
-                   // {
-                        //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
-                     /*   if (p.partRef != null)
-                            dragCoeff += p.mass * p.partRef.maximum_drag;
-                        //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
-                        else
-                            dragCoeff += p.mass * 0.2f;*/
-                        //totalParachuteArea += 0.01;
-                   // }
+                    // if (!isParachute)
+                    // {
+                    //If the part reference isn't null, find the maximum drag parameter. Multiply that by the mass (KSP has stupid aerodynamics)
+                    /*   if (p.partRef != null)
+                           dragCoeff += p.mass * p.partRef.maximum_drag;
+                       //Otherwise we assume it's a 0.2 drag. We could probably determine the exact value from the config node
+                       else
+                           dragCoeff += p.mass * 0.2f;*/
+                    //totalParachuteArea += 0.01;
+                    // }
                 }
             }
             catch (Exception e)
@@ -214,25 +308,26 @@ namespace StageRecovery
                 Debug.LogError("[SR] Error occured while trying to determine terminal velocity.");
                 Debug.LogException(e);
             }
-            if (realChuteInUse)
-            {
-            	//This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
-            	v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
-            }
-            else if (totalParachuteArea != 0)
-            {
-	            //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
-	            //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
-	            //  dragCoeff = dragCoeff / (totalMass);
-	            //Calculate Vt by what the wiki says
-	            //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
+
+            v = (float)StageRecovery.VelocityEstimate(totalMass, RCParameter);
+
+            //if (realChuteInUse)
+            //{
+            //	//This is according to the formulas used by Stupid_Chris in the Real Chute drag calculator program included with Real Chute. Source: https://github.com/StupidChris/RealChute/blob/master/Drag%20Calculator/RealChute%20drag%20calculator/RCDragCalc.cs
+            //	//v = (float)Math.Sqrt((8000 * totalMass * 9.8) / (1.223 * Math.PI * RCParameter));
+            //    v = (float)StageRecovery.VelocityEstimate(totalMass, RCParameter);
+            //}
+            //else
+            //{
+	           // //This all follows from the formulas on the KSP wiki under the atmosphere page. http://wiki.kerbalspaceprogram.com/wiki/Atmosphere
+	           // //Divide the current value of the dragCoeff by the total mass. Now we have the actual drag coefficient for the vessel
+	           // //  dragCoeff = dragCoeff / (totalMass);
+	           // //Calculate Vt by what the wiki says
+	           // //v = (float)(Math.Sqrt((250 * 6.674E-11 * 5.2915793E22) / (3.6E11 * 1.22309485 * dragCoeff)));
 	
-	            v = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
-            }
-            else
-            {
-                v = 200.0f;
-            }
+	           // //v = (float)(63 * Math.Pow(totalMass / totalParachuteArea, 0.4));
+            //    v = (float)StageRecovery.VelocityEstimate(totalMass, totalParachuteArea, false);
+            //}
             ParachuteModule = realChuteInUse ? "RealChute" : "Stock";
             Debug.Log("[SR] Vt: " + v);
             return v;
@@ -246,9 +341,10 @@ namespace StageRecovery
             foreach (ProtoPartResourceSnapshot resource in resources)
             {
                 //Get the ConfigNode which contains the resource information (amount, name, etc)
-                ConfigNode RCN = resource.resourceValues;
+                //                ConfigNode RCN = resource.resourceValues;
                 //Extract the amount information
-                double amount = double.Parse(RCN.GetValue("amount"));
+                //                double amount = double.Parse(RCN.GetValue("amount"));
+                double amount = resource.amount;
                 //Using the name of the resource, find it in the PartResourceLibrary
                 PartResourceDefinition RD = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
                 //The mass of that resource is the amount times the density
@@ -280,17 +376,33 @@ namespace StageRecovery
             Dictionary<string, float> propsUsed = new Dictionary<string, float>();
             //The stage must be controlled to be landed this way
             bool stageControllable = vessel.protoVessel.wasControllable;
+            if (!stageControllable && KerbalsOnboard.Count > 0)
+            {
+                if (!Settings.Instance.UseUpgrades)
+                    stageControllable = true;
+                else
+                {
+                    if (KerbalsOnboard.Exists(pcm => pcm.experienceTrait.Title == "Pilot"))
+                        stageControllable = true;
+                }
+            }
+            if (!stageControllable)
+            {
+                //double check that there aren't any probe cores
+                stageControllable = vessel.GetVesselCrew().Count > 0 || vessel.protoVessel.protoPartSnapshots.Exists(pps => pps.modules.Exists(m => m.moduleName == "ModuleCommand") && pps.partInfo.partPrefab.CrewCapacity == 0);
+            }
             try
             {
-                if (stageControllable && Settings.instance.UseUpgrades)
+                
+                if (stageControllable && Settings.Instance.UseUpgrades)
                 {
-                    stageControllable = vessel.GetVesselCrew().Find(c => c.experienceTrait.Title == "Pilot") != null;
+                    stageControllable = vessel.GetVesselCrew().Exists(c => c.experienceTrait.Title == "Pilot") || KerbalsOnboard.Exists(pcm => pcm.experienceTrait.Title == "Pilot");
                     if (stageControllable)
                         Debug.Log("[SR] Found a kerbal pilot!");
                     else
                     {
                         Debug.Log("[SR] No kerbal pilot found, searching for a probe core...");
-                        stageControllable = vessel.protoVessel.protoPartSnapshots.Find(p => p.modules.Find(m => m.moduleName == "ModuleSAS") != null) != null;
+                        stageControllable = vessel.protoVessel.protoPartSnapshots.Exists(p => p.modules.Exists(m => m.moduleName == "ModuleSAS" || m.moduleName == "MechJebCore"));
                         if (stageControllable)
                             Debug.Log("[SR] Found an SAS compatible probe core!");
                         else
@@ -392,7 +504,8 @@ namespace StageRecovery
                     //Loop through the resources, tracking the number and mass
                     foreach (ProtoPartResourceSnapshot rsc in p.resources)
                     {
-                        double amt = double.Parse(rsc.resourceValues.GetValue("amount"));
+//                        double amt = double.Parse(rsc.resourceValues.GetValue("amount"));
+                        double amt = rsc.amount;
                         //Debug.Log("[SR] Adding " + amt + " of " + rsc.resourceName + ". density: " + rsc.resourceRef.info.density);
                         if (!resources.ContainsKey(rsc.resourceName))
                         {
@@ -430,7 +543,10 @@ namespace StageRecovery
                     totalThrust += e.maxThrust;
                     netISP += (e.maxThrust / e.atmosphereCurve.Evaluate(1));
                 }*/
-                if (totalThrust < (totalMass * 9.81) * Settings.instance.MinTWR) //Need greater than 1 TWR to land. Planes would be different, but we ignore them. This isn't quite true with parachutes, btw.
+
+                Debug.Log("[SR] Controlled and has engines. TWR: "+(totalThrust / (9.81*totalMass)));
+
+                if (totalThrust < (totalMass * 9.81) * Settings.Instance.MinTWR) //Need greater than 1 TWR to land. Planes would be different, but we ignore them. This isn't quite true with parachutes, btw.
                     return finalVelocity;
                 //Now we determine the netISP by taking the total thrust and dividing by the stuff we calculated earlier.
                 netISP = totalThrust / netISP; 
@@ -461,10 +577,12 @@ namespace StageRecovery
                     }
                 }*/
                 //Determine the cutoff velocity that we're aiming for. This is dependent on the recovery model used (flat rate vs variable rate)
-                float cutoff = Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.LowCut;
+                float cutoff = Settings.Instance.FlatRateModel ? Settings.Instance.CutoffVelocity : Settings.Instance.LowCut;
 
                 double finalMassRequired = totalMass * Math.Exp(-(1.5 * (finalVelocity-cutoff+2)) / (9.81 * netISP));
                 double massRequired = totalMass - finalMassRequired;
+
+                Debug.Log("[SR] Requires " + propsUsed.Count + " fuels. " + String.Join(", ", propsUsed.Keys.ToArray()));
 
                 //If the engine doesn't need fuel (ie, electric engines from firespitter) then we just say you land
                 if (propsUsed.Count == 0)
@@ -510,6 +628,7 @@ namespace StageRecovery
                     //If we don't have enough fuel, we determine how much we CAN use so that maybe we'll land slow enough for a partial refund
                     if (!enoughFuel)
                     {
+                        Debug.Log("[SR] Not enough fuel for full landing. Attempting partial landing.");
                         float limiterAmount = resources.ContainsKey(limitingFuelType) ? (float)resources[limitingFuelType] : 0;
                         float ratio1 = propsUsed[limitingFuelType];
                         foreach (KeyValuePair<string, float> entry in new Dictionary<string, float>(propAmounts))
@@ -529,7 +648,9 @@ namespace StageRecovery
                             if (propsUsed.ContainsKey(r.resourceName))
                             {
                                 float density = PartResourceLibrary.Instance.GetDefinition(r.resourceName).density;
-                                float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
+//                                float amountInPart = float.Parse(r.resourceValues.GetValue("amount"));
+                                double amountInPart = r.amount;
+
                                 //If there's more in the part then what we need, reduce what's in the part and set the amount we need to 0
                                 if (amountInPart > propAmounts[r.resourceName])
                                 {
@@ -540,18 +661,19 @@ namespace StageRecovery
                                 //If there's less in the part than what we need, drain the part and lower the amount we need by that much
                                 else
                                 {
-                                    massRemoved += amountInPart * density;
-                                    propAmounts[r.resourceName] -= amountInPart;
+                                    massRemoved += (float)amountInPart * density;
+                                    propAmounts[r.resourceName] -= (float)amountInPart;
                                     amountInPart = 0;
                                 }
                                 //Set the new fuel values in the part (the ONLY time we modify the recovered stage)
-                                r.resourceValues.SetValue("amount", amountInPart.ToString());
+//                                r.resourceValues.SetValue("amount", amountInPart.ToString());
+                                r.amount = amountInPart;
                                 if (r.resourceRef != null)
                                     r.resourceRef.amount = amountInPart;
                             }
                     //Calculate the total delta-v expended.
                     double totaldV = netISP * 9.81 * Math.Log(totalMass / (totalMass - massRemoved));
-                    //Divide that by 2.5 and subtract it from the velocity after parachutes.
+                    //Divide that by 1.5 and subtract it from the velocity after parachutes.
                     finalVelocity -= (float)(totaldV / 1.5);
                 }
             }
@@ -570,89 +692,104 @@ namespace StageRecovery
                     .Select(a => a.assembly.GetExportedTypes())
                     .SelectMany(t => t)
                     .FirstOrDefault(t => t.FullName == "DeadlyReentry.ReentryPhysics") != null;*/
-
-            //For 1.0, check if the heating percent is > 0 (later we'll want to scale with that value)
-            bool DeadlyReentryInstalled = HighLogic.CurrentGame.Parameters.Difficulty.ReentryHeatScale > 0;
-
-            //Holder for the chance of burning up in atmosphere (through my non-scientific calculations)
-            float burnChance = 0f;
-            //If DR is installed, the DRMaxVelocity setting is above 0, and the surface speed is above the DRMaxV setting then we calculate the burnChance
-            if (DeadlyReentryInstalled && Settings.instance.DeadlyReentryMaxVelocity > 0 && vessel.srfSpeed > Settings.instance.DeadlyReentryMaxVelocity)
+            try
             {
-                //the burnChance is 2% per 1% that the surface speed is above the DRMaxV
-                burnChance = (float)(2 * ((vessel.srfSpeed / Settings.instance.DeadlyReentryMaxVelocity) - 1));
-                //Log a message alerting us to the speed and the burnChance
-                Debug.Log("[SR] DR velocity exceeded (" + vessel.srfSpeed + "/" + Settings.instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
-            }
+                //For 1.0, check if the heating percent is > 0 (later we'll want to scale with that value)
+                bool DeadlyReentryInstalled = HighLogic.CurrentGame.Parameters.Difficulty.ReentryHeatScale > 0;
 
-            if (burnChance == 0) return false;
-
-            //Holders for the total amount of ablative shielding available, and the maximum total
-            float totalHeatShield = 0f, maxHeatShield = 0f;
-            foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
-            {
-                if (p.modules.Find(mod => mod.moduleName == "ModuleAblator") != null)
+                //Holder for the chance of burning up in atmosphere (through my non-scientific calculations)
+                float burnChance = 0f;
+                //If DR is installed, the DRMaxVelocity setting is above 0, and the surface speed is above the DRMaxV setting then we calculate the burnChance
+                if (DeadlyReentryInstalled && Settings.Instance.DeadlyReentryMaxVelocity > 0 && vessel.srfSpeed > Settings.Instance.DeadlyReentryMaxVelocity)
                 {
-                    //Grab the heat shield module
-                    ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
-                    //Determine what type of shielding is in use
-                   /* String ablativeType = heatShield.moduleValues.GetValue("ablative");
-                    //Hopefully it's AblativeShielding, because that's what we want
-                    if (ablativeType == "AblativeShielding")
-                    {
-                        //Determine the amount of shielding remaining
-                        float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == ablativeType).resourceValues.GetValue("amount"));
-                        //And the maximum amount of shielding
-                        float maxShield = float.Parse(p.resources.Find(r => r.resourceName == ablativeType).resourceValues.GetValue("maxAmount"));
-                        //Add those to the totals for the craft
-                        totalHeatShield += shieldRemaining;
-                        maxHeatShield += maxShield;
-                    }
-                    else //Non-ablative shielding. Add a semi-random amount of shielding.
-                    {
-                        //We add 400 to each. This is so there's still a chance of failure
-                        totalHeatShield += 400;
-                        maxHeatShield += 400;
-                    }*/
-
-                    //For stock 1.0
-                    //Determine the amount of shielding remaining
-                    float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("amount"));
-                    //And the maximum amount of shielding
-                    float maxShield = float.Parse(p.resources.Find(r => r.resourceName == "Ablator").resourceValues.GetValue("maxAmount"));
-                    //Add those to the totals for the craft
-                    totalHeatShield += shieldRemaining;
-                    maxHeatShield += maxShield;
-
+                    //the burnChance is 2% per 1% that the surface speed is above the DRMaxV
+                    burnChance = (float)(2 * ((vessel.srfSpeed / Settings.Instance.DeadlyReentryMaxVelocity) - 1));
+                    //Log a message alerting us to the speed and the burnChance
+                    Debug.Log("[SR] DR velocity exceeded (" + vessel.srfSpeed + "/" + Settings.Instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
                 }
+
+                if (burnChance == 0) return false;
+
+                //Holders for the total amount of ablative shielding available, and the maximum total
+                float totalHeatShield = 0f, maxHeatShield = 0f;
+                if (vessel.protoVessel != null)
+                {
+                    foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                    {
+                        if (p != null && p.modules != null && p.modules.Exists(mod => mod.moduleName == "ModuleAblator"))
+                        {
+                            //Grab the heat shield module
+                            ProtoPartModuleSnapshot heatShield = p.modules.First(mod => mod.moduleName == "ModuleAblator");
+                            
+                            string ablativeRsc = "Ablator";
+                            if (p.partInfo.partPrefab != null && p.partInfo.partPrefab.Modules.Contains("ModuleAblator"))
+                                ablativeRsc = ((ModuleAblator)p.partInfo.partPrefab.Modules["ModuleAblator"]).ablativeResource;
+                           
+                            //For stock 1.0
+                            //Determine the amount of shielding remaining
+                            //Debug.Log("[SR] Looking for resource " + ablativeRsc);
+                            if (p.resources.Exists(r => r.resourceName == ablativeRsc))
+                            {
+                                //  Debug.Log("[SR] Found resource " + ablativeRsc);
+                                //                                float shieldRemaining = float.Parse(p.resources.Find(r => r.resourceName == ablativeRsc).resourceValues.GetValue("amount"));
+
+                                float shieldRemaining = (float)p.resources.Find(r => r.resourceName == ablativeRsc).amount;
+                                //And the maximum amount of shielding
+                                //                                float maxShield = float.Parse(p.resources.Find(r => r.resourceName == ablativeRsc).resourceValues.GetValue("maxAmount"));
+                                float maxShield = (float)p.resources.Find(r => r.resourceName == ablativeRsc).maxAmount;
+                                //Add those to the totals for the craft
+                                totalHeatShield += shieldRemaining;
+                                maxHeatShield += maxShield;
+                            }
+
+                        }
+                    }
+                }
+                Debug.Log("[SR] Found " + totalHeatShield + " ablator remaining with " + maxHeatShield + " total.");
+                //Assume we're not going to burn up until proven that we will
+                bool burnIt = false;
+                //Well, we can't burn up unless the chance of doing so is greater than 0
+                if (burnChance > 0)
+                {
+                    //If there's heatshields on the vessel then reduce the chance by the current total/the max. Aka, up to 100%
+                    if (maxHeatShield > 0)
+                        burnChance -= (totalHeatShield / maxHeatShield);
+                    //Pick a random number between 0 and 1
+                    System.Random rand = new System.Random();
+                    double choice = rand.NextDouble();
+                    //If that's less than or equal to the chance of burning, then we burn (25% chance = 0.25, random must be below 0.25)
+                    burnIt = (choice <= burnChance);
+                    //Once again, more log messages to help with debugging of people's issues
+                    Debug.Log("[SR] Burn chance: " + burnChance + " rand: " + choice + " burning? " + burnIt);
+                }
+                return burnIt;
             }
-            //Assume we're not going to burn up until proven that we will
-            bool burnIt = false;
-            //Well, we can't burn up unless the chance of doing so is greater than 0
-            if (burnChance > 0)
+            catch (Exception e)
             {
-                //If there's heatshields on the vessel then reduce the chance by the current total/the max. Aka, up to 100%
-                if (maxHeatShield > 0)
-                    burnChance -= (totalHeatShield / maxHeatShield);
-                //Pick a random number between 0 and 1
-                System.Random rand = new System.Random();
-                double choice = rand.NextDouble();
-                //If that's less than or equal to the chance of burning, then we burn (25% chance = 0.25, random must be below 0.25)
-                burnIt = (choice <= burnChance);
-                //Once again, more log messages to help with debugging of people's issues
-                Debug.Log("[SR] Burn chance: " + burnChance + " rand: " + choice + " burning? " + burnIt);
+                Debug.Log("[SR] Exception while calculating burn chance. Assuming not burned up.");
+                Debug.LogException(e);
+                return false;
             }
-            return burnIt;
         }
 
         //This calculates and sets the three recovery percentages (Recovery, Distance, and Speed Percents) along with the distance from KSC
         private void SetRecoveryPercentages()
         {
             //If we're using the Flat Rate model then we need to check for control
-            if (Settings.instance.FlatRateModel)
+            if (Settings.Instance.FlatRateModel)
             {
                 //Assume uncontrolled until proven controlled
                 bool stageControllable = vessel.protoVessel.wasControllable;
+                if (!stageControllable && KerbalsOnboard.Count > 0)
+                {
+                    if (!Settings.Instance.UseUpgrades)
+                        stageControllable = true;
+                    else
+                    {
+                        if (KerbalsOnboard.Exists(pcm => pcm.trait == "Pilot"))
+                            stageControllable = true;
+                    }
+                }
                 //Cycle through all of the parts on the ship (well, ProtoPartSnaphsots)
                 /*foreach (ProtoPartSnapshot pps in vessel.protoVessel.protoPartSnapshots)
                 {
@@ -665,13 +802,13 @@ namespace StageRecovery
                     }
                 }*/
                 //This is a fun trick for one-liners. The SpeedPercent is equal to 1 if stageControllable==true or the RecoveryModifier saved in the settings if that's false.
-                SpeedPercent = stageControllable ? 1.0f : Settings.instance.RecoveryModifier;
+                SpeedPercent = stageControllable ? 1.0f : Settings.Instance.RecoveryModifier;
                 //If the speed is too high then we set the recovery due to speed to 0
-                SpeedPercent = Vt < Settings.instance.CutoffVelocity ? SpeedPercent : 0;
+                SpeedPercent = Vt < Settings.Instance.CutoffVelocity ? SpeedPercent : 0;
             }
             //If we're not using Flat Rate (thus using Variable Rate) then we have to do a bit more work to get the SpeedPercent
             else
-                SpeedPercent = GetVariableRecoveryValue(Vt);
+                SpeedPercent = (float)GetVariableRecoveryValue(Vt);
 
             //Calculate the distance from KSC in meters
             KSCDistance = (float)SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(vessel.latitude, vessel.longitude));
@@ -685,15 +822,15 @@ namespace StageRecovery
                 maxDist *= (0.75);
 
             //Get the reduction in returns due to distance (0.98 at KSC, .1 at maxDist)
-            if (Settings.instance.DistanceOverride < 0)
+            if (Settings.Instance.DistanceOverride < 0)
                 DistancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(KSCDistance / maxDist));
             else
-                DistancePercent = Settings.instance.DistanceOverride;
+                DistancePercent = Settings.Instance.DistanceOverride;
             //Combine the modifier from the velocity and the modifier from distance together
-            RecoveryPercent = SpeedPercent * DistancePercent;
+            RecoveryPercent = SpeedPercent * DistancePercent * Settings.Instance.GlobalModifier;
 
-            Debug.Log("[SR] Vessel Lat/Lon: " + vessel.latitude + "/" + vessel.longitude);
-            Debug.Log("[SR] KSC Lat/Lon: " + SpaceCenter.Instance.Latitude + "/" + SpaceCenter.Instance.Longitude);
+            //Debug.Log("[SR] Vessel Lat/Lon: " + vessel.latitude + "/" + vessel.longitude);
+            //Debug.Log("[SR] KSC Lat/Lon: " + SpaceCenter.Instance.Latitude + "/" + SpaceCenter.Instance.Longitude);
             Debug.Log("[SR] Distance: "+KSCDistance);
         }
 
@@ -785,74 +922,123 @@ namespace StageRecovery
         }
 
         //This recovers Kerbals on the Stage, returning the list of their names
-        private List<String> RecoverKerbals()
+        private List<ProtoCrewMember> RecoverKerbals()
         { 
-            //Currently causing Kerbals to lose exp!
-            List<String> kerbals = new List<string>();
-            //If there's no crew, why look?
-            if (vessel.protoVessel.GetVesselCrew().Count > 0)
+            List<ProtoCrewMember> kerbals = new List<ProtoCrewMember>();
+
+            if (KerbalsOnboard.Count > 0)
+            {
+                //We've already removed the Kerbals, now we recover them
+                kerbals = KerbalsOnboard;
+                Debug.Log("[SR] Found pre-recovered Kerbals");
+            }
+            else
             {
                 //Recover the kerbals and get their names
                 foreach (ProtoCrewMember pcm in vessel.protoVessel.GetVesselCrew())
                 {
                     //Yeah, that's all it takes to recover a kerbal. Set them to Available from Assigned
-                    if (recovered && Settings.instance.RecoverKerbals)
-                    {
-                        pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
-                        //pcm.experienceTrait.Config.
-                        //Way to go Squad, you now kill Kerbals TWICE instead of only once.
-                        bool TwoDeathEntries = (pcm.careerLog.Entries.Count > 1 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die" 
-                            && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 2].type == "Die");
-                        if (TwoDeathEntries)
+                    /*  if (recovered && Settings.Instance.RecoverKerbals)
                         {
-                            Debug.Log("[SR] Squad has decided to kill " + pcm.name + " not once, but TWICE!");
-                            FlightLog.Entry deathEntry0 = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];//pcm.careerLog.Entries.Find(e => e.type == "Die");
-                            if (deathEntry0 != null && deathEntry0.type == "Die")
-                            {
-                                pcm.careerLog.Entries.Remove(deathEntry0);
-                            }
-                            FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
-                            if (deathEntry != null && deathEntry.type == "Die")
-                            {
-                                Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
-                                int flightNum = deathEntry.flight;
-                                pcm.careerLog.Entries.Remove(deathEntry);
-                                FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
-                                FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
-                                pcm.careerLog.AddEntry(landing);
-                                pcm.careerLog.AddEntry(recovery);
-                            }
-                        }
-                        else if (pcm.careerLog.Entries.Count > 0 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die")
-                        {
-                            Debug.Log("[SR] Squad has been gracious and has only killed " + pcm.name + " once, instead of twice.");
-                            FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
-                            if (deathEntry != null && deathEntry.type == "Die")
-                            {
-                                Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
-                                int flightNum = deathEntry.flight;
-                                pcm.careerLog.Entries.Remove(deathEntry);
-                                FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, "Kerbin");
-                                FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
-                                pcm.careerLog.AddEntry(landing);
-                                pcm.careerLog.AddEntry(recovery);
-                            }
-                        }
-                        else
-                        {
-                            Debug.Log("[SR] No death entry added, but we'll add a successful recovery anyway.");
-                            pcm.flightLog.AddEntry(FlightLog.EntryType.Land, "Kerbin");
-                            pcm.flightLog.AddEntry(FlightLog.EntryType.Recover);
-                            pcm.ArchiveFlightLog();
-                        }
-                    }
-                    kerbals.Add(pcm.name);
+                            pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                            //remove the Kerbal from the vessel
+                            ProtoPartSnapshot crewedPart = vessel.protoVessel.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
+                            if (crewedPart != null)
+                                crewedPart.RemoveCrew(pcm.name);
+                            else
+                                Debug.Log("[SR] Can't find the part housing " + pcm.name);
+                        }*/
+                    kerbals.Add(pcm);
                 }
             }
+
+            if (kerbals.Count > 0 && Settings.Instance.RecoverKerbals && recovered)
+            {
+                foreach (ProtoCrewMember pcm in kerbals)
+                {
+                    Debug.Log("[SR] Recovering " + pcm.name);
+                    pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
+                    //Way to go Squad, you now kill Kerbals TWICE instead of only once.
+                    bool TwoDeathEntries = (pcm.careerLog.Entries.Count > 1 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die"
+                        && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 2].type == "Die");
+                    if (TwoDeathEntries)
+                    {
+                        Debug.Log("[SR] Squad has decided to kill " + pcm.name + " not once, but TWICE!");
+                        FlightLog.Entry deathEntry0 = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];//pcm.careerLog.Entries.Find(e => e.type == "Die");
+                        if (deathEntry0 != null && deathEntry0.type == "Die")
+                        {
+                            pcm.careerLog.Entries.Remove(deathEntry0);
+                        }
+                        FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
+                        if (deathEntry != null && deathEntry.type == "Die")
+                        {
+                            Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
+                            int flightNum = deathEntry.flight;
+                            pcm.careerLog.Entries.Remove(deathEntry);
+                            FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, Planetarium.fetch.Home.bodyName);
+                            FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
+                            pcm.careerLog.AddEntry(landing);
+                            pcm.careerLog.AddEntry(recovery);
+                        }
+                    }
+                    else if (pcm.careerLog.Entries.Count > 0 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die")
+                    {
+                        Debug.Log("[SR] Squad has been gracious and has only killed " + pcm.name + " once, instead of twice.");
+                        FlightLog.Entry deathEntry = pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1];
+                        if (deathEntry != null && deathEntry.type == "Die")
+                        {
+                            Debug.Log("[SR] Recovered kerbal registered as dead. Attempting to repair.");
+                            int flightNum = deathEntry.flight;
+                            pcm.careerLog.Entries.Remove(deathEntry);
+                            FlightLog.Entry landing = new FlightLog.Entry(flightNum, FlightLog.EntryType.Land, Planetarium.fetch.Home.bodyName);
+                            FlightLog.Entry recovery = new FlightLog.Entry(flightNum, FlightLog.EntryType.Recover);
+                            pcm.careerLog.AddEntry(landing);
+                            pcm.careerLog.AddEntry(recovery);
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("[SR] No death entry added, but we'll add a successful recovery anyway.");
+                        pcm.flightLog.AddEntry(FlightLog.EntryType.Land, Planetarium.fetch.Home.bodyName);
+                        pcm.flightLog.AddEntry(FlightLog.EntryType.Recover);
+                        pcm.ArchiveFlightLog();
+                    }
+                }
+            }
+            else if (KerbalsOnboard.Count > 0 && (!Settings.Instance.RecoverKerbals || !recovered))
+            {
+                //kill the kerbals instead //Don't kill them twice
+                foreach (ProtoCrewMember pcm in kerbals)
+                {
+                    if (pcm.rosterStatus != ProtoCrewMember.RosterStatus.Dead && pcm.rosterStatus != ProtoCrewMember.RosterStatus.Missing)
+                    {
+                        pcm.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
+                        pcm.Die();
+                    }
+                }
+            }
+
             return kerbals;
         }
 
 
+        public void PreRecoverKerbals()
+        {
+            ProtoVessel pv = vessel.protoVessel;
+            foreach (ProtoCrewMember pcm in pv.GetVesselCrew())
+            {
+                //remove kerbal from vessel
+                ProtoPartSnapshot crewedPart = pv.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
+                if (crewedPart != null)
+                {
+                    crewedPart.RemoveCrew(pcm.name);
+                    KerbalsOnboard.Add(pcm);
+                    Debug.Log("[SR] Pre-recovered " + pcm.name);
+                }
+                else
+                    Debug.Log("[SR] Can't find the part housing " + pcm.name);
+            }
+        }
 
         //Fires the correct API event
         public void FireEvent()
@@ -870,50 +1056,51 @@ namespace StageRecovery
         public void AddToList()
         {
             if (recovered)
-                Settings.instance.RecoveredStages.Add(this);
+                Settings.Instance.RecoveredStages.Add(this);
             else
-                Settings.instance.DestroyedStages.Add(this);
+                Settings.Instance.DestroyedStages.Add(this);
         }
 
         //Removes the Stage from the corresponding List
         public void RemoveFromList()
         {
             if (recovered)
-                Settings.instance.RecoveredStages.Remove(this);
+                Settings.Instance.RecoveredStages.Remove(this);
             else
-                Settings.instance.DestroyedStages.Remove(this);
+                Settings.Instance.DestroyedStages.Remove(this);
         }
 
         //This posts either a success or failure message to the Stock Message system
         public void PostStockMessage()
         {
             StringBuilder msg = new StringBuilder();
-            if (recovered && Settings.instance.ShowSuccessMessages)
+            if (recovered && Settings.Instance.ShowSuccessMessages)
             {
                 //Start adding some in-game display messages about the return
-				msg.AppendLine("<#8BED8B>Stage '" + StageName + "' recovered " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
+				msg.AppendLine("<color=#8BED8B>Stage '" + StageName + "' recovered " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
 
-                for (int i = 0; i < PartsRecovered.Count; i++)
-                {
-					msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <#B4D455>£" + (PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent) +"</>");
-                }
-				msg.AppendLine("\n");
+                
+				//msg.AppendLine("\n");
                 //List the percent returned and break it down into distance and speed percentages
-				msg.AppendLine("Recovery percentage: <#8BED8B>" + Math.Round(100 * RecoveryPercent, 1) + "%</>");
-				msg.AppendLine("<#8BED8B>" + Math.Round(100 * DistancePercent, 1) + "%</> distance");
-				msg.AppendLine("<#8BED8B>" + Math.Round(100 * SpeedPercent, 1) + "%</> speed");
+				msg.AppendLine("Recovery percentage: <color=#8BED8B>" + Math.Round(100 * RecoveryPercent, 1) + "%</color>");
+				msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * DistancePercent, 1) + "%</color> distance");
+				msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * SpeedPercent, 1) + "%</color> speed");
+                if (Settings.Instance.GlobalModifier != 1.0f)
+                {
+                    msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * Settings.Instance.GlobalModifier, 1) + "%</color> global modifier");
+                }
 				msg.AppendLine("");
                 //List the total refunds for parts, fuel, and the combined total
-				msg.AppendLine("Total refunded for parts: <#B4D455>£" + DryReturns + "</>");
-				msg.AppendLine("Total refunded for fuel: <#B4D455>£" + FuelReturns + "</>");
-				msg.AppendLine("Total refunds: <#B4D455>£" + FundsReturned + "</>");
-                msg.AppendLine("Total value: <#B4D455>£" + FundsOriginal + "</>");
+                msg.AppendLine("Total refunds: <color=#B4D455>£" + FundsReturned + "</color>");
+				msg.AppendLine("Total refunded for parts: <color=#B4D455>£" + DryReturns + "</color>");
+				msg.AppendLine("Total refunded for fuel: <color=#B4D455>£" + FuelReturns + "</color>");
+                msg.AppendLine("Stage value: <color=#B4D455>£" + FundsOriginal + "</color>");
 
                 if (KerbalsOnboard.Count > 0)
                 {
                     msg.AppendLine("\nKerbals recovered:");
-                    foreach (string kerbal in KerbalsOnboard)
-                        msg.AppendLine("<#E0D503>" + kerbal +"</>");
+                    foreach (ProtoCrewMember kerbal in KerbalsOnboard)
+                        msg.AppendLine("<color=#E0D503>" + kerbal.name + "</color>");
                 }
                 if (ScienceExperiments.Count > 0)
                 {
@@ -927,28 +1114,30 @@ namespace StageRecovery
                 //Display which module was used for recovery
                     msg.AppendLine(ParachuteModule + " Module used.");
                 //Display the terminal velocity (Vt) and what is needed to have any recovery
-                if (Settings.instance.FlatRateModel)
-					msg.AppendLine("Terminal velocity of <#8BED8B>" + Math.Round(Vt, 2) + "</> (less than " + Settings.instance.CutoffVelocity + " needed)");
+                if (Settings.Instance.FlatRateModel)
+					msg.AppendLine("Terminal velocity of <color=#8BED8B>" + Math.Round(Vt, 2) + "</color> (less than " + Settings.Instance.CutoffVelocity + " needed)");
                 else
-					msg.AppendLine("Terminal velocity of <#8BED8B>" + Math.Round(Vt, 2) + "</> (less than " + Settings.instance.HighCut + " needed)");
+					msg.AppendLine("Terminal velocity of <color=#8BED8B>" + Math.Round(Vt, 2) + "</color> (less than " + Settings.Instance.HighCut + " needed)");
 
                 if (poweredRecovery)
                 {
                     msg.AppendLine("Propulsive landing. Check SR Flight GUI for information about amount of propellant consumed.");
                 }
 
+                msg.AppendLine("\nStage contained the following parts:");
+                for (int i = 0; i < PartsRecovered.Count; i++)
+                {
+                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <color=#B4D455>£" + (PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent) + "</color>");
+                }
+
                 //Setup and then post the message
                 MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
                 MessageSystem.Instance.AddMessage(m);
             }
-            else if (!recovered && Settings.instance.ShowFailureMessages)
+            else if (!recovered && Settings.Instance.ShowFailureMessages)
             {
-                msg.AppendLine("<#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</>");
-                msg.AppendLine("Stage contains these parts:");
-                for (int i = 0; i < PartsRecovered.Count; i++)
-                {
-                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i));
-                }
+                msg.AppendLine("<color=#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
+                
                 //If we're career mode (MONEY!) then we also let you know the (why do I say 'we'? It's only me working on this) total cost of the parts
                 if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
                 {
@@ -961,7 +1150,7 @@ namespace StageRecovery
                         totalCost += Math.Max(ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet), 0);
                     }
                     //Alert the user to what the total value was (without modifiers)
-                    msg.AppendLine("It was valued at <#FF9900>" + totalCost + "</> Funds."); //ED0B0B
+                    msg.AppendLine("It was valued at <color=#FF9900>" + totalCost + "</color> Funds."); //ED0B0B
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
@@ -969,7 +1158,7 @@ namespace StageRecovery
                 //Display which module was used for recovery
                 msg.AppendLine(ParachuteModule + " Module used.");
                 //Display the terminal velocity (Vt) and what is needed to have any recovery
-                msg.AppendLine("Terminal velocity of <#FF9900>" + Math.Round(Vt, 2) + "</> (less than " + (Settings.instance.FlatRateModel ? Settings.instance.CutoffVelocity : Settings.instance.HighCut) + " needed)");
+                msg.AppendLine("Terminal velocity of <color=#FF9900>" + Math.Round(Vt, 2) + "</color> (less than " + (Settings.Instance.FlatRateModel ? Settings.Instance.CutoffVelocity : Settings.Instance.HighCut) + " needed)");
                 
                 //If it failed because of burning up (can be in addition to speed) then we'll let you know
                 if (burnedUp)
@@ -985,6 +1174,12 @@ namespace StageRecovery
                     msg.AppendLine("Attempted propulsive landing but could not find a point of control. Add a pilot or probe core with SAS for propulsive landings.");
                 }
 
+                msg.AppendLine("\nStage contained the following parts:");
+                for (int i = 0; i < PartsRecovered.Count; i++)
+                {
+                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i));
+                }
+
                 //Now we actually create and post the message
                 MessageSystem.Message m = new MessageSystem.Message("Stage Destroyed", msg.ToString(), MessageSystemButton.MessageButtonColor.RED, MessageSystemButton.ButtonIcons.MESSAGE);
                 MessageSystem.Instance.AddMessage(m);
@@ -993,13 +1188,13 @@ namespace StageRecovery
 
         //When using the variable recovery rate we determine the rate from a negative curvature quadratic with y=100 at velocity=lowCut and y=0 at vel=highCut.
         //No other zeroes are in that range. Check this github issue for an example and some more details: https://github.com/magico13/StageRecovery/issues/1
-        public static float GetVariableRecoveryValue(float v)
+        public static double GetVariableRecoveryValue(double v)
         {
             //We're following ax^2+bx+c=recovery
             //We know that -b/2a=LowCut since that's the only location where the derivative of the quadratic is 0 (the max)
             //Starting conditions: x=lowCut y=100, x=highCut y=0. Combined with the above info, we can calculate everything
-            float x0 = Settings.instance.LowCut;
-            float x1 = Settings.instance.HighCut;
+            float x0 = Settings.Instance.LowCut;
+            float x1 = Settings.Instance.HighCut;
             //If we're below the low cut, then return 1 (100%)
             if (v < x0) return 1;
             //If we're above the high cut, return 0
