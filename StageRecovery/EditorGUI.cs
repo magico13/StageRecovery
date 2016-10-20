@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using System.Reflection;
 using UnityEngine;
 
 
@@ -128,10 +128,15 @@ namespace StageRecovery
                         ConfigNode rcNode = new ConfigNode();
                         realChute.Save(rcNode);
 
-                        //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
-                        Type matLibraryType = AssemblyLoader.loadedAssemblies
-                            .SelectMany(a => a.assembly.GetExportedTypes())
-                            .SingleOrDefault(t => t.FullName == "RealChute.Libraries.MaterialsLibrary.MaterialsLibrary");
+						//This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
+						Type matLibraryType = null;
+						AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+						{
+							if (t.FullName == "RealChute.Libraries.MaterialsLibrary.MaterialsLibrary")
+							{
+								matLibraryType = t;
+							}
+						});
 
 
                         //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
