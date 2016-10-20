@@ -357,10 +357,14 @@ namespace StageRecovery
         {
             try
             {
-                Type FMRSType = AssemblyLoader.loadedAssemblies
-                            .Select(a => a.assembly.GetExportedTypes())
-                            .SelectMany(t => t)
-                            .FirstOrDefault(t => t.FullName == "FMRS.FMRS_Util");
+				Type FMRSType = null;
+				AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+				{
+					if (t.FullName == "FMRS.FMRS_Util")
+					{
+						FMRSType = t;
+					}
+				});
                 if (FMRSType == null) return false;
 
                 UnityEngine.Object FMRSUtilClass = GameObject.FindObjectOfType(FMRSType);
