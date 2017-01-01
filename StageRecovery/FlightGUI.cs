@@ -185,8 +185,8 @@ namespace StageRecovery
             {
                 string name = selectedStage.PartsRecovered.Keys.ElementAt(i);
                 int amt = selectedStage.PartsRecovered.Values.ElementAt(i);
-                float cost = selectedStage.Costs.Values.ElementAt(i);
-                float percent = selectedStage.recovered ? selectedStage.RecoveryPercent :  1;
+                double cost = selectedStage.Costs.Values.ElementAt(i);
+                double percent = selectedStage.recovered ? selectedStage.RecoveryPercent :  1;
                 GUILayout.Label(amt + "x " + name + " @ " + Math.Round(cost * percent, 2) + ": " + Math.Round(cost * amt * percent, 2));
             }
 
@@ -278,7 +278,7 @@ namespace StageRecovery
             {
                 GUILayout.Label("\nPowered recovery was attempted.");
                 GUILayout.Label("Fuel consumed:");
-                foreach (KeyValuePair<string, float> fuel in selectedStage.fuelUsed)
+                foreach (KeyValuePair<string, double> fuel in selectedStage.fuelUsed)
                 {
                     GUILayout.Label(fuel.Key + " : " + fuel.Value + " units");
                 }

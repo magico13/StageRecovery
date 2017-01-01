@@ -246,7 +246,7 @@ namespace StageRecovery
                     StageWatchList.Remove(id);
                     continue;
                 }
-                if ((!vessel.loaded || vessel.packed) && vessel.altitude < cutoffAlt)
+                if ((!vessel.loaded || vessel.packed) && vessel.mainBody == Planetarium.fetch.Home && vessel.altitude < cutoffAlt)
                 {
                     Debug.Log("[SR] Vessel " + vessel.vesselName + " (" + id + ") is about to be destroyed. Pre-recovering Kerbals.");
                     RecoveryItem recItem = new RecoveryItem(vessel);
@@ -357,14 +357,14 @@ namespace StageRecovery
         {
             try
             {
-				Type FMRSType = null;
-				AssemblyLoader.loadedAssemblies.TypeOperation(t =>
-				{
-					if (t.FullName == "FMRS.FMRS_Util")
-					{
-						FMRSType = t;
-					}
-				});
+                Type FMRSType = null;
+                AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+                {
+                    if (t.FullName == "FMRS.FMRS_Util")
+                    {
+                        FMRSType = t;
+                    }
+                });
                 if (FMRSType == null) return false;
 
                 UnityEngine.Object FMRSUtilClass = GameObject.FindObjectOfType(FMRSType);
