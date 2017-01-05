@@ -3,7 +3,9 @@
 //magico13.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 //Change this to your mod's namespace!
 namespace StageRecovery
@@ -63,7 +65,7 @@ namespace StageRecovery
         public static void AddRecoverySuccessEvent(Action<Vessel, float[], string> method)
         {
             object successList = GetMemberInfoValue(SRType.GetMember("RecoverySuccessEvent")[0], Instance);
-            System.Reflection.MethodInfo addMethod = successList.GetType().GetMethod("Add");
+            MethodInfo addMethod = successList.GetType().GetMethod("Add");
             addMethod.Invoke(successList, new object[] { method });
         }
 
@@ -71,7 +73,7 @@ namespace StageRecovery
         public static void RemoveRecoverySuccessEvent(Action<Vessel, float[], string> method)
         {
             object successList = GetMemberInfoValue(SRType.GetMember("RecoverySuccessEvent")[0], Instance);
-            System.Reflection.MethodInfo removeMethod = successList.GetType().GetMethod("Remove");
+            MethodInfo removeMethod = successList.GetType().GetMethod("Remove");
             removeMethod.Invoke(successList, new object[] { method });
         }
 
@@ -81,7 +83,7 @@ namespace StageRecovery
         public static void AddRecoveryFailureEvent(Action<Vessel, float[], string> method)
         {
             object failList = GetMemberInfoValue(SRType.GetMember("RecoveryFailureEvent")[0], Instance);
-            System.Reflection.MethodInfo addMethod = failList.GetType().GetMethod("Add");
+            MethodInfo addMethod = failList.GetType().GetMethod("Add");
             addMethod.Invoke(failList, new object[] { method });
         }
 
@@ -89,7 +91,7 @@ namespace StageRecovery
         public static void RemoveRecoveryFailureEvent(Action<Vessel, float[], string> method)
         {
             object failList = GetMemberInfoValue(SRType.GetMember("RecoveryFailureEvent")[0], Instance);
-            System.Reflection.MethodInfo removeMethod = failList.GetType().GetMethod("Remove");
+            MethodInfo removeMethod = failList.GetType().GetMethod("Remove");
             removeMethod.Invoke(failList, new object[] { method });
         }
 
@@ -98,7 +100,7 @@ namespace StageRecovery
         public static void AddRecoveryProcessingStartListener(Action<Vessel> method)
         {
             object successList = GetMemberInfoValue(SRType.GetMember("OnRecoveryProcessingStart")[0], Instance);
-            System.Reflection.MethodInfo addMethod = successList.GetType().GetMethod("Add");
+            MethodInfo addMethod = successList.GetType().GetMethod("Add");
             addMethod.Invoke(successList, new object[] { method });
         }
 
@@ -106,7 +108,7 @@ namespace StageRecovery
         public static void RemoveRecoveryProcessingStartListener(Action<Vessel> method)
         {
             object successList = GetMemberInfoValue(SRType.GetMember("OnRecoveryProcessingStart")[0], Instance);
-            System.Reflection.MethodInfo removeMethod = successList.GetType().GetMethod("Remove");
+            MethodInfo removeMethod = successList.GetType().GetMethod("Remove");
             removeMethod.Invoke(successList, new object[] { method });
         }
 
@@ -115,7 +117,7 @@ namespace StageRecovery
         public static void AddRecoveryProcessingFinishListener(Action<Vessel> method)
         {
             object successList = GetMemberInfoValue(SRType.GetMember("OnRecoveryProcessingFinish")[0], Instance);
-            System.Reflection.MethodInfo addMethod = successList.GetType().GetMethod("Add");
+            MethodInfo addMethod = successList.GetType().GetMethod("Add");
             addMethod.Invoke(successList, new object[] { method });
         }
 
@@ -123,8 +125,22 @@ namespace StageRecovery
         public static void RemoveRecoveryProcessingFinishListener(Action<Vessel> method)
         {
             object successList = GetMemberInfoValue(SRType.GetMember("OnRecoveryProcessingFinish")[0], Instance);
-            System.Reflection.MethodInfo removeMethod = successList.GetType().GetMethod("Remove");
+            MethodInfo removeMethod = successList.GetType().GetMethod("Remove");
             removeMethod.Invoke(successList, new object[] { method });
+        }
+
+        /// <summary>
+        /// Computes the terminal velocity at sea level on the home planet (Kerbin/Earth) for the provided parts
+        /// </summary>
+        /// <param name="partList">The list of parts to compute the terminal velocity for</param>
+        /// <returns>The terminal velocity as a scalar (speed)</returns>
+        public static double ComputeTerminalVelocity(List<Part> partList)
+        {
+            MethodInfo computeMethod = SRType.GetMethod("ComputeTerminalVelocity");
+            object result = computeMethod.Invoke(Instance, new object[] { partList });
+            if (result is double)
+                return (double)result;
+            return double.MaxValue;
         }
         #endregion
 

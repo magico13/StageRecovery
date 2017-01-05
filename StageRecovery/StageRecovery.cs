@@ -454,11 +454,199 @@ namespace StageRecovery
                 APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
             }
         }
+
+        public static double ProcessPartList(List<Part> vesselParts)
+        {
+            double totalMass = 0;
+            vesselParts.ForEach(p => totalMass += p.mass + p.GetResourceMass());
+            double chuteArea = GetChuteArea(vesselParts);
+            return VelocityEstimate(totalMass, chuteArea);
+        }
+
+        public static double GetChuteArea(List<Part> parts)
+        {
+            double RCParameter = 0;
+            bool realChuteInUse = false;
+            try
+            {
+                foreach (Part vesselPart in parts)
+                {
+                    ProtoPartSnapshot p = vesselPart.protoPartSnapshot;
+                    //Make a list of all the Module Names for easy checking later. This can be avoided, but is convenient.
+                    List<string> ModuleNames = new List<string>();
+                    foreach (ProtoPartModuleSnapshot ppms in p.modules)
+                    {
+                        ModuleNames.Add(ppms.moduleName);
+                    }
+
+                    if (ModuleNames.Contains("RealChuteModule"))
+                    {
+                        if (!realChuteInUse)
+                            RCParameter = 0;
+                        //First off, get the PPMS since we'll need that
+                        ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
+                        //Assuming that's not somehow null, then we continue
+                        if (realChute != null) //Some of this was adopted from DebRefund, as Vendan's method of handling multiple parachutes is better than what I had.
+                        {
+                            //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
+                            Type matLibraryType = null;
+                            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+                            {
+                                if (t.FullName == "RealChute.Libraries.MaterialsLibrary.MaterialsLibrary")
+                                {
+                                    matLibraryType = t;
+                                }
+                            });
+
+
+                            //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
+                            //We get that from the PPMS 
+                            ConfigNode[] parachutes = realChute.moduleValues.GetNodes("PARACHUTE");
+                            //We then act on each individual parachute in the module
+                            foreach (ConfigNode chute in parachutes)
+                            {
+                                //First off, the diameter of the parachute. From that we can (later) determine the Vt, assuming a circular chute
+                                float diameter = float.Parse(chute.GetValue("deployedDiameter"));
+                                //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
+                                string mat = chute.GetValue("material");
+
+                                //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
+                                System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
+                                //In order to invoke the method, we need to grab the active instance of the material library
+                                object MatLibraryInstance = matLibraryType.GetProperty("Instance").GetValue(null, null);
+
+                                //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
+                                object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
+                                //With that material object we can extract the dragCoefficient using the helper function above.
+                                double dragC = (double)GetMemberInfoValue(materialObject.GetType().GetMember("DragCoefficient")[0], materialObject);
+                                //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
+                                //But it works perfectly for mutiple identical parachutes (the normal case)
+                                RCParameter += (dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
+
+                            }
+                            //This is a parachute also
+                            // isParachute = true;
+                            //It's existence means that RealChute is installed and in use on the craft (you could have it installed and use stock chutes, so we only check if it's on the craft)
+                            realChuteInUse = true;
+                        }
+                    }
+                    else if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
+                    {
+                        if (!realChuteInUse)
+                            RCParameter = 0;
+                        ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
+                        float diameter = 0.0F; //realChute.moduleValues.GetValue("deployedDiameter")
+
+                        if (realChute.moduleRef != null)
+                        {
+                            try
+                            {
+                                diameter = realChute.moduleRef.Fields.GetValue<float>("deployedDiameter");
+                                Debug.Log($"[SR] Diameter is {diameter}.");
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError("[SR] Exception while finding deployedDiameter for RealChuteFAR module on moduleRef.");
+                                Debug.LogException(e);
+                            }
+                        }
+                        else
+                        {
+
+                            Debug.Log("[SR] moduleRef is null, attempting workaround to find diameter.");
+                            object dDefault = p.partInfo.partPrefab.Modules["RealChuteFAR"]?.Fields?.GetValue("deployedDiameter"); //requires C# 6
+                            if (dDefault != null)
+                            {
+                                diameter = Convert.ToSingle(dDefault);
+                                Debug.Log($"[SR] Workaround gave a diameter of {diameter}.");
+                            }
+                            else
+                            {
+                                Debug.Log("[SR] Couldn't get default value, setting to 0 and calling it a day.");
+                                diameter = 0.0F;
+                            }
+
+                        }
+                        float dragC = 1.0f; //float.Parse(realChute.moduleValues.GetValue("staticCd"));
+                        RCParameter += (float)(dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
+
+                        realChuteInUse = true;
+                    }
+                    else if (!realChuteInUse && ModuleNames.Contains("ModuleParachute"))
+                    {
+                        //Credit to m4v and RCSBuildAid: https://github.com/m4v/RCSBuildAid/blob/master/Plugin/CoDMarker.cs
+                        Part part = p.partRef ?? p.partPrefab; //the part reference, or the part prefab
+                        DragCubeList dragCubes = part.DragCubes;
+                        dragCubes.SetCubeWeight("DEPLOYED", 1);
+                        dragCubes.SetCubeWeight("SEMIDEPLOYED", 0);
+                        dragCubes.SetCubeWeight("PACKED", 0);
+                        dragCubes.SetOcclusionMultiplier(0);
+                        Quaternion rotation = Quaternion.LookRotation(Vector3d.up);
+                        try
+                        {
+                            rotation = Quaternion.LookRotation(part.partTransform?.InverseTransformDirection(Vector3d.up) ?? Vector3d.up);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                        }
+                        dragCubes.SetDragVectorRotation(rotation);
+                    }
+                    if (!realChuteInUse)
+                    {
+                        Part part = p.partRef ?? p.partPrefab; //the part reference, or the part prefab
+                        DragCubeList dragCubes = part.DragCubes;
+                        dragCubes.ForceUpdate(false, true);
+                        dragCubes.SetDragWeights();
+                        dragCubes.SetPartOcclusion();
+
+                        Vector3 dir = Vector3d.up;
+                        try
+                        {
+                            dir = -part.partTransform?.InverseTransformDirection(Vector3d.down) ?? Vector3d.up;
+                        }
+                        catch (Exception e)
+                        {
+                            //Debug.LogException(e);
+                            Debug.Log("[SR] The expected excpetion is still present. " + e.Message);
+                        }
+                        dragCubes.SetDrag(dir, 0.03f); //mach 0.03, or about 10m/s
+
+                        double dragCoeff = dragCubes.AreaDrag * PhysicsGlobals.DragCubeMultiplier;
+
+                        RCParameter += (dragCoeff * PhysicsGlobals.DragMultiplier);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[SR] Error occured while trying to determine total chute area.");
+                Debug.LogException(e);
+            }
+            return RCParameter;
+        }
+
+        private static double GetResourceMass(List<ProtoPartResourceSnapshot> resources)
+        {
+            double mass = 0;
+            //Loop through the available resources
+            foreach (ProtoPartResourceSnapshot resource in resources)
+            {
+                //Extract the amount information
+                double amount = resource.amount;
+                //Using the name of the resource, find it in the PartResourceLibrary
+                PartResourceDefinition RD = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
+                //The mass of that resource is the amount times the density
+                mass += amount * RD.density;
+            }
+            //Return the total mass
+            return mass;
+        }
     }
 }
 
 /*
-Copyright (C) 2014  Michael Marvin
+Copyright (C) 2017  Michael Marvin
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
