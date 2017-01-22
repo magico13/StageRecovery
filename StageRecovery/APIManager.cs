@@ -38,7 +38,12 @@ namespace StageRecovery
             }
         }
 
-        public double ComputeTerminalVelocity(List<Part> partList)
+        public double ComputeTerminalVelocity_ProtoParts(List<ProtoPartSnapshot> partList)
+        {
+            return StageRecovery.ProcessPartList(partList);
+        }
+
+        public double ComputeTerminalVelocity_Parts(List<Part> partList)
         {
             return StageRecovery.ProcessPartList(partList);
         }

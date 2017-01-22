@@ -112,7 +112,7 @@ namespace StageRecovery
         //This function/method/thing calculates the terminal velocity of the Stage
         private double DetermineTerminalVelocity()
         {
-            double v = StageRecovery.ProcessPartList(vessel.Parts);
+            double v = StageRecovery.ProcessPartList(vessel.protoVessel.protoPartSnapshots);
             ParachuteModule = (vessel.protoVessel.protoPartSnapshots.Exists(pps => pps.modules.Exists(ppms => ppms.moduleName == "RealChuteModule")) ? "RealChute" : "Stock");
             Debug.Log("[SR] Vt: " + v);
             return v;

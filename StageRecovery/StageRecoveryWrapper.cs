@@ -132,11 +132,25 @@ namespace StageRecovery
         /// <summary>
         /// Computes the terminal velocity at sea level on the home planet (Kerbin/Earth) for the provided parts
         /// </summary>
-        /// <param name="partList">The list of parts to compute the terminal velocity for</param>
+        /// <param name="partList">The list of <see cref="ProtoPartSnapshot"/>s to compute the terminal velocity for</param>
+        /// <returns>The terminal velocity as a scalar (speed)</returns>
+        public static double ComputeTerminalVelocity(List<ProtoPartSnapshot> partList)
+        {
+            MethodInfo computeMethod = SRType.GetMethod("ComputeTerminalVelocity_ProtoParts");
+            object result = computeMethod.Invoke(Instance, new object[] { partList });
+            if (result is double)
+                return (double)result;
+            return double.MaxValue;
+        }
+
+        /// <summary>
+        /// Computes the terminal velocity at sea level on the home planet (Kerbin/Earth) for the provided parts
+        /// </summary>
+        /// <param name="partList">The list of <see cref="Part"/>s to compute the terminal velocity for</param>
         /// <returns>The terminal velocity as a scalar (speed)</returns>
         public static double ComputeTerminalVelocity(List<Part> partList)
         {
-            MethodInfo computeMethod = SRType.GetMethod("ComputeTerminalVelocity");
+            MethodInfo computeMethod = SRType.GetMethod("ComputeTerminalVelocity_Parts");
             object result = computeMethod.Invoke(Instance, new object[] { partList });
             if (result is double)
                 return (double)result;
