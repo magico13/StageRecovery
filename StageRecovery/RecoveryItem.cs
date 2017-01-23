@@ -40,6 +40,51 @@ namespace StageRecovery
         public double RecoveredTime { get; private set; }
         public double PreRecoveredTime { get; private set; }
 
+        private bool? _controlled = null;
+        public bool Controlled
+        {
+            get
+            {
+                if (_controlled == null)
+                {
+                    bool controlled = vessel.protoVessel.wasControllable;
+                    if (!controlled && KerbalsOnboard.Count > 0)
+                    {
+                        if (!Settings.Instance.UseUpgrades)
+                            controlled = true;
+                        else
+                        {
+                            if (KerbalsOnboard.Exists(pcm => pcm.CrewMember.experienceTrait.Title == "Pilot"))
+                                controlled = true;
+                        }
+                    }
+                    if (!controlled)
+                    {
+                        //double check that there aren't any probe cores
+                        controlled = vessel.GetVesselCrew().Count > 0 || vessel.protoVessel.protoPartSnapshots.Exists(pps => pps.modules.Exists(m => m.moduleName == "ModuleCommand") && pps.partInfo.partPrefab.CrewCapacity == 0);
+                    }
+                    if (controlled && Settings.Instance.UseUpgrades)
+                    {
+                        controlled = vessel.GetVesselCrew().Exists(c => c.experienceTrait.Title == "Pilot") || KerbalsOnboard.Exists(pcm => pcm.CrewMember.experienceTrait.Title == "Pilot");
+                        if (controlled)
+                            Debug.Log("[SR] Found a kerbal pilot!");
+                        else
+                        {
+                            Debug.Log("[SR] No kerbal pilot found, searching for a probe core...");
+                            controlled = vessel.protoVessel.protoPartSnapshots.Exists(p => p.modules.Exists(m => m.moduleName == "ModuleSAS" || m.moduleName == "MechJebCore"));
+                            if (controlled)
+                                Debug.Log("[SR] Found an SAS compatible probe core!");
+                            else
+                                Debug.Log("[SR] No probe core with SAS found.");
+                        }
+
+                    }
+                    _controlled = controlled;
+                }
+                return _controlled.GetValueOrDefault();
+            }
+        }
+
         //Creates a new RecoveryItem and calculates everything corresponding to it.
         public RecoveryItem(Vessel stage)
         {
@@ -57,13 +102,16 @@ namespace StageRecovery
             Debug.Log("[SR] Altitude: " + vessel.altitude);
             //Determine what the terminal velocity should be
             Vt = DetermineTerminalVelocity();
+            
+            //Determine if the stage should be burned up
+            burnedUp = DetermineIfBurnedUp();
+
             //Try to perform a powered landing
             double vt_old = Vt;
             if (Vt > (Settings.Instance.FlatRateModel ? Settings.Instance.CutoffVelocity : Settings.Instance.LowCut) && Settings.Instance.PoweredRecovery)
                 Vt = TryPoweredRecovery();
             poweredRecovery = (Vt < vt_old);
-            //Determine if the stage should be burned up
-            burnedUp = DetermineIfBurnedUp();
+
             //Set the Recovery Percentages
             SetRecoveryPercentages();
             //Set the parts, costs, and refunds
@@ -149,6 +197,7 @@ namespace StageRecovery
         /// <returns></returns>
         private double ReduceSpeed_Engines(double initialSpeed, double targetSpeed)
         {
+            Debug.Log($"[SR] Attempting to use engines to reduce speed from {initialSpeed} to {targetSpeed}");
             //ISP references: http://forum.kerbalspaceprogram.com/threads/34315-How-Do-I-calculate-Delta-V-on-more-than-one-engine
             //Thanks to Malkuth, of Mission Controller Extended, for the base of this code.
             bool hasEngines = false;
@@ -163,43 +212,13 @@ namespace StageRecovery
             Dictionary<string, double> rMasses = new Dictionary<string, double>();
             //Holder for the propellants the engines need and the ratio
             Dictionary<string, double> propsUsed = new Dictionary<string, double>();
+
+            //Holder for the amount of propellant actually used in this event
+            Dictionary<string, double> propsConsumed = new Dictionary<string, double>();
             //The stage must be controlled to have speeds reduced
-            bool stageControllable = vessel.protoVessel.wasControllable;
-            if (!stageControllable && KerbalsOnboard.Count > 0)
-            {
-                if (!Settings.Instance.UseUpgrades)
-                    stageControllable = true;
-                else
-                {
-                    if (KerbalsOnboard.Exists(pcm => pcm.CrewMember.experienceTrait.Title == "Pilot"))
-                        stageControllable = true;
-                }
-            }
-            if (!stageControllable)
-            {
-                //double check that there aren't any probe cores
-                stageControllable = vessel.GetVesselCrew().Count > 0 || vessel.protoVessel.protoPartSnapshots.Exists(pps => pps.modules.Exists(m => m.moduleName == "ModuleCommand") && pps.partInfo.partPrefab.CrewCapacity == 0);
-            }
             try
-            {
-
-                if (stageControllable && Settings.Instance.UseUpgrades)
-                {
-                    stageControllable = vessel.GetVesselCrew().Exists(c => c.experienceTrait.Title == "Pilot") || KerbalsOnboard.Exists(pcm => pcm.CrewMember.experienceTrait.Title == "Pilot");
-                    if (stageControllable)
-                        Debug.Log("[SR] Found a kerbal pilot!");
-                    else
-                    {
-                        Debug.Log("[SR] No kerbal pilot found, searching for a probe core...");
-                        stageControllable = vessel.protoVessel.protoPartSnapshots.Exists(p => p.modules.Exists(m => m.moduleName == "ModuleSAS" || m.moduleName == "MechJebCore"));
-                        if (stageControllable)
-                            Debug.Log("[SR] Found an SAS compatible probe core!");
-                        else
-                            Debug.Log("[SR] No probe core with SAS found.");
-                    }
-
-                }
-                else if (!stageControllable)
+            { 
+                if (!Controlled)
                 {
                     Debug.Log("[SR] Stage not controlled. Can't perform powered speed reduction.");
                     noControl = true;
@@ -307,7 +326,7 @@ namespace StageRecovery
             }
 
             //So, I'm not positive jets really need to be done differently. Though they could go further than normal rockets because of gliding (and wouldn't need as much TWR).
-            if (stageControllable && hasEngines) //If the stage is controlled and there are engines, we continue.
+            if (Controlled && hasEngines) //If the stage is controlled and there are engines, we continue.
             {
                 Debug.Log("[SR] Controlled and has engines. TWR: " + (totalThrust / (9.81 * totalMass)));
 
@@ -375,7 +394,19 @@ namespace StageRecovery
                     }
 
                     //Set the fuel amounts used for display later
-                    fuelUsed = new Dictionary<string, double>(propAmounts);
+                    foreach (var prop in propAmounts)
+                    {
+                        if (fuelUsed.ContainsKey(prop.Key))
+                        {
+                            fuelUsed[prop.Key] += prop.Value;
+                        }
+                        else
+                        {
+                            fuelUsed.Add(prop.Key, prop.Value);
+                        }
+                    }
+                    propsConsumed = new Dictionary<string, double>(propAmounts);
+
 
                     //Delta-V is all about mass differences, so we need to know exactly how much we used
                     double massRemoved = 0;
@@ -414,6 +445,11 @@ namespace StageRecovery
             }
             //Hopefully we removed enough fuel to land!
             Debug.Log($"[SR] Target Velocity: {targetSpeed} Final Velocity: {finalVelocity}");
+            Debug.Log("[SR] Used following propellant amounts: ");
+            foreach (var prop in propsConsumed)
+            {
+                Debug.Log($"    {prop.Key}: {prop.Value}");
+            }
             return finalVelocity;
         }
 
@@ -448,12 +484,14 @@ namespace StageRecovery
                     if (Settings.Instance.PoweredRecovery)
                     {
                         srfSpeed = ReduceSpeed_Engines(srfSpeed, Settings.Instance.DeadlyReentryMaxVelocity);
+                        Vt = srfSpeed;
                     }
 
                     //the burnChance is 2% per 1% that the surface speed is above the DRMaxV
-                    burnChance = (float)(2 * ((Vt / Settings.Instance.DeadlyReentryMaxVelocity) - 1));
+                    burnChance = (float)(2 * ((srfSpeed / Settings.Instance.DeadlyReentryMaxVelocity) - 1));
                     //Log a message alerting us to the speed and the burnChance
-                    Debug.Log("[SR] Overheat velocity exceeded (" + vessel.srfSpeed + "/" + Settings.Instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
+                    if (burnChance > 0)
+                        Debug.Log("[SR] Overheat velocity exceeded (" + srfSpeed + "/" + Settings.Instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
                 }
 
                 if (burnChance == 0) return false;

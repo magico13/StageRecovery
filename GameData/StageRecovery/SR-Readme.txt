@@ -11,6 +11,23 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.6.6 (01/22/2017)
+- Update to KSP 1.2.2.
+- Powered recovery now tries to perform a reentry burn to reduce speed and avoid burning up.
+- Kraken finds Kerbals to be less tasty when changing vessels/scenes (less randomly disappearing)
+- Terminal velocity estimations centralized and can be called through API/wrapper
+
+1.6.5 (10/20/2016)
+- Update to KSP 1.2
+- New estimator for stock parachutes based on physics. Not perfect, will try to improve
+- No longer spams messages when the recovery errors (#32)
+- Added a global recovery modifier option (#39)
+- Settings now go in StageRecovery/PluginData/Config.txt
+- Editor GUI now supports any IStageSeparators
+- Pulled in some fixes for the Toolbar mod
+
+Thank you linuxgurugamer, Iskie, and Kerbas-ad-astra for your PRs!
+ 
 1.6.4 (05/02/2016)
 - Update to 1.1.2. No other significant changes. Thank you rem0230 and Cerebrate for all of your assistance!
 
