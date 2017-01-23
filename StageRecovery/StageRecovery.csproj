@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APIManager.cs" />
+    <Compile Include="CrewWithSeat.cs" />
     <Compile Include="EditorGUI.cs" />
     <Compile Include="FlightGUI.cs" />
     <Compile Include="RecoveryItem.cs" />

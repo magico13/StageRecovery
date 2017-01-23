@@ -213,9 +213,9 @@ namespace StageRecovery
                 GUILayout.Label("None");
             else
             {
-                foreach (ProtoCrewMember kerbal in selectedStage.KerbalsOnboard)
+                foreach (CrewWithSeat kerbal in selectedStage.KerbalsOnboard)
                 {
-                    GUILayout.Label(kerbal.name);
+                    GUILayout.Label(kerbal.CrewMember.name);
                 }
             }
         }

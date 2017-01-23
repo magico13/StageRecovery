@@ -219,7 +219,8 @@ namespace StageRecovery
             if (Settings.Instance.RecoverKerbals && pv.GetVesselCrew().Count > 0)
             {
                 //Check if the conditions for vessel destruction are met
-                if (vessel != FlightGlobals.ActiveVessel && !vessel.isEVA && vessel.mainBody == Planetarium.fetch.Home && pv.situation != Vessel.Situations.LANDED && vessel.atmDensity >= 0.01) //unloading in > 0.01 atm and not landed //pv.altitude < vessel.mainBody.atmosphereDepth
+                if (vessel != FlightGlobals.ActiveVessel && !vessel.isEVA && vessel.mainBody == Planetarium.fetch.Home 
+                    && pv.situation != Vessel.Situations.LANDED && vessel.altitude < cutoffAlt && vessel.altitude > 0) //unloading in > 0.01 atm and not landed //pv.altitude < vessel.mainBody.atmosphereDepth
                 {
                     Debug.Log("[SR] Vessel " + pv.vesselName + " is going to be destroyed. Recovering Kerbals!"); //Kerbal death should be handled by SR instead
                     RecoveryItem recItem = new RecoveryItem(vessel);
@@ -237,6 +238,10 @@ namespace StageRecovery
 
         public void FixedUpdate()
         {
+            if (!sceneChangeComplete)
+            {
+                return;
+            }
             //For each vessel in the watchlist, check to see if it reaches an atm density of 0.01 and if so, pre-recover it
             foreach (Guid id in new List<Guid>(StageWatchList))
             {
@@ -246,22 +251,31 @@ namespace StageRecovery
                     StageWatchList.Remove(id);
                     continue;
                 }
-                if ((!vessel.loaded || vessel.packed) && vessel.mainBody == Planetarium.fetch.Home && vessel.altitude < cutoffAlt)
+                if ((!vessel.loaded || vessel.packed) && vessel.mainBody == Planetarium.fetch.Home && vessel.altitude < cutoffAlt && vessel.altitude > 0)
                 {
-                    Debug.Log("[SR] Vessel " + vessel.vesselName + " (" + id + ") is about to be destroyed. Pre-recovering Kerbals.");
+                    Debug.Log($"[SR] Vessel {vessel.vesselName} ({id}) is about to be destroyed at altitude {vessel.altitude}. Pre-recovering Kerbals.");
                     RecoveryItem recItem = new RecoveryItem(vessel);
 
                     //Pre-recover the Kerbals
                     recItem.PreRecoverKerbals();
 
                     //Add the ship to the RecoveryQueue to be handled by the VesselDestroy event
-                    instance.RecoveryQueue.Add(recItem);
+                    RecoveryQueue.Add(recItem);
 
                    // Debug.Log("[SR] Current RecoveryQueue size: " + instance.RecoveryQueue.Count);
 
                     StageWatchList.Remove(id);
                 }
             }
+
+            //foreach (RecoveryItem recItem in new List<RecoveryItem>(RecoveryQueue)) //Assignment validation is failing :(
+            //{
+            //    if (Planetarium.GetUniversalTime() - recItem.PreRecoveredTime > 10) //must be destroyed within 10 seconds?
+            //    {
+            //        recItem.ResetPreRecoveredKerbals();
+            //        RecoveryQueue.Remove(recItem);
+            //    }
+            //}
         }
 
         public static float ComputeCutoffAlt(CelestialBody body, float cutoffDensity, float stepSize=100)
@@ -287,7 +301,10 @@ namespace StageRecovery
                 return false;
 
             //If the vessel is around the home planet and the periapsis is below 23km, then we add it to the watch list
-            if (ves != null && FlightGlobals.ActiveVessel != ves && ves.situation != Vessel.Situations.LANDED && ves.situation != Vessel.Situations.PRELAUNCH && ves.situation != Vessel.Situations.SPLASHED && ves.protoVessel.GetVesselCrew().Count > 0 && ves.orbit != null && ves.mainBody == Planetarium.fetch.Home && ves.orbit.PeA < cutoffAlt && !ves.isEVA)
+            if (ves != null && FlightGlobals.ActiveVessel != ves && ves.situation != Vessel.Situations.LANDED 
+                && ves.situation != Vessel.Situations.PRELAUNCH && ves.situation != Vessel.Situations.SPLASHED 
+                && ves.protoVessel.GetVesselCrew().Count > 0 && ves.orbit != null && ves.mainBody == Planetarium.fetch.Home 
+                && ves.orbit.PeA < cutoffAlt && !ves.isEVA && ves.altitude > 0)
             {
                 if (instance.StageWatchList.Contains(ves.id))
                     return true;

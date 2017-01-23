@@ -28,7 +28,7 @@ namespace StageRecovery
         public List<string> ScienceExperiments = new List<string>();
         public float ScienceRecovered = 0;
         //public List<string> KerbalsOnboard = new List<string>();
-        public List<ProtoCrewMember> KerbalsOnboard = new List<ProtoCrewMember>();
+        public List<CrewWithSeat> KerbalsOnboard = new List<CrewWithSeat>();
         public Dictionary<string, int> PartsRecovered = new Dictionary<string, int>();
         public Dictionary<string, double> Costs = new Dictionary<string, double>();
         public float FundsOriginal = 0, FundsReturned = 0, DryReturns = 0, FuelReturns = 0;
@@ -36,6 +36,9 @@ namespace StageRecovery
         public float RecoveryPercent = 0, DistancePercent = 0, SpeedPercent = 0;
         public string ReasonForFailure { get { if (recovered) return "SUCCESS"; if (burnedUp) return "BURNUP"; return "SPEED"; } }
         public Dictionary<string, double> fuelUsed = new Dictionary<string, double>();
+
+        public double RecoveredTime { get; private set; }
+        public double PreRecoveredTime { get; private set; }
 
         //Creates a new RecoveryItem and calculates everything corresponding to it.
         public RecoveryItem(Vessel stage)
@@ -71,7 +74,7 @@ namespace StageRecovery
             //Recover Kerbals if we're allowed
             //if (recovered && Settings.Instance.RecoverKerbals)
             KerbalsOnboard = RecoverKerbals();
-
+            RecoveredTime = Planetarium.GetUniversalTime();
             return recovered;
         }
 
@@ -168,7 +171,7 @@ namespace StageRecovery
                     stageControllable = true;
                 else
                 {
-                    if (KerbalsOnboard.Exists(pcm => pcm.experienceTrait.Title == "Pilot"))
+                    if (KerbalsOnboard.Exists(pcm => pcm.CrewMember.experienceTrait.Title == "Pilot"))
                         stageControllable = true;
                 }
             }
@@ -182,7 +185,7 @@ namespace StageRecovery
 
                 if (stageControllable && Settings.Instance.UseUpgrades)
                 {
-                    stageControllable = vessel.GetVesselCrew().Exists(c => c.experienceTrait.Title == "Pilot") || KerbalsOnboard.Exists(pcm => pcm.experienceTrait.Title == "Pilot");
+                    stageControllable = vessel.GetVesselCrew().Exists(c => c.experienceTrait.Title == "Pilot") || KerbalsOnboard.Exists(pcm => pcm.CrewMember.experienceTrait.Title == "Pilot");
                     if (stageControllable)
                         Debug.Log("[SR] Found a kerbal pilot!");
                     else
@@ -532,7 +535,7 @@ namespace StageRecovery
                         stageControllable = true;
                     else
                     {
-                        if (KerbalsOnboard.Exists(pcm => pcm.trait == "Pilot"))
+                        if (KerbalsOnboard.Exists(pcm => pcm.CrewMember.trait == "Pilot"))
                             stageControllable = true;
                     }
                 }
@@ -668,9 +671,9 @@ namespace StageRecovery
         }
 
         //This recovers Kerbals on the Stage, returning the list of their names
-        private List<ProtoCrewMember> RecoverKerbals()
+        private List<CrewWithSeat> RecoverKerbals()
         { 
-            List<ProtoCrewMember> kerbals = new List<ProtoCrewMember>();
+            List<CrewWithSeat> kerbals = new List<CrewWithSeat>();
 
             if (KerbalsOnboard.Count > 0)
             {
@@ -694,14 +697,15 @@ namespace StageRecovery
                             else
                                 Debug.Log("[SR] Can't find the part housing " + pcm.name);
                         }*/
-                    kerbals.Add(pcm);
+                    kerbals.Add(new CrewWithSeat(pcm));
                 }
             }
 
             if (kerbals.Count > 0 && Settings.Instance.RecoverKerbals && recovered)
             {
-                foreach (ProtoCrewMember pcm in kerbals)
+                foreach (CrewWithSeat pcmWS in kerbals)
                 {
+                    ProtoCrewMember pcm = pcmWS.CrewMember;
                     Debug.Log("[SR] Recovering " + pcm.name);
                     pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
                     //Way to go Squad, you now kill Kerbals TWICE instead of only once.
@@ -754,8 +758,9 @@ namespace StageRecovery
             else if (KerbalsOnboard.Count > 0 && (!Settings.Instance.RecoverKerbals || !recovered))
             {
                 //kill the kerbals instead //Don't kill them twice
-                foreach (ProtoCrewMember pcm in kerbals)
+                foreach (CrewWithSeat pcmWS in kerbals)
                 {
+                    ProtoCrewMember pcm = pcmWS.CrewMember;
                     if (pcm.rosterStatus != ProtoCrewMember.RosterStatus.Dead && pcm.rosterStatus != ProtoCrewMember.RosterStatus.Missing)
                     {
                         pcm.rosterStatus = ProtoCrewMember.RosterStatus.Dead;
@@ -770,6 +775,7 @@ namespace StageRecovery
 
         public void PreRecoverKerbals()
         {
+            PreRecoveredTime = Planetarium.GetUniversalTime();
             ProtoVessel pv = vessel.protoVessel;
             foreach (ProtoCrewMember pcm in pv.GetVesselCrew())
             {
@@ -777,13 +783,26 @@ namespace StageRecovery
                 ProtoPartSnapshot crewedPart = pv.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
                 if (crewedPart != null)
                 {
-                    crewedPart.RemoveCrew(pcm.name);
-                    KerbalsOnboard.Add(pcm);
+                    crewedPart.RemoveCrew(pcm);
+
+                    KerbalsOnboard.Add(new CrewWithSeat(pcm, crewedPart));
                     Debug.Log("[SR] Pre-recovered " + pcm.name);
                 }
                 else
                     Debug.Log("[SR] Can't find the part housing " + pcm.name);
             }
+        }
+
+        public void ResetPreRecoveredKerbals()
+        {
+            foreach (CrewWithSeat pcmWS in KerbalsOnboard)
+            {
+                //vessel.protoVessel.AddCrew(pcm);
+                pcmWS.Restore(vessel.protoVessel);
+                Debug.Log($"[SR] Un-pre-recovering {pcmWS.CrewMember.name}");
+            }
+            KerbalsOnboard.Clear();
+            Debug.Log("[SR] Un-Pre-Recovery complete.");
         }
 
         //Fires the correct API event
@@ -845,8 +864,8 @@ namespace StageRecovery
                 if (KerbalsOnboard.Count > 0)
                 {
                     msg.AppendLine("\nKerbals recovered:");
-                    foreach (ProtoCrewMember kerbal in KerbalsOnboard)
-                        msg.AppendLine("<color=#E0D503>" + kerbal.name + "</color>");
+                    foreach (CrewWithSeat kerbal in KerbalsOnboard)
+                        msg.AppendLine("<color=#E0D503>" + kerbal.CrewMember.name + "</color>");
                 }
                 if (ScienceExperiments.Count > 0)
                 {
