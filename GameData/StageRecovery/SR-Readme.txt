@@ -11,6 +11,9 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.6.7 (01/23/2017)
+- Fixed issue with RealChute integration
+
 1.6.6 (01/22/2017)
 - Update to KSP 1.2.2.
 - Powered recovery now tries to perform a reentry burn to reduce speed and avoid burning up.
