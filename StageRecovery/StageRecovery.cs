@@ -488,13 +488,13 @@ namespace StageRecovery
             return VelocityEstimate(totalMass, chuteArea);
         }
 
-        public static double GetChuteArea(List<ProtoPartSnapshot> parts)
+        public static double GetChuteArea(List<ProtoPartSnapshot> protoParts)
         {
             double RCParameter = 0;
             bool realChuteInUse = false;
             try
             {
-                foreach (ProtoPartSnapshot p in parts)
+                foreach (ProtoPartSnapshot p in protoParts)
                 {
                     if (p.modules.Exists(ppms => ppms.moduleName == "RealChuteModule"))
                     {
@@ -505,46 +505,15 @@ namespace StageRecovery
                         //Assuming that's not somehow null, then we continue
                         if (realChute != null) //Some of this was adopted from DebRefund, as Vendan's method of handling multiple parachutes is better than what I had.
                         {
-                            //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
-                            Type matLibraryType = null;
-                            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
-                            {
-                                if (t.FullName == "RealChute.Libraries.MaterialsLibrary.MaterialsLibrary")
-                                {
-                                    matLibraryType = t;
-                                }
-                            });
-
-
                             //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
                             //We get that from the PPMS 
-                            ConfigNode[] parachutes = realChute.moduleValues.GetNodes("PARACHUTE");
-                            //We then act on each individual parachute in the module
-                            foreach (ConfigNode chute in parachutes)
-                            {
-                                //First off, the diameter of the parachute. From that we can (later) determine the Vt, assuming a circular chute
-                                float diameter = float.Parse(chute.GetValue("deployedDiameter"));
-                                //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
-                                string mat = chute.GetValue("material");
+                            ConfigNode rcNode = new ConfigNode();
+                            realChute.Save(rcNode);
 
-                                //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
-                                System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
-                                //In order to invoke the method, we need to grab the active instance of the material library
-                                object MatLibraryInstance = matLibraryType.GetProperty("Instance").GetValue(null, null);
-
-                                //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
-                                object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
-                                //With that material object we can extract the dragCoefficient using the helper function above.
-                                double dragC = (double)GetMemberInfoValue(materialObject.GetType().GetMember("DragCoefficient")[0], materialObject);
-                                //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
-                                //But it works perfectly for mutiple identical parachutes (the normal case)
-                                RCParameter += (dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
-
-                            }
-                            //This is a parachute also
-                            // isParachute = true;
                             //It's existence means that RealChute is installed and in use on the craft (you could have it installed and use stock chutes, so we only check if it's on the craft)
                             realChuteInUse = true;
+
+                            RCParameter += ProcessRealchute(rcNode);
                         }
                     }
                     else if (p.modules.Exists( ppms => ppms.moduleName == "RealChuteFAR")) //RealChute Lite for FAR
@@ -658,48 +627,15 @@ namespace StageRecovery
                         //Assuming that's not somehow null, then we continue
                         if (realChute != null) //Some of this was adopted from DebRefund, as Vendan's method of handling multiple parachutes is better than what I had.
                         {
-                            //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
-                            Type matLibraryType = null;
-                            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
-                            {
-                                if (t.FullName == "RealChute.Libraries.MaterialsLibrary.MaterialsLibrary")
-                                {
-                                    matLibraryType = t;
-                                }
-                            });
-
-
                             //We make a list of ConfigNodes containing the parachutes (usually 1, but now there can be any number of them)
                             //We get that from the PPMS 
                             ConfigNode rcNode = new ConfigNode();
                             realChute.Save(rcNode);
-                            ConfigNode[] parachutes = rcNode.GetNodes("PARACHUTE");
-                            //We then act on each individual parachute in the module
-                            foreach (ConfigNode chute in parachutes)
-                            {
-                                //First off, the diameter of the parachute. From that we can (later) determine the Vt, assuming a circular chute
-                                float diameter = float.Parse(chute.GetValue("deployedDiameter"));
-                                //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
-                                string mat = chute.GetValue("material");
-
-                                //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
-                                System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { mat.GetType() });
-                                //In order to invoke the method, we need to grab the active instance of the material library
-                                object MatLibraryInstance = matLibraryType.GetProperty("Instance").GetValue(null, null);
-
-                                //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
-                                object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
-                                //With that material object we can extract the dragCoefficient using the helper function above.
-                                double dragC = (double)GetMemberInfoValue(materialObject.GetType().GetMember("DragCoefficient")[0], materialObject);
-                                //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
-                                //But it works perfectly for mutiple identical parachutes (the normal case)
-                                RCParameter += (dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
-
-                            }
-                            //This is a parachute also
-                            // isParachute = true;
+                            
                             //It's existence means that RealChute is installed and in use on the craft (you could have it installed and use stock chutes, so we only check if it's on the craft)
                             realChuteInUse = true;
+
+                            RCParameter += ProcessRealchute(rcNode);
                         }
                     }
                     else if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
@@ -813,6 +749,47 @@ namespace StageRecovery
             }
             //Return the total mass
             return mass;
+        }
+
+        private static double ProcessRealchute(ConfigNode node)
+        {
+            double RCParameter = 0;
+
+            //This is where the Reflection starts. We need to access the material library that RealChute has, so we first grab it's Type
+            Type matLibraryType = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+            {
+                if (t.FullName == "RealChute.Libraries.MaterialsLibrary.MaterialsLibrary")
+                {
+                    matLibraryType = t;
+                }
+            });
+
+
+            ConfigNode[] parachutes = node.GetNodes("PARACHUTE");
+            //We then act on each individual parachute in the module
+            foreach (ConfigNode chute in parachutes)
+            {
+                //First off, the diameter of the parachute. From that we can (later) determine the Vt, assuming a circular chute
+                float diameter = float.Parse(chute.GetValue("deployedDiameter"));
+                //The name of the material the chute is made of. We need this to get the actual material object and then the drag coefficient
+                string mat = chute.GetValue("material");
+
+                //This grabs the method that RealChute uses to get the material. We will invoke that with the name of the material from before.
+                System.Reflection.MethodInfo matMethod = matLibraryType.GetMethod("GetMaterial", new Type[] { typeof(string) });
+                //In order to invoke the method, we need to grab the active instance of the material library
+                object MatLibraryInstance = matLibraryType.GetProperty("Instance").GetValue(null, null);
+
+                //With the library instance we can invoke the GetMaterial method (passing the name of the material as a parameter) to receive an object that is the material
+                object materialObject = matMethod.Invoke(MatLibraryInstance, new object[] { mat });
+                //With that material object we can extract the dragCoefficient using the helper function above.
+                float dragC = Convert.ToSingle(GetMemberInfoValue(materialObject.GetType().GetMember("DragCoefficient")[0], materialObject));
+                //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
+                //But it works perfectly for mutiple identical parachutes (the normal case)
+                RCParameter += (dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
+
+            }
+            return RCParameter;
         }
     }
 }
