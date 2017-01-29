@@ -11,6 +11,9 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.6.8 (01/29/2017)
+- Fixed issue where parachutes seemingly weren't being accounted for when speeds were greater than DRMaxVelocity
+
 1.6.7 (01/23/2017)
 - Fixed issue with RealChute integration
 

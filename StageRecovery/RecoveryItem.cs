@@ -100,17 +100,22 @@ namespace StageRecovery
         public bool Process()
         {
             Debug.Log("[SR] Altitude: " + vessel.altitude);
-            //Determine what the terminal velocity should be
-            Vt = DetermineTerminalVelocity();
             
             //Determine if the stage should be burned up
             burnedUp = DetermineIfBurnedUp();
 
-            //Try to perform a powered landing
+            //Determine what the terminal velocity should be
+            Vt = DetermineTerminalVelocity();
+
+            //Try to perform a powered landing, if needed
             double vt_old = Vt;
             if (Vt > (Settings.Instance.FlatRateModel ? Settings.Instance.CutoffVelocity : Settings.Instance.LowCut) && Settings.Instance.PoweredRecovery)
                 Vt = TryPoweredRecovery();
             poweredRecovery = (Vt < vt_old);
+
+
+
+
 
             //Set the Recovery Percentages
             SetRecoveryPercentages();
@@ -484,7 +489,7 @@ namespace StageRecovery
                     if (Settings.Instance.PoweredRecovery)
                     {
                         srfSpeed = ReduceSpeed_Engines(srfSpeed, Settings.Instance.DeadlyReentryMaxVelocity);
-                        Vt = srfSpeed;
+                        //Vt = srfSpeed;
                     }
 
                     //the burnChance is 2% per 1% that the surface speed is above the DRMaxV
