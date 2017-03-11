@@ -752,8 +752,6 @@ namespace StageRecovery
                     Debug.Log("[SR] Recovering " + pcm.name);
                     pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
 
-                    pcm?.seat?.part?.RemoveCrewmember(pcm); //maybe this will make them not fail assignment verification
-
                     //Way to go Squad, you now kill Kerbals TWICE instead of only once.
                     bool TwoDeathEntries = (pcm.careerLog.Entries.Count > 1 && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 1].type == "Die"
                         && pcm.careerLog.Entries[pcm.careerLog.Entries.Count - 2].type == "Die");
@@ -800,6 +798,13 @@ namespace StageRecovery
                         pcm.ArchiveFlightLog();
                     }
                 }
+
+                //remove all crew from the vessel
+                //maybe this will make them not fail assignment verification
+                foreach (ProtoCrewMember pcm in  new List<ProtoCrewMember>(vessel.protoVessel.GetVesselCrew()))
+                {
+                    vessel.protoVessel.RemoveCrew(pcm);
+                }
             }
             else if (KerbalsOnboard.Count > 0 && (!Settings.Instance.RecoverKerbals || !recovered))
             {
@@ -826,12 +831,15 @@ namespace StageRecovery
             foreach (ProtoCrewMember pcm in pv.GetVesselCrew())
             {
                 //remove kerbal from vessel
-                ProtoPartSnapshot crewedPart = pv.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
+                Part crewedPart = pcm?.seat?.part;
+
+                //ProtoPartSnapshot crewedPart = pv.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
                 if (crewedPart != null)
                 {
-                    crewedPart.RemoveCrew(pcm);
+                    //crewedPart.RemoveCrew(pcm);
+                    crewedPart.RemoveCrewmember(pcm);
 
-                    KerbalsOnboard.Add(new CrewWithSeat(pcm, crewedPart));
+                    KerbalsOnboard.Add(new CrewWithSeat(pcm, crewedPart.protoPartSnapshot));
                     Debug.Log("[SR] Pre-recovered " + pcm.name);
                 }
                 else
