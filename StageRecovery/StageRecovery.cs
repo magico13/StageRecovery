@@ -369,8 +369,13 @@ namespace StageRecovery
             return newVal;
         }
 
-        //Check to see if FMRS is installed and enabled
-        public static bool FMRS_Enabled()
+        /// <summary>
+        /// Check to see if FMRS is installed and enabled
+        /// </summary>
+        /// <param name="parachuteSetting">If true, check if the defer parachutes to SR is set (and enabled). Otherwise return only the enabled state.
+        /// Defaults to true.</param>
+
+        public static bool FMRS_Enabled(bool parachuteSetting=true)
         {
             try
             {
@@ -387,12 +392,21 @@ namespace StageRecovery
                 UnityEngine.Object FMRSUtilClass = GameObject.FindObjectOfType(FMRSType);
                 bool enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Enabled")[0], FMRSUtilClass);
                 if (enabled)
+                {
                     enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Armed")[0], FMRSUtilClass);
+                }
+
+                //if we are checking the parachute setting is set
+                if (enabled && parachuteSetting)
+                {
+                    enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Defer_Parachutes_to_StageRecovery")[0], null); //this setting is a static
+                }
 
                 return enabled;
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.LogException(ex);
                 return false;
             }
         }
