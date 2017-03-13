@@ -297,10 +297,11 @@ namespace StageRecovery
 
         public static bool WatchVessel(Vessel ves)
         {
-            if (FMRS_Enabled()) //If FMRS is active then we don't watch any vessels
+            if (FMRS_Enabled(false)) //If FMRS is active then we don't watch any vessels (we don't care if it's watching for chutes at all, we just need to know if it's on)
                 return false;
 
             //If the vessel is around the home planet and the periapsis is below 23km, then we add it to the watch list
+            //must have crew as well
             if (ves != null && FlightGlobals.ActiveVessel != ves && ves.situation != Vessel.Situations.LANDED 
                 && ves.situation != Vessel.Situations.PRELAUNCH && ves.situation != Vessel.Situations.SPLASHED 
                 && ves.protoVessel.GetVesselCrew().Count > 0 && ves.orbit != null && ves.mainBody == Planetarium.fetch.Home 
@@ -399,7 +400,12 @@ namespace StageRecovery
                 //if we are checking the parachute setting is set
                 if (enabled && parachuteSetting)
                 {
-                    enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Defer_Parachutes_to_StageRecovery")[0], null); //this setting is a static
+                    enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Parachutes")[0], null); //this setting is a static
+                    if (enabled)
+                    {
+                        enabled = !(bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Defer_Parachutes_to_StageRecovery")[0], null); //this setting is a static
+                        //we "not" it because if they're deferring to us then it's the same as them being disabled (when not considering crew or probes)
+                    }
                 }
 
                 return enabled;
@@ -429,15 +435,22 @@ namespace StageRecovery
             if (v.protoVessel == null)
                 return;
 
-            if (HighLogic.LoadedSceneIsFlight && FMRS_Enabled())
-            {//If the vessel is controlled or has a RealChute Module, FMRS will handle it
-                if ((v.protoVessel.wasControllable) || v.protoVessel.protoPartSnapshots.Find(p => p.modules != null && p.modules.Find(m => m.moduleName == "RealChuteModule") != null) != null || v.protoVessel.GetVesselCrew().Count > 0)
-                {
+            if (HighLogic.LoadedSceneIsFlight && FMRS_Enabled(false))
+            { //FMRS is installed and is active, but we aren't sure if they're handling chutes yet
+                if (!FMRS_Enabled(true))
+                { //FMRS is active, but isn't handling parachutes or deferred it to us. So if there isn't crew or a form of control, then we handle it
+                    if ((v.protoVessel.wasControllable) || v.protoVessel.GetVesselCrew().Count > 0)
+                    { //crewed or was controlled, so FMRS will get it
+                        return;
+                    }
+                    // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
+                }
+                else
+                { //FRMS is active, is handling chutes, and hasn't deferred it to us. We aren't gonna handle this case at all
                     return;
                 }
-                //If there's crew onboard, FMRS will handle that too
-                // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
             }
+            else 
 
             //Our criteria for even attempting recovery. Broken down: vessel exists, hasn't had recovery attempted, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is within atmosphere,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)

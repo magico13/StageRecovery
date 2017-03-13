@@ -127,6 +127,10 @@ namespace StageRecovery
                 //End the list of stages
                 GUILayout.EndScrollView();
             }
+
+            GUILayout.Label("FMRS: " + StageRecovery.FMRS_Enabled(false).ToString());
+            GUILayout.Label("Chutes: " + StageRecovery.FMRS_Enabled(true).ToString());
+
             GUILayout.EndVertical();
 
             //If a stage is selected we show the info for it
