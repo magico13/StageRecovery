@@ -23,7 +23,7 @@ namespace StageRecovery
         [Persistent]
         public float RecoveryModifier, DeadlyReentryMaxVelocity, CutoffVelocity, LowCut, HighCut, MinTWR, DistanceOverride, GlobalModifier;
         [Persistent]
-        public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod, HideButton;
+        public bool SREnabled, RecoverScience, RecoverKerbals, ShowFailureMessages, ShowSuccessMessages, FlatRateModel, PoweredRecovery, RecoverClamps, UseUpgrades, UseToolbarMod, HideButton, PreRecover;
 
         public bool Clicked = false;
         public List<RecoveryItem> RecoveredStages, DestroyedStages;
@@ -49,6 +49,7 @@ namespace StageRecovery
             RecoverClamps = true;
             MinTWR = 1.0f;
             UseUpgrades = true;
+            PreRecover = true;
             UseToolbarMod = true;
             DistanceOverride = -1.0f;
             GlobalModifier = 1.0f;

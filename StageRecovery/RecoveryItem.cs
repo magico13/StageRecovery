@@ -99,7 +99,7 @@ namespace StageRecovery
 
         public bool Process()
         {
-            Debug.Log("[SR] Altitude: " + vessel.altitude);
+            //Debug.Log("[SR] Altitude: " + vessel.altitude);
             
             //Determine if the stage should be burned up
             burnedUp = DetermineIfBurnedUp();
@@ -128,6 +128,18 @@ namespace StageRecovery
             //if (recovered && Settings.Instance.RecoverKerbals)
             KerbalsOnboard = RecoverKerbals();
             RecoveredTime = Planetarium.GetUniversalTime();
+
+            Debug.Log(string.Format("[SR] Stage was {0}recovered. Distance: {1}km, Altitude: {2}m", 
+                (recovered ? "" : "not"), 
+                Math.Round(KSCDistance/1000, 2), 
+                Math.Round(vessel.altitude)));
+
+            Debug.Log(string.Format("[SR] D%: {0}, S%: {1}, Total: {2}. Funds: {3}", 
+                Math.Round(DistancePercent, 3),
+                Math.Round(SpeedPercent, 3), 
+                Math.Round(RecoveryPercent, 3), 
+                Math.Round(FundsReturned, 2)));
+
             return recovered;
         }
 
@@ -623,7 +635,7 @@ namespace StageRecovery
 
             //Debug.Log("[SR] Vessel Lat/Lon: " + vessel.latitude + "/" + vessel.longitude);
             //Debug.Log("[SR] KSC Lat/Lon: " + SpaceCenter.Instance.Latitude + "/" + SpaceCenter.Instance.Longitude);
-            Debug.Log("[SR] Distance: "+KSCDistance);
+            //Debug.Log("[SR] Distance: "+KSCDistance);
         }
 
         //This populates the dictionary of Recovered Parts and the dictionary of Costs, along with total funds returns (original, modified, fuel, and dry)
@@ -826,6 +838,12 @@ namespace StageRecovery
 
         public void PreRecoverKerbals()
         {
+            //if we're not supposed to pre-recover, then we shouldn't be here at all
+            if (!Settings.Instance.PreRecover)
+            {
+                return;
+            }
+
             PreRecoveredTime = Planetarium.GetUniversalTime();
             ProtoVessel pv = vessel.protoVessel;
             foreach (ProtoCrewMember pcm in pv.GetVesselCrew())
@@ -910,10 +928,10 @@ namespace StageRecovery
                 }
                 msg.AppendLine("");
                 //List the total refunds for parts, fuel, and the combined total
-                msg.AppendLine("Total refunds: <color=#B4D455>£" + FundsReturned + "</color>");
-                msg.AppendLine("Total refunded for parts: <color=#B4D455>£" + DryReturns + "</color>");
-                msg.AppendLine("Total refunded for fuel: <color=#B4D455>£" + FuelReturns + "</color>");
-                msg.AppendLine("Stage value: <color=#B4D455>£" + FundsOriginal + "</color>");
+                msg.AppendLine("Total refunds: <color=#B4D455>£" + Math.Round(FundsReturned, 1) + "</color>");
+                msg.AppendLine("Total refunded for parts: <color=#B4D455>£" + Math.Round(DryReturns, 1) + "</color>");
+                msg.AppendLine("Total refunded for fuel: <color=#B4D455>£" + Math.Round(FuelReturns, 1) + "</color>");
+                msg.AppendLine("Stage value: <color=#B4D455>£" + Math.Round(FundsOriginal, 1) + "</color>");
 
                 if (KerbalsOnboard.Count > 0)
                 {
@@ -946,7 +964,7 @@ namespace StageRecovery
                 msg.AppendLine("\nStage contained the following parts:");
                 for (int i = 0; i < PartsRecovered.Count; i++)
                 {
-                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <color=#B4D455>£" + (PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent) + "</color>");
+                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <color=#B4D455>£" + Math.Round(PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent, 2) + "</color>");
                 }
 
                 //Setup and then post the message
@@ -969,7 +987,7 @@ namespace StageRecovery
                         totalCost += Math.Max(ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet), 0);
                     }
                     //Alert the user to what the total value was (without modifiers)
-                    msg.AppendLine("It was valued at <color=#FF9900>" + totalCost + "</color> Funds."); //ED0B0B
+                    msg.AppendLine("It was valued at <color=#FF9900>" + Math.Round(totalCost, 1) + "</color> Funds."); //ED0B0B
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information

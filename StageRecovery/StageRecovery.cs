@@ -151,7 +151,6 @@ namespace StageRecovery
                 RecoverAttemptLog.Remove(removeItem);
             }
             //end future removal
-
             sceneChangeComplete = true;
         }
 
@@ -216,7 +215,7 @@ namespace StageRecovery
             }
             
             //If it's a stage that will be destroyed, we need to manually recover the Kerbals
-            if (Settings.Instance.RecoverKerbals && pv.GetVesselCrew().Count > 0)
+            if (Settings.Instance.RecoverKerbals && Settings.Instance.PreRecover && pv.GetVesselCrew().Count > 0)
             {
                 //Check if the conditions for vessel destruction are met
                 if (vessel != FlightGlobals.ActiveVessel && !vessel.isEVA && vessel.mainBody == Planetarium.fetch.Home 
@@ -334,12 +333,12 @@ namespace StageRecovery
             int lvl = 0;
             if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Settings.Instance.UseUpgrades)
             {
-                lvl = (int)(2 * ScenarioUpgradeableFacilities.GetFacilityLevel(facility));
+                lvl = (int)(ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility) * ScenarioUpgradeableFacilities.GetFacilityLevel(facility));
             }
             else
             {
                 //lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility);
-                lvl = 2;
+                lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility); //returns 2 for VAB in Sandbox
             }
             return lvl;
         }
@@ -437,20 +436,28 @@ namespace StageRecovery
 
             if (HighLogic.LoadedSceneIsFlight && FMRS_Enabled(false))
             { //FMRS is installed and is active, but we aren't sure if they're handling chutes yet
+                Debug.Log("[SR] FMRS is active...");
                 if (!FMRS_Enabled(true))
                 { //FMRS is active, but isn't handling parachutes or deferred it to us. So if there isn't crew or a form of control, then we handle it
+                    Debug.Log("[SR] But FMRS isn't handling chutes...");
                     if ((v.protoVessel.wasControllable) || v.protoVessel.GetVesselCrew().Count > 0)
                     { //crewed or was controlled, so FMRS will get it
+                        Debug.Log("[SR] But this stage has control/kerbals, so have fun FMRS!");
                         return;
                     }
+                    Debug.Log("[SR] So we've got this stage! Maybe next time FMRS.");
                     // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
                 }
                 else
                 { //FRMS is active, is handling chutes, and hasn't deferred it to us. We aren't gonna handle this case at all
+                    Debug.Log("[SR] And FMRS is handling everything, have fun!");
                     return;
                 }
             }
-            else 
+            else
+            {
+                Debug.Log("[SR] FMRS is not active or this isn't the flight scene.");
+            }
 
             //Our criteria for even attempting recovery. Broken down: vessel exists, hasn't had recovery attempted, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is within atmosphere,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)

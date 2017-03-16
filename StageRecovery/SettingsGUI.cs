@@ -30,7 +30,7 @@ namespace StageRecovery
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut, globMod;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
-        private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades, useToolbar;
+        private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades, preRecover, useToolbar;
 
         private Vector2 scrollPos;
 
@@ -212,6 +212,7 @@ namespace StageRecovery
             DRMaxVel = Settings.Instance.DeadlyReentryMaxVelocity.ToString();
             recoverSci = Settings.Instance.RecoverScience;
             recoverKerb = Settings.Instance.RecoverKerbals;
+            preRecover = Settings.Instance.PreRecover;
             showFail = Settings.Instance.ShowFailureMessages;
             showSuccess = Settings.Instance.ShowSuccessMessages;
             flatRate = Settings.Instance.FlatRateModel;
@@ -223,6 +224,7 @@ namespace StageRecovery
             useUpgrades = Settings.Instance.UseUpgrades;
             useToolbar = Settings.Instance.UseToolbarMod;
             globMod = Settings.Instance.GlobalModifier;
+            
             showWindow = true;
         }
 
@@ -294,6 +296,7 @@ namespace StageRecovery
             poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");
             recoverClamps = GUILayout.Toggle(recoverClamps, "Recover Clamps");
             useUpgrades = GUILayout.Toggle(useUpgrades, "Tie Into Upgrades");
+            preRecover = GUILayout.Toggle(preRecover, "Pre-Recover Kerbals");
             useToolbar = GUILayout.Toggle(useToolbar, "Use Toolbar Mod");
 
             if (GUILayout.Button("Edit Ignore List"))
@@ -323,6 +326,7 @@ namespace StageRecovery
                 Settings.Instance.PoweredRecovery = poweredRecovery;
                 Settings.Instance.RecoverClamps = recoverClamps;
                 Settings.Instance.UseUpgrades = useUpgrades;
+                Settings.Instance.PreRecover = preRecover;
                 Settings.Instance.UseToolbarMod = useToolbar;
                 if (!float.TryParse(minTWR, out Settings.Instance.MinTWR))
                     Settings.Instance.MinTWR = 1.0f;
