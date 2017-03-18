@@ -11,6 +11,11 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.7.0 (03/18/2017)
+- Added support for the updated FMRS
+- Fixed bug with crew recovery that resulted in them still being marked dead
+- Added option to disable kerbal pre-recovery
+
 1.6.8 (01/29/2017)
 - Fixed issue where parachutes seemingly weren't being accounted for when speeds were greater than DRMaxVelocity
 
