@@ -291,12 +291,12 @@ namespace StageRecovery
             //The rest are just toggles and are put one after the other
             recoverSci = GUILayout.Toggle(recoverSci, "Recover Science");
             recoverKerb = GUILayout.Toggle(recoverKerb, "Recover Kerbals");
+            preRecover = GUILayout.Toggle(preRecover, "Pre-Recover Kerbals");
             showFail = GUILayout.Toggle(showFail, "Failure Messages");
             showSuccess = GUILayout.Toggle(showSuccess, "Success Messages");
             poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");
             recoverClamps = GUILayout.Toggle(recoverClamps, "Recover Clamps");
             useUpgrades = GUILayout.Toggle(useUpgrades, "Tie Into Upgrades");
-            preRecover = GUILayout.Toggle(preRecover, "Pre-Recover Kerbals");
             useToolbar = GUILayout.Toggle(useToolbar, "Use Toolbar Mod");
 
             if (GUILayout.Button("Edit Ignore List"))
