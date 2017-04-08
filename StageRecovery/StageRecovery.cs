@@ -6,7 +6,7 @@ using KSP.UI.Screens;
 
 namespace StageRecovery
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.AllGameScenes, false)]
     public class StageRecovery : MonoBehaviour
     {
         public static StageRecovery instance;
@@ -24,18 +24,17 @@ namespace StageRecovery
 
         //List of scenes where we shouldn't run the mod. I toyed with runOnce, but couldn't get it working
         private static List<GameScenes> forbiddenScenes = new List<GameScenes> { GameScenes.LOADING, GameScenes.LOADINGBUFFER, GameScenes.CREDITS, GameScenes.MAINMENU, GameScenes.SETTINGS };
-
-        //Needed to instantiate the Blizzy Toolbar button
-        internal StageRecovery()
-        {
-            if (ToolbarManager.ToolbarAvailable && Settings.Instance != null && Settings.Instance.UseToolbarMod)
-                Settings.Instance.gui.AddToolbarButton();
-        }
+        
 
         //Fired when the mod loads each scene
         public void Awake()
         {
+            Debug.Log("[SR] Awake Start");
             instance = this;
+
+            //Needed to instantiate the Blizzy Toolbar button
+            if (ToolbarManager.ToolbarAvailable && Settings.Instance != null && Settings.Instance.UseToolbarMod)
+                Settings.Instance.gui.AddToolbarButton();
 
             //If we're in the MainMenu, don't do anything
             if (forbiddenScenes.Contains(HighLogic.LoadedScene))
@@ -51,20 +50,8 @@ namespace StageRecovery
 
         private void OnGUI()
         {
-            OnDraw();
-        }
-
-        //Also needed for GUIs. Not sure why, but this is how KCT was given to me so that's the method I use
-        private void OnDraw()
-        {
             if (Settings.Instance != null && Settings.Instance.gui != null)
-                Settings.Instance.gui.SetGUIPositions(OnWindow);
-        }
-
-        //Once again, GUIs
-        private void OnWindow(int windowID)
-        {
-            Settings.Instance.gui.DrawGUIs(windowID);
+                Settings.Instance.gui.SetGUIPositions(Settings.Instance.gui.DrawGUIs);
         }
 
         //When the scene changes and the mod is destroyed
@@ -85,6 +72,7 @@ namespace StageRecovery
         //Fired when the mod loads each scene
         public void Start()
         {
+            Debug.Log("[SR] Start start");
             if (Settings.Instance != null)
                 Settings.Instance.gui.hideAll();
 
@@ -109,6 +97,9 @@ namespace StageRecovery
 
                 cutoffAlt = ComputeCutoffAlt(Planetarium.fetch.Home, 0.01F)+100;
                 Debug.Log("[SR] Determined cutoff altitude to be " + cutoffAlt);
+
+                //Register with the RecoveryController (do we only do this once?)
+                Debug.Log("[SR] RecoveryController registration success: " + RecoveryControllerWrapper.RegisterMod("StageRecovery"));
 
                 //Set the eventAdded flag to true so this code doesn't run again
                 eventAdded = true;
@@ -151,6 +142,7 @@ namespace StageRecovery
                 RecoverAttemptLog.Remove(removeItem);
             }
             //end future removal
+
             sceneChangeComplete = true;
         }
 
@@ -434,29 +426,46 @@ namespace StageRecovery
             if (v.protoVessel == null)
                 return;
 
-            if (HighLogic.LoadedSceneIsFlight && FMRS_Enabled(false))
-            { //FMRS is installed and is active, but we aren't sure if they're handling chutes yet
-                Debug.Log("[SR] FMRS is active...");
-                if (!FMRS_Enabled(true))
-                { //FMRS is active, but isn't handling parachutes or deferred it to us. So if there isn't crew or a form of control, then we handle it
-                    Debug.Log("[SR] But FMRS isn't handling chutes...");
-                    if ((v.protoVessel.wasControllable) || v.protoVessel.GetVesselCrew().Count > 0)
-                    { //crewed or was controlled, so FMRS will get it
-                        Debug.Log("[SR] But this stage has control/kerbals, so have fun FMRS!");
-                        return;
+            //Check if the stage was claimed by another mod
+            string controllingMod = RecoveryControllerWrapper.ControllingMod(v);
+            if (HighLogic.LoadedSceneIsFlight) //outside of the flight scene we're gonna handle everything
+            {
+                if (controllingMod == null || string.Equals(controllingMod, "auto", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (FMRS_Enabled(false))
+                    { //FMRS is installed and is active, but we aren't sure if they're handling chutes yet
+                        Debug.Log("[SR] FMRS is active...");
+                        if (!FMRS_Enabled(true))
+                        { //FMRS is active, but isn't handling parachutes or deferred it to us. So if there isn't crew or a form of control, then we handle it
+                            Debug.Log("[SR] But FMRS isn't handling chutes...");
+                            if ((v.protoVessel.wasControllable) || v.protoVessel.GetVesselCrew().Count > 0)
+                            { //crewed or was controlled, so FMRS will get it
+                                Debug.Log("[SR] But this stage has control/kerbals, so have fun FMRS!");
+                                return;
+                            }
+                            Debug.Log("[SR] So we've got this stage! Maybe next time FMRS.");
+                            // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
+                        }
+                        else
+                        { //FRMS is active, is handling chutes, and hasn't deferred it to us. We aren't gonna handle this case at all
+                            Debug.Log("[SR] And FMRS is handling everything, have fun!");
+                            return;
+                        }
                     }
-                    Debug.Log("[SR] So we've got this stage! Maybe next time FMRS.");
-                    // if we've gotten here, FMRS probably isn't handling the craft and we should instead.
+                    else
+                    {
+                        Debug.Log("[SR] FMRS is not active.");
+                    }
                 }
-                else
-                { //FRMS is active, is handling chutes, and hasn't deferred it to us. We aren't gonna handle this case at all
-                    Debug.Log("[SR] And FMRS is handling everything, have fun!");
+                else if (string.Equals(controllingMod, "StageRecovery", StringComparison.OrdinalIgnoreCase))
+                {
+                    Debug.Log("[SR] Vessel specified StageRecovery as its processor.");
+                }
+                else //another mod has requested full control over recovery of the vessel
+                {
+                    Debug.Log($"[SR] Vessel specified '{controllingMod}' as its processor.");
                     return;
                 }
-            }
-            else
-            {
-                Debug.Log("[SR] FMRS is not active or this isn't the flight scene.");
             }
 
             //Our criteria for even attempting recovery. Broken down: vessel exists, hasn't had recovery attempted, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is within atmosphere,

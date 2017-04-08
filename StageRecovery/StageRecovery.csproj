@@ -65,6 +65,7 @@
     <Compile Include="CrewWithSeat.cs" />
     <Compile Include="EditorGUI.cs" />
     <Compile Include="FlightGUI.cs" />
+    <Compile Include="RecoveryControllerWrapper.cs" />
     <Compile Include="RecoveryItem.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SettingsGUI.cs" />
