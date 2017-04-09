@@ -110,10 +110,6 @@ namespace StageRecovery
 
         public static  bool RegisterMod(string modName)
         {
-            if (!RecoveryControllerAvailable)
-            {
-                return false;
-            }
             var s = CallRecoveryController("RegisterMod", modName);
             if (s == null)
                 return false;
@@ -122,10 +118,6 @@ namespace StageRecovery
 
         public static  bool UnRegisterMod(string modName)
         {
-            if (!RecoveryControllerAvailable)
-            {
-                return false;
-            }
             var s = CallRecoveryController("UnRegisterMod", modName);
             if (s == null)
                 return false;
@@ -134,14 +126,8 @@ namespace StageRecovery
 
         public static string ControllingMod(Vessel v)
         {
-            if (!RecoveryControllerAvailable)
-            {
-                return null;
-            }
             var s = CallRecoveryController("ControllingMod", v);
-            if (s != null)
-                return (string)s;
-            return null;
+            return s as string;
         }
     }
 }

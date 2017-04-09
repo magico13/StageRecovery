@@ -130,7 +130,7 @@ namespace StageRecovery
             RecoveredTime = Planetarium.GetUniversalTime();
 
             Debug.Log(string.Format("[SR] Stage was {0}recovered. Distance: {1}km, Altitude: {2}m", 
-                (recovered ? "" : "not"), 
+                (recovered ? "" : "not "), 
                 Math.Round(KSCDistance/1000, 2), 
                 Math.Round(vessel.altitude)));
 

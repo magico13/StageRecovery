@@ -813,9 +813,10 @@ namespace StageRecovery
         {
             //Check if the stage was claimed by another mod
             string controllingMod = RecoveryControllerWrapper.ControllingMod(vessel);
+            Debug.Log("[SR] Controlling mod is " + (controllingMod ?? "null"));
             if (HighLogic.LoadedSceneIsFlight) //outside of the flight scene we're gonna handle everything
             {
-                if (controllingMod == null || string.Equals(controllingMod, "auto", StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(controllingMod) || string.Equals(controllingMod, "auto", StringComparison.OrdinalIgnoreCase))
                 {
                     if (FMRS_Enabled(false))
                     { //FMRS is installed and is active, but we aren't sure if they're handling chutes yet
