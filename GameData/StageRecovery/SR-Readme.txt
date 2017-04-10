@@ -11,6 +11,9 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.7.1 (04/09/2017)
+- Added support for RecoveryController, an improved form of compatibility between recovery mods (thanks LinuxGuruGamer!)
+
 1.7.0 (03/18/2017)
 - Added support for the updated FMRS
 - Fixed bug with crew recovery that resulted in them still being marked dead
