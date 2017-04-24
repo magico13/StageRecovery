@@ -479,6 +479,8 @@ namespace StageRecovery
                 Stage.AddToList();
                 //Post a message to the stock message system, if people are still using that.
                 Stage.PostStockMessage();
+                //Add to ScrapYard if it's installed
+                AddToScrapYard(Stage);
 
                 APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
             }
@@ -855,6 +857,24 @@ namespace StageRecovery
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// Adds the stage's parts to ScrapYard if it was recovered
+        /// </summary>
+        /// <param name="stage">The processed stage</param>
+        public static void AddToScrapYard(RecoveryItem stage)
+        {
+            if (stage.recovered)
+            {
+                Debug.Log("[StageRecovery] Attempting to add parts to ScrapYard inventory");
+                ScrapYardWrapper.AddPartsToInventory(stage.vessel.protoVessel.protoPartSnapshots.Select((p) =>
+                {
+                    ConfigNode tmp = new ConfigNode();
+                    p.Save(tmp);
+                    return tmp;
+                }).ToList(), true);
+            }
         }
     }
 }
