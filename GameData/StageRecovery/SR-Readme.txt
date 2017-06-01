@@ -11,6 +11,10 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.7.2 (06/01/2017)
+- Built against KSP 1.3, but should still support KSP 1.2.2
+- Added support for ScrapYard mod. Adds parts to inventory upon recovery.
+
 1.7.1 (04/09/2017)
 - Added support for RecoveryController, an improved form of compatibility between recovery mods (thanks LinuxGuruGamer!)
 
