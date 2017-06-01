@@ -58,7 +58,10 @@ namespace StageRecovery
                 if (recoveryControllerAvailable == null)
                 {
                     recoveryControllerAvailable = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "RecoveryController");
-                    calledType = Type.GetType("RecoveryController.RecoveryController,RecoveryController");
+                    if (recoveryControllerAvailable == true)
+                    {
+                        calledType = Type.GetType("RecoveryController.RecoveryController,RecoveryController");
+                    }
                 }
                 return recoveryControllerAvailable.GetValueOrDefault();
             }
