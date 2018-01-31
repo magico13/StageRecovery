@@ -884,9 +884,18 @@ namespace StageRecovery
             float[] infoArray = new float[] { SpeedPercent, FundsReturned, ScienceRecovered };
             //Fire the RecoverySuccessEvent if recovered or the RecoveryFailureEvent if destroyed
             if (recovered)
+            {
                 APIManager.instance.RecoverySuccessEvent.Fire(vessel, infoArray, ReasonForFailure);
+                //try to fire the OnVesselRecoveredEvent, but remove the VesselRecovery handler
+                VesselRecovery recovery = UnityEngine.Object.FindObjectOfType<VesselRecovery>();
+                recovery.OnDestroy();
+                GameEvents.onVesselRecovered.Fire(vessel.protoVessel, false);
+                recovery.OnAwake();
+            }
             else
+            {
                 APIManager.instance.RecoveryFailureEvent.Fire(vessel, infoArray, ReasonForFailure);
+            }
         }
 
         //Adds the Stage to the appropriate List (Recovered vs Destroyed)

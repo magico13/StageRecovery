@@ -95,7 +95,7 @@ namespace StageRecovery
                 //if (!ToolbarManager.ToolbarAvailable)
                 GameEvents.onGUIApplicationLauncherReady.Add(Settings.Instance.gui.OnGUIAppLauncherReady);
 
-                cutoffAlt = ComputeCutoffAlt(Planetarium.fetch.Home, 0.01F)+100;
+                cutoffAlt = ComputeCutoffAlt(Planetarium.fetch.Home)+1000;
                 Debug.Log("[SR] Determined cutoff altitude to be " + cutoffAlt);
 
                 //Register with the RecoveryController (do we only do this once?)
@@ -124,7 +124,7 @@ namespace StageRecovery
             if (HighLogic.LoadedSceneIsFlight)
             {
                 foreach (Vessel v in FlightGlobals.Vessels)
-                    WatchVessel(v);
+                    TryWatchVessel(v);
             }
 
             //Remove anything that happens in the future
@@ -211,7 +211,8 @@ namespace StageRecovery
             {
                 //Check if the conditions for vessel destruction are met
                 if (vessel != FlightGlobals.ActiveVessel && !vessel.isEVA && vessel.mainBody == Planetarium.fetch.Home 
-                    && pv.situation != Vessel.Situations.LANDED && vessel.altitude < cutoffAlt && vessel.altitude > 0) //unloading in > 0.01 atm and not landed //pv.altitude < vessel.mainBody.atmosphereDepth
+                    && pv.situation != Vessel.Situations.LANDED && vessel.altitude < cutoffAlt && vessel.altitude > 0
+                    && (FlightGlobals.ActiveVessel.transform.position - vessel.transform.position).sqrMagnitude > Math.Pow(vessel.vesselRanges.GetSituationRanges(Vessel.Situations.FLYING).pack, 2) - 250)
                 {
                     Debug.Log("[SR] Vessel " + pv.vesselName + " is going to be destroyed. Recovering Kerbals!"); //Kerbal death should be handled by SR instead
                     RecoveryItem recItem = new RecoveryItem(vessel);
@@ -223,7 +224,7 @@ namespace StageRecovery
                     instance.RecoveryQueue.Add(recItem);
                 }
                 else
-                    WatchVessel(vessel);
+                    TryWatchVessel(vessel);
             }
         }
 
@@ -242,7 +243,8 @@ namespace StageRecovery
                     StageWatchList.Remove(id);
                     continue;
                 }
-                if ((!vessel.loaded || vessel.packed) && vessel.mainBody == Planetarium.fetch.Home && vessel.altitude < cutoffAlt && vessel.altitude > 0)
+                if ((!vessel.loaded || vessel.packed) && vessel.mainBody == Planetarium.fetch.Home && vessel.altitude < cutoffAlt && vessel.altitude > 0 
+                    && (FlightGlobals.ActiveVessel.transform.position - vessel.transform.position).sqrMagnitude > Math.Pow(vessel.vesselRanges.GetSituationRanges(Vessel.Situations.FLYING).pack, 2)-250)
                 {
                     if (!SRShouldRecover(vessel))
                     {
@@ -274,24 +276,32 @@ namespace StageRecovery
             //}
         }
 
-        public static float ComputeCutoffAlt(CelestialBody body, float cutoffDensity, float stepSize=100)
+        public static float ComputeCutoffAlt(CelestialBody body, float stepSize=100)
         {
             //This unfortunately doesn't seem to be coming up with the right altitude for Kerbin (~23km, it finds ~27km)
-            double dens = 0;
             float alt = (float)body.atmosphereDepth;
             while (alt > 0)
             {
-                dens = body.GetDensity(FlightGlobals.getStaticPressure(alt, body), body.atmosphereTemperatureCurve.Evaluate(alt)); //body.atmospherePressureCurve.Evaluate(alt)
-                //Debug.Log("[SR] Alt: " + alt + " Pres: " + dens);
-                if (dens < cutoffDensity)
+                //dens = body.GetDensity(FlightGlobals.getStaticPressure(alt, body), body.atmosphereTemperatureCurve.Evaluate(alt)); //body.atmospherePressureCurve.Evaluate(alt)
+                ////Debug.Log("[SR] Alt: " + alt + " Pres: " + dens);
+                //if (dens < cutoffDensity)
+                //    alt -= stepSize;
+                //else
+                //    break;
+                double pres = body.GetPressure(alt);
+                if (pres < 1.0)
+                {
                     alt -= stepSize;
+                }
                 else
+                {
                     break;
+                }
             }
             return alt;
         }
 
-        public static bool WatchVessel(Vessel ves)
+        public static bool TryWatchVessel(Vessel ves)
         {
             if (FMRS_Enabled(false)) //If FMRS is active then we don't watch any vessels (we don't care if it's watching for chutes at all, we just need to know if it's on)
                 return false;
@@ -479,8 +489,8 @@ namespace StageRecovery
                 Stage.AddToList();
                 //Post a message to the stock message system, if people are still using that.
                 Stage.PostStockMessage();
-                //Add to ScrapYard if it's installed
-                AddToScrapYard(Stage);
+                //Add to ScrapYard if it's installed (not needed if we fire the Recovery event)
+                //AddToScrapYard(Stage);
 
                 APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
             }
