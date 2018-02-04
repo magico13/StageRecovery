@@ -31,23 +31,35 @@ namespace StageRecovery
             GUILayout.BeginHorizontal();
             bool active = GUILayout.Toggle(firstToolbarIndex == 0, "Recovered" + (Settings.Instance.RecoveredStages.Count > 0 ? " ("+Settings.Instance.RecoveredStages.Count+")" : ""), GUI.skin.button);
             if (!active && firstToolbarIndex == 0)
+            {
                 firstToolbarIndex = -1;
+            }
             else if (active)
+            {
                 firstToolbarIndex = 0;
-
+            }
 
             active = GUILayout.Toggle(firstToolbarIndex == 1, "Destroyed" + (Settings.Instance.DestroyedStages.Count > 0 ? " (" + Settings.Instance.DestroyedStages.Count + ")" : ""), GUI.skin.button);
             if (!active && firstToolbarIndex == 1)
+            {
                 firstToolbarIndex = -1;
+            }
             else if (active)
+            {
                 firstToolbarIndex = 1;
+            }
+
             if (temp != firstToolbarIndex)
             {
                 NullifySelected();
                 if (firstToolbarIndex == -1)
+                {
                     flightWindowRect.height = 1;
+                }
                 else
+                {
                     flightWindowRect.height = 480;
+                }
             }
             GUILayout.EndHorizontal();
             //NullifySelected will set the selectedStage to null and reset the toolbar
@@ -68,16 +80,23 @@ namespace StageRecovery
                     {
                         string buttonText = stage.StageName;
                         if (stage == selectedStage)
+                        {
                             buttonText = "--  " + buttonText + "  --";
+                        }
+
                         if (GUILayout.Button(buttonText))
                         {
                             if (Input.GetMouseButtonUp(0))
                             {
                                 //If you select the same stage again it will minimize the list
                                 if (selectedStage == stage)
+                                {
                                     selectedStage = null;
+                                }
                                 else
+                                {
                                     selectedStage = stage;
+                                }
                             }
                             else if (Input.GetMouseButtonUp(1))
                             {
@@ -94,16 +113,23 @@ namespace StageRecovery
                     {
                         string buttonText = stage.StageName;
                         if (stage == selectedStage)
+                        {
                             buttonText = "--  " + buttonText + "  --";
+                        }
+
                         if (GUILayout.Button(buttonText))
                         {
                             if (Input.GetMouseButtonUp(0))
                             {
                                 //If you select the same stage again it will minimize the list
                                 if (selectedStage == stage)
+                                {
                                     selectedStage = null;
+                                }
                                 else
+                                {
                                     selectedStage = stage;
+                                }
                             }
                             else if (Input.GetMouseButtonUp(1))
                             {
@@ -117,11 +143,18 @@ namespace StageRecovery
                 if (deleteThis != null)
                 {
                     if (deleteThis == selectedStage)
+                    {
                         NullifySelected();
+                    }
+
                     if (firstToolbarIndex == 0)
+                    {
                         Settings.Instance.RecoveredStages.Remove(deleteThis);
+                    }
                     else
+                    {
                         Settings.Instance.DestroyedStages.Remove(deleteThis);
+                    }
                 }
 
                 //End the list of stages
@@ -137,7 +170,11 @@ namespace StageRecovery
             if (selectedStage != null)
             {
                 //Make the window larger to accomodate the info
-                if (flightWindowRect.width != 600) flightWindowRect.width = 600;
+                if (flightWindowRect.width != 600)
+                {
+                    flightWindowRect.width = 600;
+                }
+
                 GUILayout.BeginVertical(HighLogic.Skin.textArea);
                 //Show a toolbar with options for specific data, defaulting to the Parts list
                 infoBarIndex = GUILayout.Toolbar(infoBarIndex, new string[] { "Parts", "Crew", "Science", "Info" });
@@ -161,7 +198,10 @@ namespace StageRecovery
             //If no stage is selected we reset the window size back to 240
             else
             {
-                if (flightWindowRect.width != 240) flightWindowRect.width = 240;
+                if (flightWindowRect.width != 240)
+                {
+                    flightWindowRect.width = 240;
+                }
             }
             
             GUILayout.EndHorizontal();
@@ -170,7 +210,9 @@ namespace StageRecovery
 
             //Make it draggable
             if (!Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2))
+            {
                 GUI.DragWindow();
+            }
         }
 
         //Set the selected stage to null and reset the info toolbar to "Parts"
@@ -214,7 +256,9 @@ namespace StageRecovery
         {
             GUILayout.Label("Crew Onboard:");
             if (selectedStage.KerbalsOnboard.Count == 0)
+            {
                 GUILayout.Label("None");
+            }
             else
             {
                 foreach (CrewWithSeat kerbal in selectedStage.KerbalsOnboard)

@@ -11,7 +11,7 @@ namespace StageRecovery
     public sealed class APIManager
     {
         //This is the actual instance. It gets instantiated when someone calls for it, below.
-        private static readonly APIManager instance_ = new APIManager();
+        private static readonly APIManager _instance = new APIManager();
 
         //This is the public reference to the instance. Nobody else can change the instance, it's read only.
         public static APIManager instance
@@ -19,7 +19,7 @@ namespace StageRecovery
             //get and set let you get the value or set the value. Providing only one (here: get) makes it read only or write only.
             get
             {
-                return instance_;
+                return _instance;
             }
         }
 
@@ -60,7 +60,9 @@ namespace StageRecovery
         {
             //We only add it if it isn't already added. Just in case.
             if (!listeningMethods.Contains(method))
+            {
                 listeningMethods.Add(method);
+            }
         }
 
         //This removes and event from the List
@@ -68,7 +70,9 @@ namespace StageRecovery
         {
             //We also only remove it if it's actually in the list.
             if (listeningMethods.Contains(method))
+            {
                 listeningMethods.Remove(method);
+            }
         }
 
         //This fires the event off, activating all the listening methods.
@@ -76,7 +80,9 @@ namespace StageRecovery
         {
             //Loop through the list of listening methods and Invoke them.
             foreach (Action<Vessel, float[], string> method in listeningMethods)
+            {
                 method.Invoke(vessel, infoArray, reason);
+            }
         }
     }
 
@@ -91,7 +97,9 @@ namespace StageRecovery
         {
             //We only add it if it isn't already added. Just in case.
             if (!listeningMethods.Contains(method))
+            {
                 listeningMethods.Add(method);
+            }
         }
 
         //This removes and event from the List
@@ -99,7 +107,9 @@ namespace StageRecovery
         {
             //We also only remove it if it's actually in the list.
             if (listeningMethods.Contains(method))
+            {
                 listeningMethods.Remove(method);
+            }
         }
 
         //This fires the event off, activating all the listening methods.
@@ -107,7 +117,9 @@ namespace StageRecovery
         {
             //Loop through the list of listening methods and Invoke them.
             foreach (Action<Vessel> method in listeningMethods)
+            {
                 method.Invoke(vessel);
+            }
         }
     }
 }

@@ -116,20 +116,28 @@ namespace StageRecovery
 
         public bool Contains(string item)
         {
-            if (ignore.Count == 0) Load();
+            if (ignore.Count == 0)
+            {
+                Load();
+            }
+
             return ignore.FirstOrDefault(s => item.ToLower().Contains(s)) != null;
         }
 
         public void Add(string item)
         {
             if (!ignore.Contains(item.ToLower()))
+            {
                 ignore.Add(item.ToLower());
+            }
         }
 
         public void Remove(string item)
         {
             if (ignore.Contains(item.ToLower()))
+            {
                 ignore.Remove(item.ToLower());
+            }
         }
     }
 

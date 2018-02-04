@@ -40,9 +40,15 @@ namespace StageRecovery
         public void OnGUIAppLauncherReady()
         {
             if (ToolbarManager.ToolbarAvailable && Settings.Instance.UseToolbarMod)
+            {
                 return;
+            }
+
             if (Settings.Instance.HideButton) //If told to hide the button, then don't show the button. Blizzy's can do this automatically.
+            {
                 return;
+            }
+
             bool vis;
             if (ApplicationLauncher.Ready && (SRButtonStock == null || !ApplicationLauncher.Instance.Contains(SRButtonStock, out vis))) //Add Stock button
             {
@@ -76,7 +82,9 @@ namespace StageRecovery
         public void onClick()
         {
             if (Settings.Instance.Clicked && (showWindow || flightGUI.showFlightGUI || editorGUI.showEditorGUI))
+            {
                 hideAll();
+            }
             else
                 ShowWindow();
         }
@@ -85,14 +93,18 @@ namespace StageRecovery
         public void OnHoverOn()
         {
             if (HighLogic.LoadedSceneIsFlight)
+            {
                 flightGUI.showFlightGUI = true;
+            }
         }
 
         //When the button is no longer hovered over, hide the flight GUI if it wasn't clicked
         public void OnHoverOff()
         {
             if (HighLogic.LoadedSceneIsFlight && !Settings.Instance.Clicked)
+            {
                 flightGUI.showFlightGUI = false;
+            }
         }
 
         //This shows the correct window depending on the current scene
@@ -117,26 +129,48 @@ namespace StageRecovery
         public void SetGUIPositions(GUI.WindowFunction OnWindow)
         {
             if (showWindow)
+            {
                 mainWindowRect = GUILayout.Window(8940, mainWindowRect, DrawSettingsGUI, "StageRecovery", HighLogic.Skin.window);
+            }
+
             if (flightGUI.showFlightGUI)
+            {
                 flightGUI.flightWindowRect = GUILayout.Window(8940, flightGUI.flightWindowRect, flightGUI.DrawFlightGUI, "StageRecovery", HighLogic.Skin.window);
+            }
+
             if (showBlacklist)
+            {
                 blacklistRect = GUILayout.Window(8941, blacklistRect, DrawBlacklistGUI, "Ignore List", HighLogic.Skin.window);
+            }
+
             if (editorGUI.showEditorGUI)
+            {
                 editorGUI.EditorGUIRect = GUILayout.Window(8940, editorGUI.EditorGUIRect, editorGUI.DrawEditorGUI, "StageRecovery", HighLogic.Skin.window);
+            }
         }
 
         //More drawing window stuff. I only half understand this. It just works.
         public void DrawGUIs(int windowID)
         {
             if (showWindow)
+            {
                 DrawSettingsGUI(windowID);
+            }
+
             if (flightGUI.showFlightGUI)
+            {
                 flightGUI.DrawFlightGUI(windowID);
+            }
+
             if (showBlacklist)
+            {
                 DrawBlacklistGUI(windowID);
+            }
+
             if (editorGUI.showEditorGUI)
+            {
                 editorGUI.DrawEditorGUI(windowID);
+            }
         }
 
         //Hide all the windows. We only have one so this isn't super helpful, but alas.
@@ -200,7 +234,9 @@ namespace StageRecovery
             GUILayout.EndVertical();
 
             if (!Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2))
+            {
                 GUI.DragWindow();
+            }
         }
 
         //This function will show the settings window and copy the current settings into their holders
@@ -318,7 +354,10 @@ namespace StageRecovery
                 //Strings must be parsed into the correct type. Using TryParse returns a bool stating whether it was sucessful. The value is saved in the out if it works
                 //Otherwise we set the value to the default
                 if (!float.TryParse(DRMaxVel, out Settings.Instance.DeadlyReentryMaxVelocity))
+                {
                     Settings.Instance.DeadlyReentryMaxVelocity = 2000f;
+                }
+
                 Settings.Instance.RecoverScience = recoverSci;
                 Settings.Instance.RecoverKerbals = recoverKerb;
                 Settings.Instance.ShowFailureMessages = showFail;
@@ -329,7 +368,10 @@ namespace StageRecovery
                 Settings.Instance.PreRecover = preRecover;
                 Settings.Instance.UseToolbarMod = useToolbar;
                 if (!float.TryParse(minTWR, out Settings.Instance.MinTWR))
+                {
                     Settings.Instance.MinTWR = 1.0f;
+                }
+
                 Settings.Instance.GlobalModifier = globMod;
                 //Finally we save the settings to the file
                 Settings.Instance.Save();
@@ -341,7 +383,9 @@ namespace StageRecovery
             //This last thing checks whether the right mouse button or middle mouse button are clicked on the window. If they are, we ignore it, otherwise we GUI.DragWindow()
             //Calling that allows the window to be moved by clicking it (anywhere empty on the window) with the left mouse button and dragging it to wherever you want.
             if (!Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2))
+            {
                 GUI.DragWindow();
+            }
         }
 
         public void EditorCalc()

@@ -22,16 +22,22 @@ namespace StageRecovery
             {
                 highLight = !highLight;
                 if (highLight)
+                {
                     HighlightAll();
+                }
                 else
+                {
                     UnHighlightAll();
+                }
             }
 
             if (GUILayout.Button("Tanks: "+(tanksDry? "Empty":"Full")))
             {
                 tanksDry = !tanksDry;
                 if (highLight)
+                {
                     HighlightAll();
+                }
             }
 
             //list each stage, with info for each
@@ -48,7 +54,10 @@ namespace StageRecovery
                     //highlight this stage and unhighlight all others
                     bool status = stage.Highlighted;
                     if (highLight)
+                    {
                         status = false;
+                    }
+
                     UnHighlightAll();
                     stage.SetHighlight(!status, tanksDry);
                 }
@@ -60,7 +69,9 @@ namespace StageRecovery
             {
                 BreakShipIntoStages();
                 if (highLight)
+                {
                     HighlightAll();
+                }
 
                 EditorGUIRect.height = 1; //reset the height so it is the smallest size it needs to be 
             }
@@ -74,21 +85,27 @@ namespace StageRecovery
 
             //Make it draggable
             if (!Input.GetMouseButtonDown(1) && !Input.GetMouseButtonDown(2))
+            {
                 GUI.DragWindow();
+            }
         }
 
         public void UnHighlightAll()
         {
             highLight = false;
             foreach (EditorStatItem stage in stages)
+            {
                 stage.UnHighlight();
+            }
         }
 
         public void HighlightAll()
         {
             highLight = true;
             foreach (EditorStatItem stage in stages)
+            {
                 stage.Highlight(tanksDry);
+            }
         }
 
         public void BreakShipIntoStages()
@@ -107,9 +124,11 @@ namespace StageRecovery
                 Part parent = RemainingDecouplers[0];
                 RemainingDecouplers.RemoveAt(0);
                 stage = DetermineStage(parent);
-                current = new EditorStatItem();
-                current.stageNumber = stageNum++;
-                current.parts = stage.parts;
+                current = new EditorStatItem
+                {
+                    stageNumber = stageNum++,
+                    parts = stage.parts
+                };
                 RemainingDecouplers.AddRange(stage.decouplers);
 
                 //compute properties
@@ -221,7 +240,10 @@ namespace StageRecovery
             get
             {
                 if (_FullVelocity < 0)
+                {
                     _FullVelocity = GetVelocity(false);
+                }
+
                 return _FullVelocity;
             }
         }
@@ -231,7 +253,10 @@ namespace StageRecovery
             get
             {
                 if (_DryVelocity < 0)
+                {
                     _DryVelocity = GetVelocity(true);
+                }
+
                 return _DryVelocity;
             }
         }
@@ -251,9 +276,13 @@ namespace StageRecovery
         private double GetVelocity(bool dry=true)
         {
             if (dry)
+            {
                 return StageRecovery.VelocityEstimate(dryMass, chuteArea);
+            }
             else
+            {
                 return StageRecovery.VelocityEstimate(mass, chuteArea);
+            }
         }
 
         public double GetRecoveryPercent(bool dry=true)
@@ -261,16 +290,28 @@ namespace StageRecovery
             double Vt = GetVelocity(dry);
             bool recovered = false;
             if (Settings.Instance.FlatRateModel)
+            {
                 recovered = Vt < Settings.Instance.CutoffVelocity;
+            }
             else
+            {
                 recovered = Vt < Settings.Instance.HighCut;
+            }
 
             if (!recovered)
+            {
                 return 0;
+            }
 
             double recoveryPercent = 0;
-            if (recovered && Settings.Instance.FlatRateModel) recoveryPercent = 1;
-            else if (recovered && !Settings.Instance.FlatRateModel) recoveryPercent = RecoveryItem.GetVariableRecoveryValue(Vt);
+            if (recovered && Settings.Instance.FlatRateModel)
+            {
+                recoveryPercent = 1;
+            }
+            else if (recovered && !Settings.Instance.FlatRateModel)
+            {
+                recoveryPercent = RecoveryItem.GetVariableRecoveryValue(Vt);
+            }
 
             return Math.Round(100 * recoveryPercent, 2);
         }
@@ -280,9 +321,14 @@ namespace StageRecovery
             double vel = dry ? EmptyVelocity : FullVelocity;
             UnityEngine.Color stageColor = UnityEngine.Color.red;
             if (vel < Settings.Instance.HighCut)
+            {
                 stageColor = UnityEngine.Color.yellow;
+            }
+
             if (vel < Settings.Instance.LowCut)
+            {
                 stageColor = UnityEngine.Color.green;
+            }
             //Part p = parts[0];
             foreach (Part p in parts)
             {
@@ -308,17 +354,25 @@ namespace StageRecovery
         public void SetHighlight(bool status, bool dry = true)
         {
             if (status)
+            {
                 Highlight(dry);
+            }
             else
+            {
                 UnHighlight();
+            }
         }
 
         public bool ToggleHighlight()
         {
             if (_highlighted)
+            {
                 UnHighlight();
+            }
             else
+            {
                 Highlight();
+            }
 
             return _highlighted;
         }
