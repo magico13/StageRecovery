@@ -11,15 +11,23 @@ namespace StageRecovery
     public class RecoveryItem
     {
         public Vessel vessel;
-        public bool recovered
+        public bool Recovered
         {
             get
             {
-                if (burnedUp) return false;
+                if (burnedUp)
+                {
+                    return false;
+                }
+
                 if (Settings.Instance.FlatRateModel)
+                {
                     return Vt < Settings.Instance.CutoffVelocity;
+                }
                 else
+                {
                     return Vt < Settings.Instance.HighCut;
+                }
             }
         }
         public bool burnedUp, poweredRecovery, noControl;
@@ -34,7 +42,7 @@ namespace StageRecovery
         public float FundsOriginal = 0, FundsReturned = 0, DryReturns = 0, FuelReturns = 0;
         public float KSCDistance = 0;
         public float RecoveryPercent = 0, DistancePercent = 0, SpeedPercent = 0;
-        public string ReasonForFailure { get { if (recovered) return "SUCCESS"; if (burnedUp) return "BURNUP"; return "SPEED"; } }
+        public string ReasonForFailure { get { if (Recovered) { return "SUCCESS"; } if (burnedUp) { return "BURNUP"; } return "SPEED"; } }
         public Dictionary<string, double> fuelUsed = new Dictionary<string, double>();
 
         public double RecoveredTime { get; private set; }
@@ -51,11 +59,15 @@ namespace StageRecovery
                     if (!controlled && KerbalsOnboard.Count > 0)
                     {
                         if (!Settings.Instance.UseUpgrades)
+                        {
                             controlled = true;
+                        }
                         else
                         {
                             if (KerbalsOnboard.Exists(pcm => pcm.CrewMember.experienceTrait.Title == "Pilot"))
+                            {
                                 controlled = true;
+                            }
                         }
                     }
                     if (!controlled)
@@ -67,15 +79,21 @@ namespace StageRecovery
                     {
                         controlled = vessel.GetVesselCrew().Exists(c => c.experienceTrait.Title == "Pilot") || KerbalsOnboard.Exists(pcm => pcm.CrewMember.experienceTrait.Title == "Pilot");
                         if (controlled)
+                        {
                             Debug.Log("[SR] Found a kerbal pilot!");
+                        }
                         else
                         {
                             Debug.Log("[SR] No kerbal pilot found, searching for a probe core...");
                             controlled = vessel.protoVessel.protoPartSnapshots.Exists(p => p.modules.Exists(m => m.moduleName == "ModuleSAS" || m.moduleName == "MechJebCore"));
                             if (controlled)
+                            {
                                 Debug.Log("[SR] Found an SAS compatible probe core!");
+                            }
                             else
+                            {
                                 Debug.Log("[SR] No probe core with SAS found.");
+                            }
                         }
 
                     }
@@ -91,8 +109,12 @@ namespace StageRecovery
             vessel = stage;
             //Pack all the parts. I got this from MCE and everything works so I haven't tried removing it.
             if (!vessel.packed)
+            {
                 foreach (Part p in vessel.Parts)
+                {
                     p.Pack();
+                }
+            }
             //Get the name
             StageName = vessel.vesselName;
         }
@@ -110,7 +132,10 @@ namespace StageRecovery
             //Try to perform a powered landing, if needed
             double vt_old = Vt;
             if (Vt > (Settings.Instance.FlatRateModel ? Settings.Instance.CutoffVelocity : Settings.Instance.LowCut) && Settings.Instance.PoweredRecovery)
+            {
                 Vt = TryPoweredRecovery();
+            }
+
             poweredRecovery = (Vt < vt_old);
 
 
@@ -122,15 +147,17 @@ namespace StageRecovery
             //Set the parts, costs, and refunds
             SetPartsAndFunds();
             //Recover Science if we're allowed
-            if (recovered && Settings.Instance.RecoverScience)
+            if (Recovered && Settings.Instance.RecoverScience)
+            {
                 ScienceRecovered = RecoverScience();
+            }
             //Recover Kerbals if we're allowed
             //if (recovered && Settings.Instance.RecoverKerbals)
             KerbalsOnboard = RecoverKerbals();
             RecoveredTime = Planetarium.GetUniversalTime();
 
             Debug.Log(string.Format("[SR] Stage was {0}recovered. Distance: {1}km, Altitude: {2}m", 
-                (recovered ? "" : "not "), 
+                (Recovered ? "" : "not "), 
                 Math.Round(KSCDistance/1000, 2), 
                 Math.Round(vessel.altitude)));
 
@@ -140,7 +167,7 @@ namespace StageRecovery
                 Math.Round(RecoveryPercent, 3), 
                 Math.Round(FundsReturned, 2)));
 
-            return recovered;
+            return Recovered;
         }
 
         public static double GetParachuteDragFromPart(AvailablePart parachute)
@@ -278,7 +305,9 @@ namespace StageRecovery
                                         if (!(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
                                         {
                                             if (!propsUsed.ContainsKey(prop.name))
+                                            {
                                                 propsUsed.Add(prop.name, prop.ratio);
+                                            }
                                         }
                                     }
                                 }
@@ -311,7 +340,9 @@ namespace StageRecovery
                                         if (!(prop.name.ToLower().Contains("air") || prop.name.ToLower().Contains("electric") || prop.name.ToLower().Contains("coolant")))
                                         {
                                             if (!propsUsed.ContainsKey(prop.name))
+                                            {
                                                 propsUsed.Add(prop.name, prop.ratio);
+                                            }
                                         }
                                     }
                                 }
@@ -348,18 +379,22 @@ namespace StageRecovery
                 Debug.Log("[SR] Controlled and has engines. TWR: " + (totalThrust / (9.81 * totalMass)));
 
                 if (totalThrust < (totalMass * 9.81) * Settings.Instance.MinTWR) //Need greater than 1 TWR to land. Planes would be different, but we ignore them. This isn't quite true with parachutes, btw.
+                {
                     return finalVelocity;
+                }
                 //Now we determine the netISP by taking the total thrust and dividing by the stuff we calculated earlier.
                 netISP = totalThrust / netISP;
 
                 double finalMassRequired = totalMass * Math.Exp(-(1.5 * (finalVelocity - targetSpeed)) / (9.81 * netISP));
                 double massRequired = totalMass - finalMassRequired;
 
-                Debug.Log("[SR] Requires " + propsUsed.Count + " fuels. " + String.Join(", ", propsUsed.Keys.ToArray()));
+                Debug.Log("[SR] Requires " + propsUsed.Count + " fuels. " + string.Join(", ", propsUsed.Keys.ToArray()));
 
                 //If the engine doesn't need fuel (ie, electric engines from firespitter) then we just say you land
                 if (propsUsed.Count == 0)
+                {
                     finalVelocity = targetSpeed;
+                }
                 //Otherwise we need to use fuel
                 else
                 {
@@ -392,9 +427,13 @@ namespace StageRecovery
                             enoughFuel = false;
                             limitingFuelType = entry.Key;
                             if (resources.ContainsKey(entry.Key))
+                            {
                                 limiter = (float)(entry.Value - resources[entry.Key]) * density;
+                            }
                             else
+                            {
                                 limiter = (entry.Value) * density;
+                            }
                         }
                     }
 
@@ -411,7 +450,7 @@ namespace StageRecovery
                     }
 
                     //Set the fuel amounts used for display later
-                    foreach (var prop in propAmounts)
+                    foreach (KeyValuePair<string, double> prop in propAmounts)
                     {
                         if (fuelUsed.ContainsKey(prop.Key))
                         {
@@ -429,7 +468,9 @@ namespace StageRecovery
                     double massRemoved = 0;
                     //Loop over the parts and the resources contained, removing what we need
                     foreach (ProtoPartSnapshot p in vessel.protoVessel.protoPartSnapshots)
+                    {
                         foreach (ProtoPartResourceSnapshot r in p.resources)
+                        {
                             if (propsUsed.ContainsKey(r.resourceName))
                             {
                                 double density = PartResourceLibrary.Instance.GetDefinition(r.resourceName).density;
@@ -452,8 +493,12 @@ namespace StageRecovery
                                 //Set the new fuel values in the part (the ONLY time we modify the recovered stage)
                                 r.amount = amountInPart;
                                 if (r.resourceRef != null)
+                                {
                                     r.resourceRef.amount = amountInPart;
+                                }
                             }
+                        }
+                    }
                     //Calculate the total delta-v expended.
                     double totaldV = netISP * 9.81 * Math.Log(totalMass / (totalMass - massRemoved));
                     //Divide that by 1.5 and subtract it from the velocity after parachutes.
@@ -463,7 +508,7 @@ namespace StageRecovery
             //Hopefully we removed enough fuel to land!
             Debug.Log($"[SR] Target Velocity: {targetSpeed} Final Velocity: {finalVelocity}");
             Debug.Log("[SR] Used following propellant amounts: ");
-            foreach (var prop in propsConsumed)
+            foreach (KeyValuePair<string, double> prop in propsConsumed)
             {
                 Debug.Log($"    {prop.Key}: {prop.Value}");
             }
@@ -508,10 +553,15 @@ namespace StageRecovery
                     burnChance = (float)(2 * ((srfSpeed / Settings.Instance.DeadlyReentryMaxVelocity) - 1));
                     //Log a message alerting us to the speed and the burnChance
                     if (burnChance > 0)
+                    {
                         Debug.Log("[SR] Overheat velocity exceeded (" + srfSpeed + "/" + Settings.Instance.DeadlyReentryMaxVelocity + ") Chance of burning up: " + burnChance);
+                    }
                 }
 
-                if (burnChance == 0) return false;
+                if (burnChance == 0)
+                {
+                    return false;
+                }
 
 
                 //Holders for the total amount of ablative shielding available, and the maximum total
@@ -527,8 +577,10 @@ namespace StageRecovery
                             
                             string ablativeRsc = "Ablator";
                             if (p.partInfo.partPrefab != null && p.partInfo.partPrefab.Modules.Contains("ModuleAblator"))
+                            {
                                 ablativeRsc = ((ModuleAblator)p.partInfo.partPrefab.Modules["ModuleAblator"]).ablativeResource;
-                           
+                            }
+
                             //For stock 1.0
                             //Determine the amount of shielding remaining
                             //Debug.Log("[SR] Looking for resource " + ablativeRsc);
@@ -557,7 +609,9 @@ namespace StageRecovery
                 {
                     //If there's heatshields on the vessel then reduce the chance by the current total/the max. Aka, up to 100%
                     if (maxHeatShield > 0)
+                    {
                         burnChance -= (totalHeatShield / maxHeatShield);
+                    }
                     //Pick a random number between 0 and 1
                     System.Random rand = new System.Random();
                     double choice = rand.NextDouble();
@@ -587,11 +641,15 @@ namespace StageRecovery
                 if (!stageControllable && KerbalsOnboard.Count > 0)
                 {
                     if (!Settings.Instance.UseUpgrades)
+                    {
                         stageControllable = true;
+                    }
                     else
                     {
                         if (KerbalsOnboard.Exists(pcm => pcm.CrewMember.trait == "Pilot"))
+                        {
                             stageControllable = true;
+                        }
                     }
                 }
                 //Cycle through all of the parts on the ship (well, ProtoPartSnaphsots)
@@ -612,7 +670,9 @@ namespace StageRecovery
             }
             //If we're not using Flat Rate (thus using Variable Rate) then we have to do a bit more work to get the SpeedPercent
             else
+            {
                 SpeedPercent = (float)GetVariableRecoveryValue(Vt);
+            }
 
             //Calculate the distance from KSC in meters
             KSCDistance = (float)SpaceCenter.Instance.GreatCircleDistance(SpaceCenter.Instance.cb.GetRelSurfaceNVector(vessel.latitude, vessel.longitude));
@@ -621,15 +681,23 @@ namespace StageRecovery
 
             int TSUpgrades = StageRecovery.BuildingUpgradeLevel(SpaceCenterFacility.TrackingStation);
             if (TSUpgrades == 0)
+            {
                 maxDist *= (0.5);
+            }
             else if (TSUpgrades == 1)
+            {
                 maxDist *= (0.75);
+            }
 
             //Get the reduction in returns due to distance (0.98 at KSC, .1 at maxDist)
             if (Settings.Instance.DistanceOverride < 0)
+            {
                 DistancePercent = Mathf.Lerp(0.98f, 0.1f, (float)(KSCDistance / maxDist));
+            }
             else
+            {
                 DistancePercent = Settings.Instance.DistanceOverride;
+            }
             //Combine the modifier from the velocity and the modifier from distance together
             RecoveryPercent = SpeedPercent * DistancePercent * Settings.Instance.GlobalModifier;
 
@@ -682,8 +750,10 @@ namespace StageRecovery
 
             }
             //Add refunds for the stage
-            if (FundsReturned > 0 && recovered)
+            if (FundsReturned > 0 && Recovered)
+            {
                 StageRecovery.AddFunds(FundsReturned);
+            }
         }
 
         //This method performs Science recovery and populates the ScienceExperiments list
@@ -708,7 +778,7 @@ namespace StageRecovery
                             ScienceSubject subject = ResearchAndDevelopment.GetSubjectByID(subjectNode.GetValue("subjectID"));
                             //Get the amount of data saved
                             float amt = float.Parse(subjectNode.GetValue("data"));
-                            String title = subject.title;
+                            string title = subject.title;
                             //And submit that data with the subjectID to the R&D center, getting the amount earned back
                             float science = ResearchAndDevelopment.Instance.SubmitScienceData(amt, subject, 1f);
                             //Add the amount earned to the total earned
@@ -756,7 +826,7 @@ namespace StageRecovery
                 }
             }
 
-            if (kerbals.Count > 0 && Settings.Instance.RecoverKerbals && recovered)
+            if (kerbals.Count > 0 && Settings.Instance.RecoverKerbals && Recovered)
             {
                 foreach (CrewWithSeat pcmWS in kerbals)
                 {
@@ -818,7 +888,7 @@ namespace StageRecovery
                     vessel.protoVessel.RemoveCrew(pcm);
                 }
             }
-            else if (KerbalsOnboard.Count > 0 && (!Settings.Instance.RecoverKerbals || !recovered))
+            else if (KerbalsOnboard.Count > 0 && (!Settings.Instance.RecoverKerbals || !Recovered))
             {
                 //kill the kerbals instead //Don't kill them twice
                 foreach (CrewWithSeat pcmWS in kerbals)
@@ -861,7 +931,9 @@ namespace StageRecovery
                     Debug.Log("[SR] Pre-recovered " + pcm.name);
                 }
                 else
+                {
                     Debug.Log("[SR] Can't find the part housing " + pcm.name);
+                }
             }
         }
 
@@ -883,7 +955,7 @@ namespace StageRecovery
             //Create an array with the Percent returned due to Speed (aka, damage), the Funds Returned, and the Science Recovered
             float[] infoArray = new float[] { SpeedPercent, FundsReturned, ScienceRecovered };
             //Fire the RecoverySuccessEvent if recovered or the RecoveryFailureEvent if destroyed
-            if (recovered)
+            if (Recovered)
             {
                 APIManager.instance.RecoverySuccessEvent.Fire(vessel, infoArray, ReasonForFailure);
                 //try to fire the OnVesselRecoveredEvent, but remove the VesselRecovery handler
@@ -901,26 +973,34 @@ namespace StageRecovery
         //Adds the Stage to the appropriate List (Recovered vs Destroyed)
         public void AddToList()
         {
-            if (recovered)
+            if (Recovered)
+            {
                 Settings.Instance.RecoveredStages.Add(this);
+            }
             else
+            {
                 Settings.Instance.DestroyedStages.Add(this);
+            }
         }
 
         //Removes the Stage from the corresponding List
         public void RemoveFromList()
         {
-            if (recovered)
+            if (Recovered)
+            {
                 Settings.Instance.RecoveredStages.Remove(this);
+            }
             else
+            {
                 Settings.Instance.DestroyedStages.Remove(this);
+            }
         }
 
         //This posts either a success or failure message to the Stock Message system
         public void PostStockMessage()
         {
             StringBuilder msg = new StringBuilder();
-            if (recovered && Settings.Instance.ShowSuccessMessages)
+            if (Recovered && Settings.Instance.ShowSuccessMessages)
             {
                 //Start adding some in-game display messages about the return
                 msg.AppendLine("<color=#8BED8B>Stage '" + StageName + "' recovered " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
@@ -946,13 +1026,17 @@ namespace StageRecovery
                 {
                     msg.AppendLine("\nKerbals recovered:");
                     foreach (CrewWithSeat kerbal in KerbalsOnboard)
+                    {
                         msg.AppendLine("<color=#E0D503>" + kerbal.CrewMember.name + "</color>");
+                    }
                 }
                 if (ScienceExperiments.Count > 0)
                 {
                     msg.AppendLine("\nScience recovered: "+ScienceRecovered);
                     foreach (string science in ScienceExperiments)
+                    {
                         msg.AppendLine(science);
+                    }
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
@@ -961,9 +1045,13 @@ namespace StageRecovery
                     msg.AppendLine(ParachuteModule + " Module used.");
                 //Display the terminal velocity (Vt) and what is needed to have any recovery
                 if (Settings.Instance.FlatRateModel)
+                {
                     msg.AppendLine("Terminal velocity of <color=#8BED8B>" + Math.Round(Vt, 2) + "</color> (less than " + Settings.Instance.CutoffVelocity + " needed)");
+                }
                 else
+                {
                     msg.AppendLine("Terminal velocity of <color=#8BED8B>" + Math.Round(Vt, 2) + "</color> (less than " + Settings.Instance.HighCut + " needed)");
+                }
 
                 if (poweredRecovery)
                 {
@@ -980,7 +1068,7 @@ namespace StageRecovery
                 MessageSystem.Message m = new MessageSystem.Message("Stage Recovered", msg.ToString(), MessageSystemButton.MessageButtonColor.BLUE, MessageSystemButton.ButtonIcons.MESSAGE);
                 MessageSystem.Instance.AddMessage(m);
             }
-            else if (!recovered && Settings.Instance.ShowFailureMessages)
+            else if (!Recovered && Settings.Instance.ShowFailureMessages)
             {
                 msg.AppendLine("<color=#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
                 
@@ -1008,7 +1096,9 @@ namespace StageRecovery
                 
                 //If it failed because of burning up (can be in addition to speed) then we'll let you know
                 if (burnedUp)
+                {
                     msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + vessel.srfSpeed + " m/s.");
+                }
 
                 if (poweredRecovery && !burnedUp)
                 {
@@ -1042,9 +1132,15 @@ namespace StageRecovery
             float x0 = Settings.Instance.LowCut;
             float x1 = Settings.Instance.HighCut;
             //If we're below the low cut, then return 1 (100%)
-            if (v < x0) return 1;
+            if (v < x0)
+            {
+                return 1;
+            }
             //If we're above the high cut, return 0
-            if (v > x1) return 0;
+            if (v > x1)
+            {
+                return 0;
+            }
             //Well, we're inbetween. Calculate the 'a' parameter.
             float a = (float)(-100 / (Math.Pow(x1, 2) - 2 * x0 * x1 + Math.Pow(x0, 2)));
             //From 'a' we can calculate 'b'. 

@@ -34,11 +34,15 @@ namespace StageRecovery
 
             //Needed to instantiate the Blizzy Toolbar button
             if (ToolbarManager.ToolbarAvailable && Settings.Instance != null && Settings.Instance.UseToolbarMod)
+            {
                 Settings.Instance.gui.AddToolbarButton();
+            }
 
             //If we're in the MainMenu, don't do anything
             if (forbiddenScenes.Contains(HighLogic.LoadedScene))
+            {
                 return;
+            }
 
             //Create a new Settings instance if one doesn't exist
             //if (Settings.Instance == null)
@@ -51,7 +55,9 @@ namespace StageRecovery
         private void OnGUI()
         {
             if (Settings.Instance != null && Settings.Instance.gui != null)
+            {
                 Settings.Instance.gui.SetGUIPositions(Settings.Instance.gui.DrawGUIs);
+            }
         }
 
         //When the scene changes and the mod is destroyed
@@ -59,14 +65,20 @@ namespace StageRecovery
         {
             //If we're in the MainMenu, don't do anything
             if (forbiddenScenes.Contains(HighLogic.LoadedScene) || Settings.Instance == null || Settings.Instance.gui == null)
+            {
                 return;
+            }
 
             //Remove the button from the stock toolbar
             if (Settings.Instance.gui.SRButtonStock != null)
+            {
                 ApplicationLauncher.Instance.RemoveModApplication(Settings.Instance.gui.SRButtonStock);
+            }
             //Remove the button from Blizzy's toolbar
             if (Settings.Instance.gui.SRToolbarButton != null)
+            {
                 Settings.Instance.gui.SRToolbarButton.Destroy();
+            }
         }
 
         //Fired when the mod loads each scene
@@ -74,11 +86,15 @@ namespace StageRecovery
         {
             Debug.Log("[SR] Start start");
             if (Settings.Instance != null)
+            {
                 Settings.Instance.gui.hideAll();
+            }
 
             //If we're in the MainMenu, don't do anything
             if (forbiddenScenes.Contains(HighLogic.LoadedScene))
+            {
                 return;
+            }
 
             //If the event hasn't been added yet, run this code (adds the event and the stock button)
             if (!eventAdded)
@@ -107,8 +123,15 @@ namespace StageRecovery
             //Load the settings from file
             Settings.Instance.Load();
             //Confine the RecoveryModifier to be between 0 and 1
-            if (Settings.Instance.RecoveryModifier > 1) Settings.Instance.RecoveryModifier = 1;
-            if (Settings.Instance.RecoveryModifier < 0) Settings.Instance.RecoveryModifier = 0;
+            if (Settings.Instance.RecoveryModifier > 1)
+            {
+                Settings.Instance.RecoveryModifier = 1;
+            }
+
+            if (Settings.Instance.RecoveryModifier < 0)
+            {
+                Settings.Instance.RecoveryModifier = 0;
+            }
             //Save the settings file (in case it doesn't exist yet). I suppose this is somewhat unnecessary if the file exists
             Settings.Instance.Save();
 
@@ -124,7 +147,9 @@ namespace StageRecovery
             if (HighLogic.LoadedSceneIsFlight)
             {
                 foreach (Vessel v in FlightGlobals.Vessels)
+                {
                     TryWatchVessel(v);
+                }
             }
 
             //Remove anything that happens in the future
@@ -155,7 +180,9 @@ namespace StageRecovery
         {
             sceneChangeComplete = false;
             if (newScene != GameScenes.FLIGHT)
+            {
                 clampsRecovered.Clear();
+            }
         }
 
         private List<Vessel> clampsRecovered = new List<Vessel>();
@@ -163,11 +190,15 @@ namespace StageRecovery
         {
             //If we're disabled, just return
             if (!Settings.Instance.SREnabled)
+            {
                 return;
+            }
 
             //If the vessel or the protovessel are null then we surely can't do anything with them
             if (vessel == null || vessel.protoVessel == null)
+            {
                 return;
+            }
 
             ProtoVessel pv = vessel.protoVessel;
 
@@ -176,10 +207,12 @@ namespace StageRecovery
             {
                 //If we've already recovered the clamps, then no need to try again
                 if (clampsRecovered.Find(a => a.id == vessel.id) != null)
+                {
                     return;
+                }
 
                 //Assign the pv variable to the protovessel, then look for if the root is a clamp
-                
+
                 if (pv.protoPartSnapshots.Count > 0 && pv.protoPartSnapshots[0].modules.Exists(m => m.moduleName == "LaunchClamp"))
                 {
                     //We look for the launchclamp module, which will hopefully cover FASA and stock.
@@ -224,7 +257,9 @@ namespace StageRecovery
                     instance.RecoveryQueue.Add(recItem);
                 }
                 else
+                {
                     TryWatchVessel(vessel);
+                }
             }
         }
 
@@ -304,7 +339,9 @@ namespace StageRecovery
         public static bool TryWatchVessel(Vessel ves)
         {
             if (FMRS_Enabled(false)) //If FMRS is active then we don't watch any vessels (we don't care if it's watching for chutes at all, we just need to know if it's on)
+            {
                 return false;
+            }
 
             //If the vessel is around the home planet and the periapsis is below 23km, then we add it to the watch list
             //must have crew as well
@@ -314,7 +351,9 @@ namespace StageRecovery
                 && ves.orbit.PeA < cutoffAlt && !ves.isEVA && ves.altitude > 0)
             {
                 if (instance.StageWatchList.Contains(ves.id))
+                {
                     return true;
+                }
 
                 instance.StageWatchList.Add(ves.id);
                 Debug.Log("[SR] Added vessel " + ves.vesselName + " (" + ves.id + ") to watchlist.");
@@ -329,7 +368,10 @@ namespace StageRecovery
         public static double AddFunds(double toAdd)
         {
             if (HighLogic.CurrentGame.Mode != Game.Modes.CAREER)
+            {
                 return 0;
+            }
+
             Funding.Instance.AddFunds(toAdd, TransactionReasons.VesselRecovery);
             Debug.Log("[SR] Adding funds: " + toAdd + ", New total: " + Funding.Instance.Funds);
             return (Funding.Instance.Funds);
@@ -354,9 +396,14 @@ namespace StageRecovery
         public static double VelocityEstimate(double mass, double chuteAreaTimesCd)
         {
             if (chuteAreaTimesCd <= 0)
+            {
                 return 200;
+            }
+
             if (mass <= 0)
+            {
                 return 0;
+            }
 
             CelestialBody home = Planetarium.fetch.Home;
 
@@ -370,9 +417,14 @@ namespace StageRecovery
         {
             object newVal;
             if (member is System.Reflection.FieldInfo)
+            {
                 newVal = ((System.Reflection.FieldInfo)member).GetValue(sourceObject);
+            }
             else
+            {
                 newVal = ((System.Reflection.PropertyInfo)member).GetValue(sourceObject, null);
+            }
+
             return newVal;
         }
 
@@ -394,7 +446,10 @@ namespace StageRecovery
                         FMRSType = t;
                     }
                 });
-                if (FMRSType == null) return false;
+                if (FMRSType == null)
+                {
+                    return false;
+                }
 
                 UnityEngine.Object FMRSUtilClass = GameObject.FindObjectOfType(FMRSType);
                 bool enabled = (bool)GetMemberInfoValue(FMRSType.GetMember("_SETTING_Enabled")[0], FMRSUtilClass);
@@ -428,18 +483,26 @@ namespace StageRecovery
         {
             //If we're disabled, just return
             if (!Settings.Instance.SREnabled)
+            {
                 return;
+            }
 
             if (!sceneChangeComplete)
+            {
                 return;
+            }
 
             //If FlightGlobals is null, just return. We can't do anything
             if (FlightGlobals.fetch == null)
+            {
                 return;
+            }
 
             //If the protoVessel is null, we can't do anything so just return
             if (v.protoVessel == null)
+            {
                 return;
+            }
 
             //Check if we should even recover it
             if (!SRShouldRecover(v))
@@ -464,7 +527,10 @@ namespace StageRecovery
                         break;
                     }
                 }
-                if (OnlyBlacklistedItems) return;
+                if (OnlyBlacklistedItems)
+                {
+                    return;
+                }
 
                 //If we got this far, we can assume we're going to be attempting to recover the vessel, so we should fire the processing event
                 APIManager.instance.OnRecoveryProcessingStart.Fire(v);
@@ -523,7 +589,9 @@ namespace StageRecovery
                     if (p.modules.Exists(ppms => ppms.moduleName == "RealChuteModule"))
                     {
                         if (!realChuteInUse)
+                        {
                             RCParameter = 0;
+                        }
                         //First off, get the PPMS since we'll need that
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteModule");
                         //Assuming that's not somehow null, then we continue
@@ -543,7 +611,10 @@ namespace StageRecovery
                     else if (p.modules.Exists( ppms => ppms.moduleName == "RealChuteFAR")) //RealChute Lite for FAR
                     {
                         if (!realChuteInUse)
+                        {
                             RCParameter = 0;
+                        }
+
                         ProtoPartModuleSnapshot realChute = p.modules.First(mod => mod.moduleName == "RealChuteFAR");
                         float diameter = 0.0F; //realChute.moduleValues.GetValue("deployedDiameter")
 
@@ -645,7 +716,9 @@ namespace StageRecovery
                     if (ModuleNames.Contains("RealChuteModule"))
                     {
                         if (!realChuteInUse)
+                        {
                             RCParameter = 0;
+                        }
                         //First off, get the PPMS since we'll need that
                         PartModule realChute = p.Modules["RealChuteModule"];
                         //Assuming that's not somehow null, then we continue
@@ -665,7 +738,10 @@ namespace StageRecovery
                     else if (ModuleNames.Contains("RealChuteFAR")) //RealChute Lite for FAR
                     {
                         if (!realChuteInUse)
+                        {
                             RCParameter = 0;
+                        }
+
                         PartModule realChute = p.Modules["RealChuteFAR"];
                         float diameter = 0.0F; //realChute.moduleValues.GetValue("deployedDiameter")
 
@@ -875,7 +951,7 @@ namespace StageRecovery
         /// <param name="stage">The processed stage</param>
         public static void AddToScrapYard(RecoveryItem stage)
         {
-            if (stage.recovered)
+            if (stage.Recovered)
             {
                 Debug.Log("[StageRecovery] Attempting to add parts to ScrapYard inventory");
                 ScrapYardWrapper.AddPartsToInventory(stage.vessel.protoVessel.protoPartSnapshots.Select((p) =>

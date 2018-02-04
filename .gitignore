@@ -156,3 +156,4 @@ $RECYCLE.BIN/
 .DS_Store
 *.dll
 /.vs/StageRecovery/v15/Server/sqlite3
+*.exe

@@ -143,7 +143,7 @@ namespace StageRecovery
                 infoBarIndex = GUILayout.Toolbar(infoBarIndex, new string[] { "Parts", "Crew", "Science", "Info" });
                 //List the stage name and whether it was recovered or destroyed
                 GUILayout.Label("Stage name: " + selectedStage.StageName);
-                GUILayout.Label("Status: " + (selectedStage.recovered ? "RECOVERED" : "DESTROYED"));
+                GUILayout.Label("Status: " + (selectedStage.Recovered ? "RECOVERED" : "DESTROYED"));
                 //Put everything in a scroll view in case it is too much data for the window to display
                 infoScroll = GUILayout.BeginScrollView(infoScroll);
                 //Depending on the selected data view we display different things (split into different functions for ease)
@@ -190,12 +190,12 @@ namespace StageRecovery
                 string name = selectedStage.PartsRecovered.Keys.ElementAt(i);
                 int amt = selectedStage.PartsRecovered.Values.ElementAt(i);
                 double cost = selectedStage.Costs.Values.ElementAt(i);
-                double percent = selectedStage.recovered ? selectedStage.RecoveryPercent :  1;
+                double percent = selectedStage.Recovered ? selectedStage.RecoveryPercent :  1;
                 GUILayout.Label(amt + "x " + name + " @ " + Math.Round(cost * percent, 2) + ": " + Math.Round(cost * amt * percent, 2));
             }
 
             //If the stage was recovered, list the refunds for parts, fuel, and total, along with the overall percentage
-            if (selectedStage.recovered)
+            if (selectedStage.Recovered)
             {
                 GUILayout.Label("\nTotal refunded for parts: " + Math.Round(selectedStage.DryReturns, 2));
                 GUILayout.Label("Total refunded for fuel: " + Math.Round(selectedStage.FuelReturns, 2));
