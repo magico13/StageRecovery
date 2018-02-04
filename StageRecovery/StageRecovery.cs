@@ -885,7 +885,7 @@ namespace StageRecovery
                 //With that material object we can extract the dragCoefficient using the helper function above.
                 float dragC = Convert.ToSingle(GetMemberInfoValue(materialObject.GetType().GetMember("DragCoefficient")[0], materialObject));
                 //Now we calculate the RCParameter. Simple addition of this doesn't result in perfect results for Vt with parachutes with different diameter or drag coefficients
-                //But it works perfectly for mutiple identical parachutes (the normal case)
+                //But it works perfectly for multiple identical parachutes (the normal case)
                 RCParameter += (dragC * Mathf.Pow(diameter, 2) * Math.PI / 4.0);
 
             }
@@ -953,7 +953,7 @@ namespace StageRecovery
         {
             if (stage.Recovered)
             {
-                Debug.Log("[StageRecovery] Attempting to add parts to ScrapYard inventory");
+                Debug.Log("[SR] Attempting to add parts to ScrapYard inventory");
                 ScrapYardWrapper.AddPartsToInventory(stage.vessel.protoVessel.protoPartSnapshots.Select((p) =>
                 {
                     ConfigNode tmp = new ConfigNode();
