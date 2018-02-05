@@ -247,14 +247,9 @@ namespace StageRecovery
                     && pv.situation != Vessel.Situations.LANDED && vessel.altitude < cutoffAlt && vessel.altitude > 0
                     && (FlightGlobals.ActiveVessel.transform.position - vessel.transform.position).sqrMagnitude > Math.Pow(vessel.vesselRanges.GetSituationRanges(Vessel.Situations.FLYING).pack, 2) - 250)
                 {
-                    Debug.Log("[SR] Vessel " + pv.vesselName + " is going to be destroyed. Recovering Kerbals!"); //Kerbal death should be handled by SR instead
-                    RecoveryItem recItem = new RecoveryItem(vessel);
+                    Debug.Log("[SR] Vessel " + pv.vesselName + " is going to be destroyed. Pre-recovering!"); //Kerbal death should be handled by SR instead
 
-                    //Pre-recover the Kerbals
-                    recItem.PreRecoverKerbals();
-
-                    //Add the ship to the RecoveryQueue to be handled by the OnDestroy event
-                    instance.RecoveryQueue.Add(recItem);
+                    RecoverVessel(vessel, true);
                 }
                 else
                 {
@@ -286,16 +281,9 @@ namespace StageRecovery
                         StageWatchList.Remove(id);
                         continue;
                     }
-                    Debug.Log($"[SR] Vessel {vessel.vesselName} ({id}) is about to be destroyed at altitude {vessel.altitude}. Pre-recovering Kerbals.");
-                    RecoveryItem recItem = new RecoveryItem(vessel);
+                    Debug.Log($"[SR] Vessel {vessel.vesselName} ({id}) is about to be destroyed at altitude {vessel.altitude}. Pre-recovering vessel.");
 
-                    //Pre-recover the Kerbals
-                    recItem.PreRecoverKerbals();
-
-                    //Add the ship to the RecoveryQueue to be handled by the VesselDestroy event
-                    RecoveryQueue.Add(recItem);
-
-                   // Debug.Log("[SR] Current RecoveryQueue size: " + instance.RecoveryQueue.Count);
+                    RecoverVessel(vessel, true);
 
                     StageWatchList.Remove(id);
                 }
@@ -515,51 +503,59 @@ namespace StageRecovery
             if (v != null && !RecoverAttemptLog.ContainsKey(v.id) && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && (v.mainBody == Planetarium.fetch.Home) && (!v.loaded || v.packed) && (v.altitude < v.mainBody.atmosphereDepth) &&
                (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL || v.situation == Vessel.Situations.ORBITING) && !v.isEVA && v.altitude > 100)
             {
-                //Indicate that we've at least attempted recovery of this vessel
-                RecoverAttemptLog.Add(v.id, Planetarium.GetUniversalTime());
-
-                bool OnlyBlacklistedItems = true;
-                foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
-                {
-                    if (!Settings.Instance.BlackList.Contains(pps.partInfo.title))
-                    {
-                        OnlyBlacklistedItems = false;
-                        break;
-                    }
-                }
-                if (OnlyBlacklistedItems)
-                {
-                    return;
-                }
-
-                //If we got this far, we can assume we're going to be attempting to recover the vessel, so we should fire the processing event
-                APIManager.instance.OnRecoveryProcessingStart.Fire(v);
-
-                //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
-                Debug.Log("[SR] Searching in RecoveryQueue (" + instance.RecoveryQueue.Count + ") for " + v.id);
-                RecoveryItem Stage;
-                if (instance.RecoveryQueue.Count > 0 && instance.RecoveryQueue.Exists(ri => ri.vessel.id == v.id))
-                {
-                    Stage = instance.RecoveryQueue.Find(ri => ri.vessel.id == v.id);
-                    instance.RecoveryQueue.Remove(Stage);
-                    Debug.Log("[SR] Found vessel in the RecoveryQueue.");
-                }
-                else
-                {
-                    Stage = new RecoveryItem(v);
-                }
-                Stage.Process();
-                //Fire the pertinent RecoveryEvent (success or failure). Aka, make the API do its work
-                Stage.FireEvent();
-                //Add the Stage to the correct list of stages. Either the Recovered Stages list or the Destroyed Stages list, for display on the main gui
-                Stage.AddToList();
-                //Post a message to the stock message system, if people are still using that.
-                Stage.PostStockMessage();
-                //Add to ScrapYard if it's installed (not needed if we fire the Recovery event)
-                //AddToScrapYard(Stage);
-
-                APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
+                RecoverVessel(v, false);
             }
+        }
+
+        private static void RecoverVessel(Vessel v, bool preRecovery)
+        {
+            //Indicate that we've at least attempted recovery of this vessel
+            RecoverAttemptLog.Add(v.id, Planetarium.GetUniversalTime());
+
+            bool OnlyBlacklistedItems = true;
+            foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+            {
+                if (!Settings.Instance.BlackList.Contains(pps.partInfo.title))
+                {
+                    OnlyBlacklistedItems = false;
+                    break;
+                }
+            }
+            if (OnlyBlacklistedItems)
+            {
+                return;
+            }
+
+            //If we got this far, we can assume we're going to be attempting to recover the vessel, so we should fire the processing event
+            APIManager.instance.OnRecoveryProcessingStart.Fire(v);
+
+            //Create a new RecoveryItem. Calling this calculates everything regarding the success or failure of the recovery. We need it for display purposes in the main gui
+            Debug.Log("[SR] Searching in RecoveryQueue (" + instance.RecoveryQueue.Count + ") for " + v.id);
+            RecoveryItem Stage;
+            if (instance.RecoveryQueue.Count > 0 && instance.RecoveryQueue.Exists(ri => ri.vessel.id == v.id))
+            {
+                Stage = instance.RecoveryQueue.Find(ri => ri.vessel.id == v.id);
+                instance.RecoveryQueue.Remove(Stage);
+                Debug.Log("[SR] Found vessel in the RecoveryQueue.");
+            }
+            else
+            {
+                Stage = new RecoveryItem(v);
+            }
+            Stage.Process(preRecovery);
+            //Fire the pertinent RecoveryEvent (success or failure). Aka, make the API do its work
+            Stage.FireEvent();
+            //Add the Stage to the correct list of stages. Either the Recovered Stages list or the Destroyed Stages list, for display on the main gui
+            Stage.AddToList();
+            //Post a message to the stock message system, if people are still using that.
+            Stage.PostStockMessage();
+            //Add to ScrapYard if it's installed (not needed if we fire the Recovery event)
+            //AddToScrapYard(Stage);
+            //Remove all crew on the vessel
+            Stage.RemoveCrew();
+
+            //Fire the event stating we are done processing
+            APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
         }
 
         public static double ProcessPartList(List<Part> vesselParts)

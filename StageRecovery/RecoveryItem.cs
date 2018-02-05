@@ -46,6 +46,7 @@ namespace StageRecovery
 
         public double RecoveredTime { get; private set; }
         public double PreRecoveredTime { get; private set; }
+        public bool PreRecovered { get; private set; }
 
         private bool? _controlled = null;
         public bool Controlled
@@ -118,9 +119,11 @@ namespace StageRecovery
             StageName = vessel.vesselName;
         }
 
-        public bool Process()
+        public bool Process(bool preRecover)
         {
             //Debug.Log("[SR] Altitude: " + vessel.altitude);
+
+            PreRecovered = preRecover;
             
             //Determine if the stage should be burned up
             burnedUp = DetermineIfBurnedUp();
@@ -136,10 +139,6 @@ namespace StageRecovery
             }
 
             poweredRecovery = (Vt < vt_old);
-
-
-
-
 
             //Set the Recovery Percentages
             SetRecoveryPercentages();
@@ -882,9 +881,12 @@ namespace StageRecovery
 
                 //remove all crew from the vessel
                 //maybe this will make them not fail assignment verification
-                foreach (ProtoCrewMember pcm in  new List<ProtoCrewMember>(vessel.protoVessel.GetVesselCrew()))
+                if (!PreRecovered)
                 {
-                    vessel.protoVessel.RemoveCrew(pcm);
+                    foreach (ProtoCrewMember pcm in new List<ProtoCrewMember>(vessel.protoVessel.GetVesselCrew()))
+                    {
+                        vessel.protoVessel.RemoveCrew(pcm);
+                    }
                 }
             }
             else if (KerbalsOnboard.Count > 0 && (!Settings.Instance.RecoverKerbals || !Recovered))
@@ -936,16 +938,15 @@ namespace StageRecovery
             }
         }
 
-        public void ResetPreRecoveredKerbals()
+        /// <summary>
+        /// Removes all crew from the vessel
+        /// </summary>
+        public void RemoveCrew()
         {
-            foreach (CrewWithSeat pcmWS in KerbalsOnboard)
+            foreach (ProtoCrewMember pcm in new List<ProtoCrewMember>(vessel.protoVessel.GetVesselCrew()))
             {
-                //vessel.protoVessel.AddCrew(pcm);
-                pcmWS.Restore(vessel.protoVessel);
-                Debug.Log($"[SR] Un-pre-recovering {pcmWS.CrewMember.name}");
+                vessel.protoVessel.RemoveCrew(pcm);
             }
-            KerbalsOnboard.Clear();
-            Debug.Log("[SR] Un-Pre-Recovery complete.");
         }
 
         //Fires the correct API event
