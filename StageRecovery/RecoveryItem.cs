@@ -874,7 +874,7 @@ namespace StageRecovery
                     {
                         Debug.Log("[SR] No death entry added, but we'll add a successful recovery anyway.");
                         pcm.flightLog.AddEntry(FlightLog.EntryType.Land, Planetarium.fetch.Home.bodyName);
-                        pcm.flightLog.AddEntry(FlightLog.EntryType.Recover);
+                        pcm.flightLog.AddEntryUnique(FlightLog.EntryType.Recover);
                         pcm.ArchiveFlightLog();
                     }
                 }
@@ -963,6 +963,9 @@ namespace StageRecovery
                 recovery.OnDestroy();
                 GameEvents.onVesselRecovered.Fire(vessel.protoVessel, false);
                 recovery.OnAwake();
+
+                //Needed for contracts
+                GameEvents.onVesselRecoveryProcessing.Fire(vessel.protoVessel, null, 0);
             }
             else
             {

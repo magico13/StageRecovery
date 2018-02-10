@@ -157,3 +157,4 @@ $RECYCLE.BIN/
 *.dll
 /.vs/StageRecovery/v15/Server/sqlite3
 *.exe
+/.vs/slnx.sqlite

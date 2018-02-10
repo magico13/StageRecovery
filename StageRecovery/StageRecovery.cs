@@ -554,6 +554,12 @@ namespace StageRecovery
             //Remove all crew on the vessel
             Stage.RemoveCrew();
 
+            if (preRecovery)
+            {
+                //remove the vessel so it doesn't get destroyed
+                v.Die();
+            }
+
             //Fire the event stating we are done processing
             APIManager.instance.OnRecoveryProcessingFinish.Fire(v);
         }

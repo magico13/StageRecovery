@@ -1,0 +1,3716 @@
+GAME
+{
+	version = 1.3.1
+	Title = stagerecovery (CAREER)
+	Description = No description available.
+	linkURL = 
+	linkCaption = 
+	Mode = CAREER
+	Status = 1
+	Seed = 427862769
+	scene = 7
+	editor = None
+	flag = Squad/Flags/default
+	launchID = 4
+	modded = True
+	envInfo =  - Environment Info - Win32NT 7FFFFFFFFFFFFFFF  Args: KSP_x64.exe  - 
+	versionFull = 1.3.1.1891 (WindowsPlayer x64)
+	versionCreated = 1.3.1.1891 (WindowsPlayer x64)
+	PARAMETERS
+	{
+		preset = Custom
+		FLIGHT
+		{
+			CanQuickSave = True
+			CanQuickLoad = True
+			CanAutoSave = True
+			CanUseMap = True
+			CanSwitchVesselsNear = True
+			CanSwitchVesselsFar = True
+			CanTimeWarpHigh = True
+			CanTimeWarpLow = True
+			CanEVA = True
+			CanIVA = True
+			CanBoard = True
+			CanRestart = True
+			CanLeaveToEditor = True
+			CanLeaveToTrackingStation = True
+			CanLeaveToSpaceCenter = True
+			CanLeaveToMainMenu = True
+		}
+		EDITOR
+		{
+			CanSave = True
+			CanLoad = True
+			CanStartNew = True
+			CanLaunch = True
+			CanLeaveToSpaceCenter = True
+			CanLeaveToMainMenu = False
+			startUpMode = 0
+			craftFileToLoad = 
+		}
+		TRACKINGSTATION
+		{
+			CanFlyVessel = True
+			CanAbortVessel = True
+			CanLeaveToSpaceCenter = True
+			CanLeaveToMainMenu = False
+		}
+		SPACECENTER
+		{
+			CanGoInVAB = True
+			CanGoInSPH = True
+			CanGoInTrackingStation = True
+			CanLaunchAtPad = True
+			CanLaunchAtRunway = True
+			CanGoToAdmin = True
+			CanGoToAstronautC = True
+			CanGoToMissionControl = True
+			CanGoToRnD = True
+			CanSelectFlag = True
+			CanLeaveToMainMenu = True
+		}
+		DIFFICULTY
+		{
+			AutoHireCrews = False
+			MissingCrewsRespawn = True
+			RespawnTimer = 7200
+			BypassEntryPurchaseAfterResearch = True
+			AllowStockVessels = False
+			IndestructibleFacilities = False
+			ResourceAbundance = 1
+			ReentryHeatScale = 1
+			EnableCommNet = True
+		}
+		CAREER
+		{
+			TechTreeUrl = GameData\ModuleManager.TechTree
+			StartingFunds = 500000
+			StartingScience = 5000
+			StartingReputation = 1000
+			FundsGainMultiplier = 1
+			RepGainMultiplier = 1
+			ScienceGainMultiplier = 1
+			FundsLossMultiplier = 1
+			RepLossMultiplier = 1
+			RepLossDeclined = 1
+		}
+		SaveSpecificSettings
+		{
+			ModEnabled = True
+			UseInventory = True
+			UseTracker = True
+			OverrideFunds = False
+			RefreshTime = 10
+		}
+		CommNetParams
+		{
+			requireSignalForControl = False
+			plasmaBlackout = False
+			rangeModifier = 1
+			DSNModifier = 1
+			occlusionMultiplierVac = 0.9
+			occlusionMultiplierAtm = 0.75
+			enableGroundStations = True
+		}
+		AdvancedParams
+		{
+			EnableKerbalExperience = True
+			ImmediateLevelUp = False
+			AllowNegativeCurrency = False
+			PressurePartLimits = False
+			GPartLimits = False
+			GKerbalLimits = False
+			KerbalGToleranceMult = 1
+			ResourceTransferObeyCrossfeed = False
+			ActionGroupsAlways = False
+			BuildingImpactDamageMult = 0.05
+			PartUpgradesInSandbox = False
+			PartUpgradesInCareer = True
+		}
+	}
+	SCENARIO
+	{
+		name = CommNetScenario
+		scene = 7, 8, 5, 6
+	}
+	SCENARIO
+	{
+		name = PartUpgradeManager
+		scene = 6, 5, 7
+		UPGRADES
+		{
+			Unlocks
+			{
+			}
+			Enableds
+			{
+			}
+		}
+	}
+	SCENARIO
+	{
+		name = ResourceScenario
+		scene = 7, 8, 5, 6
+		RESOURCE_SETTINGS
+		{
+			GameSeed = 372317039
+			MaxDeltaTime = 21600
+		}
+	}
+	SCENARIO
+	{
+		name = ContractSystem
+		scene = 7, 8, 5, 6
+		update = 1964.3313281248245
+		version = 1.3.1
+		WEIGHTS
+		{
+			TourismContract = 42
+			SurveyContract = 30
+			StationContract = 30
+			SentinelContract = 30
+			SatelliteContract = 30
+			ISRUContract = 30
+			ExplorationContract = 30
+			BaseContract = 30
+			ARMContract = 30
+			RecoverAsset = 30
+			PlantFlag = 30
+			PartTest = 30
+			GrandTour = 30
+			CollectScience = 30
+			Eeloo = 30
+			Dres = 30
+			Pol = 30
+			Gilly = 30
+			Tylo = 30
+			Bop = 30
+			Vall = 30
+			Laythe = 30
+			Jool = 30
+			Ike = 30
+			Duna = 30
+			Eve = 30
+			Moho = 30
+			Minmus = 30
+			Mun = 30
+			Kerbin = 42
+			Sun = 30
+		}
+		CONTRACTS
+		{
+			CONTRACT
+			{
+				guid = 269705ee-c8b5-412d-afc8-b440be027bb1
+				type = SurveyContract
+				prestige = 0
+				seed = 873830395
+				state = Offered
+				viewed = Seen
+				agent = Research & Development Department
+				deadlineType = Floating
+				expiryType = Floating
+				values = 21600,46008000,7500,13250,7500,0,2,2,21766.28,0,0,0
+				targetBody = 1
+				centerLatitude = 0.65118907133952209
+				centerLongitude = -76.328807410966704
+				dataName = observational
+				anomalyName = inconsistencies
+				reportName = reports
+				locationName = Kerbin^N
+				focusedSurvey = True
+				targetBand = HIGH
+				contextual = False
+				PARAM
+				{
+					name = SurveyWaypointParameter
+					state = Incomplete
+					values = 0,0,0,0,0
+					targetBody = 1
+					actionDescription = Take a crew report
+					experiment = crewReport
+					flightThreshold = 19400
+					band = 3
+					clusterState = MIXED
+					verified = True
+					contextual = False
+					wpSeed = 806898666
+					wpIndex = 0
+					wpTexture = report
+					wpLatitude = 0.65126762380075842
+					wpLongitude = -76.328781270266532
+					wpLandlocked = False
+					wpNavigationId = 385f13e4-754a-4ae4-9ec6-c7c908720d01
+				}
+			}
+			CONTRACT
+			{
+				guid = ca92ca15-8300-4832-8a31-c9a5f5a5040c
+				type = PartTest
+				prestige = 0
+				seed = 873435363
+				state = Offered
+				viewed = Seen
+				agent = O.M.B. Demolition Enterprises
+				deadlineType = Floating
+				expiryType = Floating
+				values = 21600,9201600,6750,17718.7491953373,7087.49967813492,2,3.809524,3,21766.24,0,0,0
+				part = radialDecoupler1-2
+				haul = True
+				dest = 1
+				sit = FLYING
+				exp = False
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = radialDecoupler1-2
+					body = Kerbin
+					situation = FLYING
+					uniqueID = 0.51095051249067791
+					haul = True
+					repeatability = ALWAYS
+				}
+				PARAM
+				{
+					name = ReachDestination
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					dest = 1
+					title = 
+				}
+				PARAM
+				{
+					name = ReachSituation
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					sit = FLYING
+					title = 
+				}
+				PARAM
+				{
+					name = ReachAltitudeEnvelope
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					minAlt = 13000
+					maxAlt = 20000
+				}
+				PARAM
+				{
+					name = ReachSpeedEnvelope
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					minSpd = 70
+					maxSpd = 1790
+				}
+			}
+			CONTRACT
+			{
+				guid = fc911ee1-dc50-4ccf-92cb-0ac69511ef21
+				type = PartTest
+				prestige = 0
+				seed = 1606437926
+				state = Offered
+				viewed = Seen
+				agent = Research & Development Department
+				deadlineType = Floating
+				expiryType = Floating
+				values = 43200,9201600,6750,16875,6750,2,4,3,43480.240144043,0,0,0
+				part = parachuteSingle
+				haul = True
+				dest = 1
+				sit = FLYING
+				exp = False
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = parachuteSingle
+					body = Kerbin
+					situation = FLYING
+					uniqueID = 0.33307223689419785
+					haul = True
+					repeatability = ALWAYS
+				}
+				PARAM
+				{
+					name = ReachDestination
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					dest = 1
+					title = 
+				}
+				PARAM
+				{
+					name = ReachSituation
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					sit = FLYING
+					title = 
+				}
+				PARAM
+				{
+					name = ReachAltitudeEnvelope
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					minAlt = 5000
+					maxAlt = 11000
+				}
+				PARAM
+				{
+					name = ReachSpeedEnvelope
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					minSpd = 40
+					maxSpd = 230
+				}
+			}
+			CONTRACT
+			{
+				guid = 7f457796-8fae-4408-b84b-997f51f28084
+				type = PartTest
+				prestige = 0
+				seed = 873435365
+				state = Offered
+				viewed = Seen
+				agent = Rockomax Conglomerate
+				deadlineType = Floating
+				expiryType = Floating
+				values = 19315.8960745368,8228571.72775267,9359.13424278451,24567.7262716136,9733.4992876053,3,6.144799,4,19482.1360745368,0,0,0
+				part = solidBooster1-1
+				haul = False
+				dest = 1
+				sit = FLYING
+				exp = False
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = solidBooster1-1
+					body = Kerbin
+					situation = FLYING
+					uniqueID = 0.41351644341531973
+					haul = False
+					repeatability = ALWAYS
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 1
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = FLYING
+						title = 
+					}
+					PARAM
+					{
+						name = ReachAltitudeEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minAlt = 35000
+						maxAlt = 40000
+					}
+					PARAM
+					{
+						name = ReachSpeedEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minSpd = 40
+						maxSpd = 160
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = 67ebc26c-603d-4aa6-bd72-e5c27f5db9b9
+				type = TourismContract
+				prestige = 1
+				seed = 969339474
+				state = Active
+				viewed = Read
+				agent = Kerbal Motion LLC
+				deadlineType = Floating
+				expiryType = Floating
+				values = 129600,46008000,0,0,0,0,25,12,129976.960144043,1881.96370849599,46009881.9637085,0
+				preposition = right here on Kerbin
+				homeDestinations = True
+				isGeeAdventure = False
+				tourists = Arlas Kerman|Jamie Kerman
+				PARAM
+				{
+					name = KerbalTourParameter
+					state = Incomplete
+					disableOnStateChange = False
+					allowPartialFailure = True
+					values = 12188,0,0,0,0
+					kerbalName = Arlas Kerman
+					kerbalGender = Female
+					PARAM
+					{
+						name = KerbalDestinationParameter
+						state = Incomplete
+						values = 4062,0,0,0,0
+						targetBody = 1
+						targetType = Suborbit
+						kerbalName = Arlas Kerman
+					}
+				}
+				PARAM
+				{
+					name = KerbalTourParameter
+					state = Incomplete
+					disableOnStateChange = False
+					allowPartialFailure = True
+					values = 12188,0,0,0,0
+					kerbalName = Jamie Kerman
+					kerbalGender = Male
+					PARAM
+					{
+						name = KerbalDestinationParameter
+						state = Incomplete
+						values = 4062,0,0,0,0
+						targetBody = 1
+						targetType = Suborbit
+						kerbalName = Jamie Kerman
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = b4271568-4851-4362-a896-0c13bbb37f06
+				type = PartTest
+				prestige = 1
+				seed = 873705445
+				state = Offered
+				viewed = Seen
+				agent = C7 Aerospace Division
+				deadlineType = Floating
+				expiryType = Floating
+				values = 21600,9201600,8438,21094,8438,2,5,4,21766.24,0,0,0
+				part = JetEngine
+				haul = True
+				dest = 1
+				sit = FLYING
+				exp = True
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = JetEngine
+					body = Kerbin
+					situation = FLYING
+					uniqueID = 0.91682850705312025
+					haul = True
+					repeatability = ONCEPERPART
+				}
+				PARAM
+				{
+					name = ReachDestination
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					dest = 1
+					title = 
+				}
+				PARAM
+				{
+					name = ReachSituation
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					sit = FLYING
+					title = 
+				}
+				PARAM
+				{
+					name = ReachAltitudeEnvelope
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					minAlt = 5000
+					maxAlt = 7000
+				}
+				PARAM
+				{
+					name = ReachSpeedEnvelope
+					state = Incomplete
+					disableOnStateChange = False
+					values = 0,0,0,0,0
+					minSpd = 70
+					maxSpd = 170
+				}
+			}
+			CONTRACT
+			{
+				guid = 2148b06c-662d-4108-9656-4099b3f85d6c
+				type = PartTest
+				prestige = 1
+				seed = 873705449
+				state = Offered
+				viewed = Seen
+				agent = O.M.B. Demolition Enterprises
+				deadlineType = Floating
+				expiryType = Floating
+				values = 43200,9201600,11250,30937.5006705523,12375.0002682209,4,7.272727,5,43366.24,0,0,0
+				part = HeatShield0
+				haul = False
+				dest = 1
+				sit = FLYING
+				exp = False
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = HeatShield0
+					body = Kerbin
+					situation = FLYING
+					uniqueID = 0.721960368902404
+					haul = False
+					repeatability = BODYANDSITUATION
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 1
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = FLYING
+						title = 
+					}
+					PARAM
+					{
+						name = ReachAltitudeEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minAlt = 48000
+						maxAlt = 58000
+					}
+					PARAM
+					{
+						name = ReachSpeedEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minSpd = 1670
+						maxSpd = 2090
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = 1fbb32f8-a628-4a9a-83cb-eb047c745053
+				type = PartTest
+				prestige = 1
+				seed = 873705457
+				state = Offered
+				viewed = Seen
+				agent = O.M.B. Demolition Enterprises
+				deadlineType = Floating
+				expiryType = Floating
+				values = 21600,9201600,18000,49500.0010728836,19800.0004291534,6,10.90909,9,21766.24,0,0,0
+				part = radialDecoupler
+				haul = False
+				dest = 1
+				sit = SUB_ORBITAL
+				exp = False
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = radialDecoupler
+					body = Kerbin
+					situation = SUB_ORBITAL
+					uniqueID = 0.33222409260097152
+					haul = False
+					repeatability = BODYANDSITUATION
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 1
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = SUB_ORBITAL
+						title = 
+					}
+					PARAM
+					{
+						name = ReachAltitudeEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minAlt = 170000
+						maxAlt = 180000
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = 8e92b42d-e695-4b65-923f-ad6f3d28a32a
+				type = ExplorationContract
+				prestige = 2
+				seed = 1677489653
+				state = Active
+				viewed = Read
+				agent = Kerbin World-Firsts Record-Keeping Society
+				deadlineType = None
+				expiryType = Floating
+				ignoresWeight = True
+				values = 43200,0,16800,31200,16800,6,10,0,43200.04,283.600144042987,0,0
+				targetBody = 1
+				bodyRatio = 0
+				PARAM
+				{
+					name = ProgressTrackingParameter
+					state = Incomplete
+					values = 48000,0,6,10,0
+					targetBody = 1
+					targetType = ORBIT
+				}
+			}
+			CONTRACT
+			{
+				guid = e6a0d9f3-11a0-4e11-884f-48dbf1e98a32
+				type = PartTest
+				prestige = 2
+				seed = 873705471
+				state = Offered
+				viewed = Seen
+				agent = Rockomax Conglomerate
+				deadlineType = Floating
+				expiryType = Floating
+				values = 31435.3310590401,13391451.0311511,60436.6071642381,173755.241994882,67689.0006694793,9,19.21915,14,31601.5710590401,0,0,0
+				part = liquidEngineMini
+				haul = False
+				dest = 2
+				sit = SUB_ORBITAL
+				exp = True
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = liquidEngineMini
+					body = Mun
+					situation = SUB_ORBITAL
+					uniqueID = 0.65018560907346457
+					haul = False
+					repeatability = ONCEPERPART
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 2
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = SUB_ORBITAL
+						title = 
+					}
+					PARAM
+					{
+						name = ReachAltitudeEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minAlt = 30000
+						maxAlt = 40000
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = ce34fb6d-4255-4b45-bafa-67fe305f7947
+				type = PartTest
+				prestige = 2
+				seed = 873435482
+				state = Offered
+				viewed = Seen
+				agent = Kerbodyne
+				deadlineType = Floating
+				expiryType = Floating
+				values = 43200,18403200,54000,135000,54000,9,18,14,43366.24,0,0,0
+				part = Size2LFB
+				haul = False
+				dest = 2
+				sit = SUB_ORBITAL
+				exp = True
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = Size2LFB
+					body = Mun
+					situation = SUB_ORBITAL
+					uniqueID = 0.71362340250686895
+					haul = False
+					repeatability = ONCEPERPART
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 2
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = SUB_ORBITAL
+						title = 
+					}
+					PARAM
+					{
+						name = ReachAltitudeEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minAlt = 220000
+						maxAlt = 230000
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = 2d5f0c19-770d-40a4-a438-b62b3f4da460
+				type = PartTest
+				prestige = 2
+				seed = 873830424
+				state = Offered
+				viewed = Seen
+				agent = Jebediah Kerman's Junkyard and Spacecraft Parts Co
+				deadlineType = Floating
+				expiryType = Floating
+				values = 18305.0851821899,15595932.5752258,26129.0324449539,75120.9667218308,37259.9992275238,6,12.00328,7.54717,18471.36518219,0,0,0
+				part = liquidEngine2
+				haul = False
+				dest = 2
+				sit = ESCAPING
+				exp = False
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = liquidEngine2
+					body = Mun
+					situation = ESCAPING
+					uniqueID = 0.31056902246110563
+					haul = False
+					repeatability = ONCEPERPART
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 2
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = ESCAPING
+						title = 
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = 79a60bcf-286b-49dc-9bd0-09578133ae7e
+				type = PartTest
+				prestige = 2
+				seed = 873830437
+				state = Offered
+				viewed = Seen
+				agent = Rockomax Conglomerate
+				deadlineType = Floating
+				expiryType = Floating
+				values = 15717.66552952,13391451.0311511,90654.9107463572,260632.862992323,101533.501004219,14,28.82872,21,15883.94552952,0,0,0
+				part = engineLargeSkipper
+				haul = False
+				dest = 2
+				sit = LANDED
+				exp = False
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = engineLargeSkipper
+					body = Mun
+					situation = LANDED
+					uniqueID = 0.67724757347127773
+					haul = False
+					repeatability = ONCEPERPART
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 2
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = LANDED
+						title = 
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = 7946c6b2-35e1-4500-9fce-cd6ed1291851
+				type = PartTest
+				prestige = 2
+				seed = 873435447
+				state = Offered
+				viewed = Seen
+				agent = Rockomax Conglomerate
+				deadlineType = Floating
+				expiryType = Floating
+				values = 15717.66552952,13391451.0311511,60436.6071642381,173755.241994882,67689.0006694793,9,19.21915,14,15883.90552952,0,0,0
+				part = liquidEngine1-2
+				haul = False
+				dest = 2
+				sit = SUB_ORBITAL
+				exp = True
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = liquidEngine1-2
+					body = Mun
+					situation = SUB_ORBITAL
+					uniqueID = 0.41871961132563634
+					haul = False
+					repeatability = ONCEPERPART
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 2
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = SUB_ORBITAL
+						title = 
+					}
+					PARAM
+					{
+						name = ReachAltitudeEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minAlt = 150000
+						maxAlt = 160000
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = bb996e9e-b4b1-48a7-9472-cd8bca3a3cb2
+				type = PartTest
+				prestige = 2
+				seed = 873705503
+				state = Offered
+				viewed = Seen
+				agent = Kerbodyne
+				deadlineType = Floating
+				expiryType = Floating
+				values = 43200,18403200,43200,108000,43200,8,15,10,43366.24,0,0,0
+				part = MassiveBooster
+				haul = False
+				dest = 2
+				sit = ORBITING
+				exp = False
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = MassiveBooster
+					body = Mun
+					situation = ORBITING
+					uniqueID = 0.091240503867734454
+					haul = False
+					repeatability = ONCEPERPART
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 2
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = ORBITING
+						title = 
+					}
+					PARAM
+					{
+						name = ReachAltitudeEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minAlt = 190000
+						maxAlt = 200000
+					}
+				}
+			}
+			CONTRACT
+			{
+				guid = af0de1d1-c6f0-4283-a157-55127f82f245
+				type = PartTest
+				prestige = 2
+				seed = 873435426
+				state = Offered
+				viewed = Seen
+				agent = O.M.B. Demolition Enterprises
+				deadlineType = Floating
+				expiryType = Floating
+				values = 21600,18403200,43200,124199.997425079,49679.9989700317,8,13.04348,10,21766.24,0,0,0
+				part = stackSeparator
+				haul = False
+				dest = 2
+				sit = ORBITING
+				exp = True
+				PARAM
+				{
+					name = PartTest
+					state = Incomplete
+					values = 0,0,0,0,0
+					part = stackSeparator
+					body = Mun
+					situation = ORBITING
+					uniqueID = 0.44177733661689672
+					haul = False
+					repeatability = ONCEPERPART
+					PARAM
+					{
+						name = ReachDestination
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						dest = 2
+						title = 
+					}
+					PARAM
+					{
+						name = ReachSituation
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						sit = ORBITING
+						title = 
+					}
+					PARAM
+					{
+						name = ReachAltitudeEnvelope
+						state = Incomplete
+						disableOnStateChange = False
+						values = 0,0,0,0,0
+						minAlt = 180000
+						maxAlt = 190000
+					}
+				}
+			}
+			CONTRACT_FINISHED
+			{
+				guid = 91e04491-a1d2-4836-ad8e-a88cba455f10
+				type = ExplorationContract
+				prestige = 0
+				seed = 1677489589
+				state = Completed
+				viewed = Read
+				agent = Kerbin World-Firsts Record-Keeping Society
+				deadlineType = None
+				expiryType = Floating
+				ignoresWeight = True
+				values = 64800,0,1120,2080,1120,1,1,0,64800.04,159.380000000008,0,0
+				targetBody = 1
+				bodyRatio = 0
+				PARAM
+				{
+					name = ProgressTrackingParameter
+					enabled = False
+					state = Complete
+					values = 0,0,0,0,0
+					targetBody = 1
+					targetType = FIRSTLAUNCH
+				}
+			}
+			CONTRACT_FINISHED
+			{
+				guid = 9eebfd21-adbc-4398-9c6e-613847d8bf94
+				type = ExplorationContract
+				prestige = 0
+				seed = 1677489594
+				state = Completed
+				viewed = Read
+				agent = Kerbin World-Firsts Record-Keeping Society
+				deadlineType = None
+				expiryType = Floating
+				ignoresWeight = True
+				values = 86400,0,2240,4160,2240,1,2,0,86400.04,159.380000000008,0,0
+				targetBody = 1
+				bodyRatio = 0
+				PARAM
+				{
+					name = ProgressTrackingParameter
+					enabled = False
+					state = Complete
+					values = 0,0,0,0,0
+					targetBody = 1
+					targetType = SCIENCE
+				}
+			}
+			CONTRACT_FINISHED
+			{
+				guid = d6c2855e-3a3b-415e-b683-335f88a085b8
+				type = ExplorationContract
+				prestige = 1
+				seed = 1677489630
+				state = Completed
+				viewed = Read
+				agent = Kerbin World-Firsts Record-Keeping Society
+				deadlineType = None
+				expiryType = Floating
+				ignoresWeight = True
+				values = 64800,0,11200,20800,11200,4,8,0,64800.04,283.600144042987,0,0
+				targetBody = 1
+				bodyRatio = 0
+				PARAM
+				{
+					name = ProgressTrackingParameter
+					enabled = False
+					state = Complete
+					values = 0,0,0,0,0
+					targetBody = 1
+					targetType = REACHSPACE
+				}
+			}
+		}
+	}
+	SCENARIO
+	{
+		name = ScenarioContractEvents
+		scene = 7, 8, 5
+		id = -170439638
+	}
+	SCENARIO
+	{
+		name = Funding
+		scene = 7, 8, 5, 6
+		funds = 749015.92184448242
+	}
+	SCENARIO
+	{
+		name = ScenarioNewGameIntro
+		scene = 5, 6, 8
+		kscComplete = True
+		editorComplete = True
+		tsComplete = False
+	}
+	SCENARIO
+	{
+		name = ProgressTracking
+		scene = 7, 8, 5
+		Progress
+		{
+			FirstLaunch
+			{
+				completedManned = 166.24000000001124
+			}
+			FirstCrewToSurvive
+			{
+				completed = 280.24014404299038
+				crew
+				{
+					crews = Jebediah Kerman
+				}
+			}
+			RecordsAltitude
+			{
+				completed = 376.90014404290247
+				record = 70000
+			}
+			RecordsSpeed
+			{
+				reached = 1869.9237084960039
+				record = 2332.019726415313
+			}
+			RecordsDistance
+			{
+				completed = 1556.8549572753159
+				record = 100000
+			}
+			ReachedSpace
+			{
+				completedManned = 376.94014404290243
+				vessel
+				{
+					name = Untitled Space Craft
+					flag = Squad/Flags/default
+				}
+				crew
+				{
+					crews = Jebediah Kerman
+				}
+			}
+			Kerbin
+			{
+				reached = 280.24014404299038
+				Science
+				{
+					completedManned = 280.24014404299038
+					vessel
+					{
+						name = Untitled Space Craft
+						flag = Squad/Flags/default
+					}
+					crew
+					{
+						crews = Jebediah Kerman
+					}
+				}
+			}
+		}
+	}
+	SCENARIO
+	{
+		name = ResearchAndDevelopment
+		scene = 7, 8, 5, 6
+		sci = 4613.5
+		Tech
+		{
+			id = start
+			state = Available
+			cost = 0
+			part = basicFin
+			part = mk1pod
+			part = solidBooster.sm
+			part = GooExperiment
+			part = trussPiece1x
+			part = parachuteSingle
+		}
+		Tech
+		{
+			id = basicRocketry
+			state = Available
+			cost = 5
+			part = fuelTankSmallFlat
+			part = solidBooster
+			part = liquidEngine2
+		}
+		Tech
+		{
+			id = engineering101
+			state = Available
+			cost = 5
+			part = SurfAntenna
+			part = stackDecoupler
+			part = longAntenna
+			part = sensorThermometer
+		}
+		Tech
+		{
+			id = generalRocketry
+			state = Available
+			cost = 20
+			part = fuelTankSmall
+			part = solidBooster1-1
+			part = liquidEngine
+		}
+		Tech
+		{
+			id = stability
+			state = Available
+			cost = 18
+			part = radialDecoupler
+			part = winglet
+			part = noseCone
+		}
+		Tech
+		{
+			id = survivability
+			state = Available
+			cost = 15
+			part = ServiceBay.125
+			part = parachuteRadial
+			part = radialDrogue
+			part = miniLandingLeg
+			part = radPanelSm
+			part = sensorBarometer
+			part = HeatShield1
+			part = HeatShield0
+		}
+		Tech
+		{
+			id = generalConstruction
+			state = Available
+			cost = 45
+			part = launchClamp1
+			part = largeAdapter
+			part = decoupler1-2
+			part = Mk1FuselageStructural
+			part = strutConnector
+			part = MK1CrewCabin
+		}
+		Tech
+		{
+			id = advRocketry
+			state = Available
+			cost = 45
+			part = fuelTank
+			part = radialLiquidEngine1-2
+			part = liquidEngine3
+		}
+		Tech
+		{
+			id = heavyRocketry
+			state = Available
+			cost = 90
+			part = MassiveBooster
+			part = engineLargeSkipper
+			part = liquidEngine2-2
+		}
+		Tech
+		{
+			id = fuelSystems
+			state = Available
+			cost = 90
+			part = fuelTank4-2
+			part = fuelTank1-2
+			part = fuelTank2-2
+			part = fuelTank.long
+			part = fuelLine
+		}
+		Tech
+		{
+			id = advConstruction
+			state = Available
+			cost = 90
+			part = stackTriCoupler
+			part = largeAdapter2
+			part = radialDecoupler2
+			part = radialDecoupler1-2
+			part = rocketNoseCone
+			part = fairingSize1
+			part = pointyNoseConeA
+		}
+		Science
+		{
+			id = crewReport@KerbinFlyingLowShores
+			title = Crew Report while flying over Kerbin's Shores
+			dsc = 1
+			scv = 0
+			sbv = 0.699999988
+			sci = 3.5
+			cap = 3.5
+		}
+		Science
+		{
+			id = recovery@KerbinFlew
+			title = Recovery of a vessel returned from a flight over Kerbin
+			dsc = 1
+			scv = 0.166666672
+			sbv = 5
+			sci = 5
+			cap = 6
+		}
+	}
+	SCENARIO
+	{
+		name = VesselRecovery
+		scene = 5, 7, 8, 6
+	}
+	SCENARIO
+	{
+		name = Reputation
+		scene = 7, 8, 5, 6
+		rep = 980.113098
+	}
+	SCENARIO
+	{
+		name = StrategySystem
+		scene = 7, 8, 5, 6
+		STRATEGIES
+		{
+		}
+	}
+	SCENARIO
+	{
+		name = ScenarioAchievements
+		scene = 7, 8, 5, 6
+	}
+	SCENARIO
+	{
+		name = ScenarioCustomWaypoints
+		scene = 7, 8
+	}
+	SCENARIO
+	{
+		name = ScenarioDestructibles
+		scene = 5, 7, 6, 8
+		SpaceCenter/Administration/Facility/Building
+		{
+			intact = True
+		}
+		SpaceCenter/AstronautComplex/Facility/mainBuilding
+		{
+			intact = True
+		}
+		SpaceCenter/FlagPole/Facility
+		{
+			intact = True
+		}
+		SpaceCenter/LaunchPad/Facility/Flag
+		{
+			intact = True
+		}
+		SpaceCenter/MissionControl/Facility/mainBuilding
+		{
+			intact = True
+		}
+		SpaceCenter/ResearchAndDevelopment/Facility/mainBuilding
+		{
+			intact = True
+		}
+		SpaceCenter/ResearchAndDevelopment/Facility/ForeverAlone
+		{
+			intact = True
+		}
+		SpaceCenter/SpaceplaneHangar/Facility/Building
+		{
+			intact = True
+		}
+		SpaceCenter/TrackingStation/Facility/building
+		{
+			intact = True
+		}
+		SpaceCenter/TrackingStation/Facility/OuterDish
+		{
+			intact = True
+		}
+		SpaceCenter/VehicleAssemblyBuilding/Facility/VAB2
+		{
+			intact = True
+		}
+	}
+	SCENARIO
+	{
+		name = ScenarioDiscoverableObjects
+		scene = 7, 8, 5
+		lastSeed = 0
+		sizeCurve
+		{
+			key = 0 0 1.5 1.5
+			key = 0.3 0.45 0.875 0.875
+			key = 0.7 0.55 0.875 0.875
+			key = 1 1 1.5 1.5
+		}
+	}
+	SCENARIO
+	{
+		name = ScenarioUpgradeableFacilities
+		scene = 5, 6, 7, 8
+		SpaceCenter/LaunchPad
+		{
+			lvl = 0
+		}
+		SpaceCenter/Runway
+		{
+			lvl = 0
+		}
+		SpaceCenter/VehicleAssemblyBuilding
+		{
+			lvl = 0
+		}
+		SpaceCenter/SpaceplaneHangar
+		{
+			lvl = 0
+		}
+		SpaceCenter/TrackingStation
+		{
+			lvl = 0
+		}
+		SpaceCenter/AstronautComplex
+		{
+			lvl = 0
+		}
+		SpaceCenter/MissionControl
+		{
+			lvl = 0
+		}
+		SpaceCenter/ResearchAndDevelopment
+		{
+			lvl = 0
+		}
+		SpaceCenter/Administration
+		{
+			lvl = 0
+		}
+		SpaceCenter/FlagPole
+		{
+			lvl = 0
+		}
+	}
+	SCENARIO
+	{
+		name = SentinelScenario
+		scene = 7, 8, 5
+		NextSpawnTime = 13696.514379125767
+	}
+	SCENARIO
+	{
+		name = ScrapYard
+		scene = 8, 5, 6, 7
+		PartInventory
+		{
+			ScrapYard.InventoryPart
+			{
+				_name = mk1pod
+				_dryCost = 588
+				_id = f93eb542-0eb4-404d-b8d3-b7208a580c8b
+				_timesRecovered = 1
+				_inventoried = True
+			}
+			ScrapYard.InventoryPart
+			{
+				_name = solidBooster.sm
+				_dryCost = 116
+				_id = e9383915-27a7-4269-9315-84476ed0ecda
+				_timesRecovered = 1
+				_inventoried = True
+			}
+			ScrapYard.InventoryPart
+			{
+				_name = parachuteSingle
+				_dryCost = 422
+				_id = df327c24-056b-4cf6-8793-e07b0e909984
+				_timesRecovered = 1
+				_inventoried = True
+			}
+			ScrapYard.InventoryPart
+			{
+				_name = parachuteSingle
+				_dryCost = 422
+				_id = 85756d0d-1e33-4dd0-b232-28cbb1e5e455
+				_timesRecovered = 1
+				_inventoried = True
+			}
+		}
+		PartTracker
+		{
+			TrackedItem
+			{
+				buildsTotal = 3
+				buildsNew = 3
+				buildsInventoried = 0
+				usesTotal = 3
+				usesNew = 3
+				usesInventoried = 0
+				ScrapYard.InventoryPart
+				{
+					_name = mk1pod
+					_dryCost = 588
+					_id = f93eb542-0eb4-404d-b8d3-b7208a580c8b
+					_timesRecovered = 0
+					_inventoried = False
+				}
+			}
+			TrackedItem
+			{
+				buildsTotal = 2
+				buildsNew = 2
+				buildsInventoried = 0
+				usesTotal = 2
+				usesNew = 2
+				usesInventoried = 0
+				ScrapYard.InventoryPart
+				{
+					_name = solidBooster.sm
+					_dryCost = 116
+					_id = e9383915-27a7-4269-9315-84476ed0ecda
+					_timesRecovered = 0
+					_inventoried = False
+				}
+			}
+			TrackedItem
+			{
+				buildsTotal = 3
+				buildsNew = 3
+				buildsInventoried = 0
+				usesTotal = 3
+				usesNew = 3
+				usesInventoried = 0
+				ScrapYard.InventoryPart
+				{
+					_name = parachuteSingle
+					_dryCost = 422
+					_id = df327c24-056b-4cf6-8793-e07b0e909984
+					_timesRecovered = 0
+					_inventoried = False
+				}
+			}
+			TrackedItem
+			{
+				buildsTotal = 2
+				buildsNew = 2
+				buildsInventoried = 0
+				usesTotal = 5
+				usesNew = 5
+				usesInventoried = 0
+				ScrapYard.InventoryPart
+				{
+					_name = stackDecoupler
+					_dryCost = 400
+					_id = 7f462ad0-79b6-4539-8e19-fccc50ed8ce1
+					_timesRecovered = 0
+					_inventoried = False
+				}
+			}
+			TrackedItem
+			{
+				buildsTotal = 2
+				buildsNew = 2
+				buildsInventoried = 0
+				usesTotal = 2
+				usesNew = 2
+				usesInventoried = 0
+				ScrapYard.InventoryPart
+				{
+					_name = solidBooster
+					_dryCost = 174.999985
+					_id = e5e6e5a7-c42b-4558-9a10-61661e04f18d
+					_timesRecovered = 0
+					_inventoried = False
+				}
+			}
+			TrackedItem
+			{
+				buildsTotal = 2
+				buildsNew = 2
+				buildsInventoried = 0
+				usesTotal = 2
+				usesNew = 2
+				usesInventoried = 0
+				ScrapYard.InventoryPart
+				{
+					_name = solidBooster1-1
+					_dryCost = 357.999969
+					_id = 3457d0c8-1278-4a79-a112-d7be357cdc49
+					_timesRecovered = 0
+					_inventoried = False
+				}
+			}
+			TrackedItem
+			{
+				buildsTotal = 1
+				buildsNew = 1
+				buildsInventoried = 0
+				usesTotal = 1
+				usesNew = 1
+				usesInventoried = 0
+				ScrapYard.InventoryPart
+				{
+					_name = MK1CrewCabin
+					_dryCost = 550
+					_id = ef702e11-d4b7-4e9b-a8b4-fbdc63798f73
+					_timesRecovered = 0
+					_inventoried = False
+				}
+			}
+			TrackedItem
+			{
+				buildsTotal = 1
+				buildsNew = 1
+				buildsInventoried = 0
+				usesTotal = 2
+				usesNew = 2
+				usesInventoried = 0
+				ScrapYard.InventoryPart
+				{
+					_name = parachuteRadial
+					_dryCost = 400
+					_id = c1ac0fe7-2f98-4da6-91a2-b11079e3d778
+					_timesRecovered = 0
+					_inventoried = False
+				}
+			}
+		}
+		VesselTracker
+		{
+		}
+	}
+	FLIGHTSTATE
+	{
+		version = 1.3.1
+		UT = 1971.451328124818
+		activeVessel = 0
+		mapViewFiltering = -1026
+		commNetUIModeTracking = Network
+		commNetUIModeFlight = Path
+		VESSEL
+		{
+			pid = 363a71933d4442049fed25e26624af9a
+			name = Untitled Space Craft
+			type = Ship
+			sit = FLYING
+			landed = False
+			landedAt = 
+			displaylandedAt = 
+			splashed = False
+			met = 84.88761962882927
+			lct = 1886.5637084959887
+			lastUT = 1971.451328124818
+			root = 0
+			lat = -0.10029617048408185
+			lon = -73.510202291830637
+			alt = 36615.4586333927
+			hgt = 36615.457
+			nrm = -0.445605546,0.893538237,0.0550026596
+			rot = -0.675057113,-0.284104198,-0.234807879,0.639099419
+			CoM = 2.76863575E-05,-2.28368354,-1.10268593E-06
+			stg = 4
+			prst = False
+			ref = 2251329063
+			ctrl = True
+			cPch = 0.284
+			cHdg = 0.102
+			cMod = 0
+			ORBIT
+			{
+				SMA = 354883.04156821582
+				ECC = 0.9435181817460998
+				INC = 0.25405138745079314
+				LPE = 28.980237952524558
+				LAN = 206.17280559282145
+				MNA = 2.0607476293018347
+				EPH = 1971.451328124818
+				REF = 1
+			}
+			PART
+			{
+				name = mk1pod
+				cid = 4294776612
+				uid = 2251329063
+				mid = 3307040797
+				launchID = 3
+				parent = 0
+				position = 0,0,0
+				rotation = 0,0,0,1
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = -1
+				resPri = 0
+				dstg = 0
+				sqor = -1
+				sepI = -1
+				sidx = -1
+				attm = 0
+				srfN = , -1
+				attN = bottom, 2
+				attN = top, 1
+				mass = 0.800000012
+				shielded = False
+				temp = 314.60970787463282
+				tempExt = 471.1121446075299
+				tempExtUnexp = 471.30264535691623
+				expt = 0.5
+				state = 0
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = mk1pod
+				modCost = 0
+				crew = Valentina Kerman
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleCommand
+					isEnabled = True
+					hibernation = False
+					hibernateOnWarp = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						MakeReferenceToggle
+						{
+							actionGroup = None
+						}
+						HibernateToggle
+						{
+							actionGroup = None
+							active = False
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleReactionWheel
+					isEnabled = True
+					actuatorModeCycle = 0
+					authorityLimiter = 100
+					stateString = Running
+					stagingEnabled = True
+					WheelState = Active
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						CycleAction
+						{
+							actionGroup = None
+						}
+						Activate
+						{
+							actionGroup = None
+						}
+						Deactivate
+						{
+							actionGroup = None
+						}
+						Toggle
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleColorChanger
+					isEnabled = True
+					animState = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						ToggleAction
+						{
+							actionGroup = Light
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleScienceExperiment
+					isEnabled = True
+					Deployed = False
+					Inoperable = False
+					cooldownToGo = 0
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						DeployAction
+						{
+							actionGroup = None
+						}
+						ResetAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleScienceContainer
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						CollectAllAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = FlagDecal
+					isEnabled = True
+					flagDisplayed = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleConductionMultiplier
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleDataTransmitter
+					isEnabled = True
+					xmitIncomplete = False
+					stagingEnabled = True
+					canComm = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						StartTransmissionAction
+						{
+							actionGroup = None
+							active = False
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleLiftingSurface
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = 2fb03fde-29be-4963-869d-d31f232847db
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 1.25
+					defaultScale = 1.25
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 588
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTripLogger
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					Log
+					{
+						flight = 0
+						0 = Flight,Kerbin
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				RESOURCE
+				{
+					name = ElectricCharge
+					amount = 38.296983357603096
+					maxAmount = 50
+					flowState = True
+					isTweakable = True
+					hideFlow = False
+					isVisible = True
+					flowMode = Both
+				}
+				RESOURCE
+				{
+					name = MonoPropellant
+					amount = 10
+					maxAmount = 10
+					flowState = True
+					isTweakable = True
+					hideFlow = False
+					isVisible = True
+					flowMode = Both
+				}
+			}
+			PART
+			{
+				name = parachuteSingle
+				cid = 4294770054
+				uid = 406513656
+				mid = 3307040797
+				launchID = 3
+				parent = 0
+				position = 0,0.65745735168457031,0
+				rotation = 0,0,0,1
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = 0
+				resPri = 0
+				dstg = 0
+				sqor = 0
+				sepI = -1
+				sidx = 1
+				attm = 0
+				srfN = srfAttach, -1
+				attN = bottom, 0
+				mass = 0.100000001
+				shielded = False
+				temp = 316.90205488580892
+				tempExt = 481.91205681564145
+				tempExtUnexp = 482.13244918198131
+				expt = 0.5
+				state = 0
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = parachuteSingle
+				modCost = 0
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleParachute
+					isEnabled = True
+					persistentState = STOWED
+					animTime = 0
+					minAirPressureToOpen = 0.0399999991
+					deployAltitude = 1000
+					spreadAngle = 7
+					automateSafeDeploy = 0
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						DeployAction
+						{
+							actionGroup = None
+						}
+						CutAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTestSubject
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleDragModifier
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleDragModifier
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = fcdd456c-6077-4ecf-936f-c22911ccd205
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 0.625
+					defaultScale = 0.625
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 422
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+			}
+			PART
+			{
+				name = stackDecoupler
+				cid = 4294560134
+				uid = 3282786245
+				mid = 3307040797
+				launchID = 3
+				parent = 0
+				position = 0,-0.47008991241455078,0
+				rotation = 0,0,0,1
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = 1
+				resPri = 0
+				dstg = 1
+				sqor = 1
+				sepI = 1
+				sidx = 0
+				attm = 0
+				srfN = , -1
+				attN = bottom, 3
+				attN = top, 0
+				mass = 0.0500000007
+				shielded = False
+				temp = 315.32773231514062
+				tempExt = 425.19548724735887
+				tempExtUnexp = 384.52864389885809
+				expt = 0.5
+				state = 0
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = stackDecoupler
+				modCost = 0
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleDecouple
+					isEnabled = True
+					ejectionForcePercent = 100
+					isDecoupled = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						DecoupleAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleToggleCrossfeed
+					isEnabled = True
+					crossfeedStatus = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						ToggleAction
+						{
+							actionGroup = None
+						}
+						EnableAction
+						{
+							actionGroup = None
+						}
+						DisableAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTestSubject
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = b56ae787-9c1d-4859-92e6-eb80cddcc15a
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 1.25
+					defaultScale = 1.25
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 400
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+			}
+			PART
+			{
+				name = solidBooster.sm
+				cid = 4294564484
+				uid = 226335486
+				mid = 3307040797
+				launchID = 3
+				parent = 2
+				position = 0,-1.2905845642089844,0
+				rotation = 0,0,0,1
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = 2
+				resPri = 0
+				dstg = 2
+				sqor = 2
+				sepI = 1
+				sidx = 0
+				attm = 0
+				srfN = srfAttach, -1
+				attN = bottom, 4
+				attN = top, 2
+				mass = 0.449999988
+				shielded = False
+				temp = 313.72677701166191
+				tempExt = 329.04547331838063
+				tempExtUnexp = 4
+				expt = 0.5
+				state = 0
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = solidBooster.sm
+				modCost = 0
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleEngines
+					isEnabled = True
+					staged = False
+					flameout = False
+					EngineIgnited = False
+					engineShutdown = False
+					currentThrottle = 0
+					thrustPercentage = 100
+					manuallyOverridden = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						OnAction
+						{
+							actionGroup = None
+						}
+						ShutdownAction
+						{
+							actionGroup = None
+						}
+						ActivateAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTestSubject
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSurfaceFX
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = f20c8d82-d203-4742-a056-f68e28d38734
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 1.25
+					defaultScale = 1.25
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 116
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				RESOURCE
+				{
+					name = SolidFuel
+					amount = 140
+					maxAmount = 140
+					flowState = True
+					isTweakable = True
+					hideFlow = False
+					isVisible = True
+					flowMode = Both
+				}
+			}
+			PART
+			{
+				name = stackDecoupler
+				cid = 4294712720
+				uid = 3998884876
+				mid = 3307040797
+				launchID = 3
+				parent = 3
+				position = 0,-2.3556365966796875,0
+				rotation = 0,0,0,1
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = 3
+				resPri = 0
+				dstg = 3
+				sqor = 3
+				sepI = 3
+				sidx = 0
+				attm = 0
+				srfN = , -1
+				attN = bottom, 5
+				attN = top, 3
+				mass = 0.0500000007
+				shielded = False
+				temp = 341.19386973414578
+				tempExt = 373.44238814924068
+				tempExtUnexp = 4
+				expt = 0.5
+				state = 0
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = stackDecoupler
+				modCost = 0
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleDecouple
+					isEnabled = True
+					ejectionForcePercent = 100
+					isDecoupled = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						DecoupleAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleToggleCrossfeed
+					isEnabled = True
+					crossfeedStatus = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						ToggleAction
+						{
+							actionGroup = None
+						}
+						EnableAction
+						{
+							actionGroup = None
+						}
+						DisableAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTestSubject
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = 070d7cdf-f012-48a5-ad24-c2c6a169a024
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 1.25
+					defaultScale = 1.25
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 400
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+			}
+			PART
+			{
+				name = MK1CrewCabin
+				cid = 4294647970
+				uid = 1410245829
+				mid = 3307040797
+				launchID = 3
+				parent = 4
+				position = 0,-3.4261312484741211,0
+				rotation = 0,0,0,1
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = 3
+				resPri = 0
+				dstg = 4
+				sqor = -1
+				sepI = 3
+				sidx = -1
+				attm = 0
+				srfN = , -1
+				attN = top, 4
+				attN = bottom, 6
+				mass = 1
+				shielded = False
+				temp = 358.10395864316001
+				tempExt = 426.44636106597943
+				tempExtUnexp = 4
+				expt = 0.5
+				state = 0
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = MK1CrewCabin
+				modCost = 0
+				crew = Arlas Kerman
+				crew = Jamie Kerman
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleScienceExperiment
+					isEnabled = True
+					Deployed = False
+					Inoperable = False
+					cooldownToGo = 0
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						DeployAction
+						{
+							actionGroup = None
+						}
+						ResetAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleScienceContainer
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						CollectAllAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleAnimateGeneric
+					isEnabled = True
+					aniState = LOCKED
+					animSwitch = True
+					animTime = 0
+					animSpeed = 1
+					deployPercent = 100
+					animationIsDisabled = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						ToggleAction
+						{
+							actionGroup = Light
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleDataTransmitter
+					isEnabled = True
+					xmitIncomplete = False
+					stagingEnabled = True
+					canComm = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						StartTransmissionAction
+						{
+							actionGroup = None
+							active = False
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = ef702e11-d4b7-4e9b-a8b4-fbdc63798f73
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 1.25
+					defaultScale = 1.25
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 550
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTripLogger
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					Log
+					{
+						flight = 0
+						0 = Flight,Kerbin
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+			}
+			PART
+			{
+				name = solidBooster
+				cid = 4294705500
+				uid = 1936266653
+				mid = 3307040797
+				launchID = 3
+				parent = 5
+				position = 0,-5.6454687118530273,0
+				rotation = 0,0,0,1
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = 4
+				resPri = 0
+				dstg = 4
+				sqor = 4
+				sepI = 3
+				sidx = 0
+				attm = 0
+				srfN = srfAttach, -1
+				attN = bottom, -1
+				attN = top, 5
+				mass = 0.75
+				shielded = False
+				temp = 587.84087523129426
+				tempExt = 557.58817649831735
+				tempExtUnexp = 553.95958686504036
+				expt = 0.5
+				state = 1
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = solidBooster
+				modCost = 0
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleEngines
+					isEnabled = True
+					staged = True
+					flameout = True
+					EngineIgnited = True
+					engineShutdown = False
+					currentThrottle = 0
+					thrustPercentage = 100
+					manuallyOverridden = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						OnAction
+						{
+							actionGroup = None
+						}
+						ShutdownAction
+						{
+							actionGroup = None
+						}
+						ActivateAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = FXModuleAnimateThrottle
+					isEnabled = True
+					animState = 0.432186961
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTestSubject
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSurfaceFX
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = d46e2c17-e826-4ff6-8803-a483bcd2ea2b
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 1.25
+					defaultScale = 1.25
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 174.999985
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				RESOURCE
+				{
+					name = SolidFuel
+					amount = 0
+					maxAmount = 375
+					flowState = True
+					isTweakable = True
+					hideFlow = False
+					isVisible = True
+					flowMode = Both
+				}
+			}
+			PART
+			{
+				name = parachuteRadial
+				cid = 4294647188
+				uid = 1091516029
+				mid = 3307040797
+				launchID = 3
+				parent = 5
+				position = 0.15626481175422668,-2.9102897644042969,-0.58318853378295898
+				rotation = -2.85405672E-08,0.130525619,-3.75742015E-09,-0.991444945
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = 0
+				resPri = 0
+				dstg = 3
+				sqor = 0
+				sepI = 3
+				sidx = 0
+				attm = 1
+				sym = 8
+				srfN = srfAttach, 5
+				mass = 0.100000001
+				shielded = False
+				temp = 336.06561297287891
+				tempExt = 393.83341228077501
+				tempExtUnexp = 4
+				expt = 0.5
+				state = 0
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = parachuteRadial
+				modCost = 0
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleParachute
+					isEnabled = True
+					persistentState = STOWED
+					animTime = 0
+					minAirPressureToOpen = 0.0399999991
+					deployAltitude = 1000
+					spreadAngle = 7
+					automateSafeDeploy = 0
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						DeployAction
+						{
+							actionGroup = None
+						}
+						CutAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTestSubject
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleDragModifier
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleDragModifier
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = c1ac0fe7-2f98-4da6-91a2-b11079e3d778
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 100
+					defaultScale = 100
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 400
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+			}
+			PART
+			{
+				name = parachuteRadial
+				cid = 4294647040
+				uid = 147546746
+				mid = 3307040797
+				launchID = 3
+				parent = 5
+				position = -0.1562647670507431,-2.9102897644042969,0.58318853378295898
+				rotation = -3.75741882E-09,-0.991444945,2.85405672E-08,-0.130525574
+				mirror = 1,1,1
+				symMethod = Radial
+				istg = 0
+				resPri = 0
+				dstg = 3
+				sqor = 0
+				sepI = 3
+				sidx = 0
+				attm = 1
+				sym = 7
+				srfN = srfAttach, 5
+				mass = 0.100000001
+				shielded = False
+				temp = 336.04398791078791
+				tempExt = 393.81613827049301
+				tempExtUnexp = 4
+				expt = 0.5
+				state = 0
+				attached = True
+				autostrutMode = Off
+				rigidAttachment = False
+				flag = Squad/Flags/default
+				rTrf = parachuteRadial
+				modCost = 0
+				EVENTS
+				{
+				}
+				ACTIONS
+				{
+				}
+				PARTDATA
+				{
+				}
+				MODULE
+				{
+					name = ModuleParachute
+					isEnabled = True
+					persistentState = STOWED
+					animTime = 0
+					minAirPressureToOpen = 0.0399999991
+					deployAltitude = 1000
+					spreadAngle = 7
+					automateSafeDeploy = 0
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+						DeployAction
+						{
+							actionGroup = None
+						}
+						CutAction
+						{
+							actionGroup = None
+						}
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleTestSubject
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleDragModifier
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleDragModifier
+					isEnabled = True
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = ModuleSYPartTracker
+					isEnabled = True
+					ID = 442a71a1-6657-4660-af41-4a95e15d910e
+					TimesRecovered = 0
+					Inventoried = False
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+				MODULE
+				{
+					name = TweakScale
+					isEnabled = True
+					currentScale = 100
+					defaultScale = 100
+					defaultTransformScale = (0, 0, 0)
+					DryCost = 400
+					stagingEnabled = True
+					EVENTS
+					{
+					}
+					ACTIONS
+					{
+					}
+					UPGRADESAPPLIED
+					{
+					}
+				}
+			}
+			ACTIONGROUPS
+			{
+				Stage = True, 1938.19132812485
+				Gear = False, 0
+				Light = False, 0
+				RCS = False, 0
+				SAS = True, 1895.00370849598
+				Brakes = False, 0
+				Abort = False, 0
+				Custom01 = False, 0
+				Custom02 = False, 0
+				Custom03 = False, 0
+				Custom04 = False, 0
+				Custom05 = False, 0
+				Custom06 = False, 0
+				Custom07 = False, 0
+				Custom08 = False, 0
+				Custom09 = False, 0
+				Custom10 = False, 0
+			}
+			DISCOVERY
+			{
+				state = -1
+				lastObservedTime = 0
+				lifetime = Infinity
+				refTime = Infinity
+				size = 2
+			}
+			FLIGHTPLAN
+			{
+			}
+			CTRLSTATE
+			{
+				pitch = 0.00191899226
+				yaw = 0.0642751232
+				roll = -6.25414032E-05
+				trimPitch = 0
+				trimYaw = 0
+				trimRoll = 0
+				mainThrottle = 0.5
+			}
+			VESSELMODULES
+			{
+				FlightIntegrator
+				{
+				}
+				CommNetVessel
+				{
+					controlState = KerbalFull
+					canComm = True
+				}
+			}
+		}
+	}
+	LoaderInfo
+	{
+		ModuleManager v3.0.1.0 = True
+		MagiCore v1.0.0.0 / v1.3.0.0 = True
+		ScrapYard v1.0.0.0 = True
+		StageRecovery v1.7.2.0 = True
+		Scale v2.3.7.0 = True
+		Scale_Redist v1.0.0.0 = True
+		MagiCore = True
+		ScrapYard = True
+		StageRecovery = True
+		TweakScale = True
+		ModuleManager.3.0.1.dll = True
+		ModuleManager.ConfigCache = True
+		ModuleManager.ConfigSHA = True
+		ModuleManager.Physics = True
+		ModuleManager.TechTree = True
+	}
+	ROSTER
+	{
+		KERBAL
+		{
+			name = Jebediah Kerman
+			gender = Male
+			type = Crew
+			trait = Pilot
+			brave = 0.5
+			dumb = 0.5
+			badS = True
+			veteran = True
+			tour = False
+			state = Missing
+			inactive = False
+			inactiveTimeEnd = 0
+			gExperienced = 0
+			outDueToG = False
+			ToD = 9076.5237084959972
+			idx = 0
+			extraXP = 0
+			CAREER_LOG
+			{
+				flight = 2
+				0 = Flight,Kerbin
+				0 = Land,Kerbin
+				0 = Recover
+				1 = Flight,Kerbin
+				1 = Suborbit,Kerbin
+				1 = Die
+			}
+			FLIGHT_LOG
+			{
+				flight = 2
+			}
+		}
+		KERBAL
+		{
+			name = Bill Kerman
+			gender = Male
+			type = Crew
+			trait = Engineer
+			brave = 0.5
+			dumb = 0.800000012
+			badS = False
+			veteran = True
+			tour = False
+			state = Available
+			inactive = False
+			inactiveTimeEnd = 0
+			gExperienced = 0
+			outDueToG = False
+			ToD = 0
+			idx = -1
+			extraXP = 0
+			CAREER_LOG
+			{
+				flight = 0
+			}
+			FLIGHT_LOG
+			{
+				flight = 0
+			}
+		}
+		KERBAL
+		{
+			name = Bob Kerman
+			gender = Male
+			type = Crew
+			trait = Scientist
+			brave = 0.300000012
+			dumb = 0.100000001
+			badS = False
+			veteran = True
+			tour = False
+			state = Available
+			inactive = False
+			inactiveTimeEnd = 0
+			gExperienced = 0
+			outDueToG = False
+			ToD = 0
+			idx = -1
+			extraXP = 0
+			CAREER_LOG
+			{
+				flight = 0
+			}
+			FLIGHT_LOG
+			{
+				flight = 0
+			}
+		}
+		KERBAL
+		{
+			name = Valentina Kerman
+			gender = Female
+			type = Crew
+			trait = Pilot
+			brave = 0.550000012
+			dumb = 0.400000006
+			badS = True
+			veteran = True
+			tour = False
+			state = Assigned
+			inactive = False
+			inactiveTimeEnd = 0
+			gExperienced = 0
+			outDueToG = False
+			ToD = 0
+			idx = 0
+			extraXP = 0
+			CAREER_LOG
+			{
+				flight = 0
+			}
+			FLIGHT_LOG
+			{
+				flight = 0
+				0 = Flight,Kerbin
+			}
+		}
+		KERBAL
+		{
+			name = Arlas Kerman
+			gender = Female
+			type = Tourist
+			trait = Tourist
+			brave = 0.0860427245
+			dumb = 0.94650209
+			badS = False
+			veteran = False
+			tour = False
+			state = Assigned
+			inactive = False
+			inactiveTimeEnd = 0
+			gExperienced = 0
+			outDueToG = False
+			ToD = 0
+			idx = 0
+			extraXP = 0
+			CAREER_LOG
+			{
+				flight = 0
+			}
+			FLIGHT_LOG
+			{
+				flight = 0
+				0 = Flight,Kerbin
+			}
+		}
+		KERBAL
+		{
+			name = Jamie Kerman
+			gender = Male
+			type = Tourist
+			trait = Tourist
+			brave = 0.484959304
+			dumb = 0.14005284
+			badS = False
+			veteran = False
+			tour = False
+			state = Assigned
+			inactive = False
+			inactiveTimeEnd = 0
+			gExperienced = 0
+			outDueToG = False
+			ToD = 0
+			idx = 1
+			extraXP = 0
+			CAREER_LOG
+			{
+				flight = 0
+			}
+			FLIGHT_LOG
+			{
+				flight = 0
+				0 = Flight,Kerbin
+			}
+		}
+	}
+	MESSAGESYSTEM
+	{
+		flash = True
+		MESSAGE
+		{
+			title = Stage Destroyed
+			message = <color=#FF9900>Stage 'Untitled Space Craft Debris' destroyed 3.42 km from KSC</color>~nIt was valued at <color=#FF9900>758</color> Funds.~n~nAdditional Information:~nStock Module used.~nTerminal velocity of <color=#FF9900>112.16</color> (less than 12 needed)~nAttempted propulsive landing but could not find a point of control. Add a pilot or probe core with SAS for propulsive landings.~n~nStage contained the following parts:~n1 x TR-18A Stack Decoupler~n1 x BACC "Thumper" Solid Fuel Booster~n
+			color = 1
+			icon = 5
+			read = False
+		}
+		MESSAGE
+		{
+			title = Stage Recovered
+			message = <color=#8BED8B>Stage 'Untitled Space Craft Debris' recovered 177.75 km from KSC</color>~nRecovery percentage: <color=#8BED8B>81.4%</color>~n<color=#8BED8B>81.4%</color> distance~n<color=#8BED8B>100%</color> speed~n~nTotal refunds: <color=#B4D455>£343.5</color>~nTotal refunded for parts: <color=#B4D455>£343.5</color>~nTotal refunded for fuel: <color=#B4D455>£0</color>~nStage value: <color=#B4D455>£422</color>~n~nAdditional Information:~nStock Module used.~nTerminal velocity of <color=#8BED8B>1.87</color> (less than 12 needed)~n~nStage contained the following parts:~n1 x Mk16 Parachute: <color=#B4D455>£343.52</color>~n
+			color = 3
+			icon = 5
+			read = False
+		}
+		MESSAGE
+		{
+			title = Stage Destroyed
+			message = <color=#FF9900>Stage 'Untitled Space Craft Debris' destroyed 175.19 km from KSC</color>~nIt was valued at <color=#FF9900>575</color> Funds.~n~nAdditional Information:~nStock Module used.~nTerminal velocity of <color=#FF9900>80.39</color> (less than 12 needed)~nThe stage burned up in the atmosphere! It was travelling at 2401.01374108892 m/s.~nAttempted propulsive landing but could not find a point of control. Add a pilot or probe core with SAS for propulsive landings.~n~nStage contained the following parts:~n1 x TR-18A Stack Decoupler~n1 x RT-10 "Hammer" Solid Fuel Booster~n
+			color = 1
+			icon = 5
+			read = False
+		}
+		MESSAGE
+		{
+			title = Stage Destroyed
+			message = <color=#FF9900>Stage 'Untitled Space Craft Debris' destroyed 4.71 km from KSC</color>~nIt was valued at <color=#FF9900>758</color> Funds.~n~nAdditional Information:~nStock Module used.~nTerminal velocity of <color=#FF9900>112.16</color> (less than 12 needed)~nAttempted propulsive landing but could not find a point of control. Add a pilot or probe core with SAS for propulsive landings.~n~nStage contained the following parts:~n1 x TR-18A Stack Decoupler~n1 x BACC "Thumper" Solid Fuel Booster~n
+			color = 1
+			icon = 5
+			read = False
+		}
+		MESSAGE
+		{
+			title = Contract Complete
+			message = <b>Escape the atmosphere!</b>~n~nWhat is it like up there? We hope it's fun because you're coming back very soon!~n~n<b><color=#8BED8B>Completion Rewards:</color></b> ~n<color=#B4D455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  20,800   </color>~n<color=#6DCFF6><sprite="CurrencySpriteAsset" name="Science" tint=1> 4   </color>~n<color=#E0D503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 8   </color>~n~n
+			color = 2
+			icon = 3
+			read = False
+		}
+		MESSAGE
+		{
+			title = Contract Parameter Complete
+			message = <b>Escape the atmosphere!</b>~n~n'Achieve goal' complete!~n~n<color=#B4D455><sprite="CurrencySpriteAsset" name="Funds" tint=1> 32,000   </color><color=#6DCFF6><sprite="CurrencySpriteAsset" name="Science" tint=1> 4   </color><color=#E0D503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 8   </color>
+			color = 2
+			icon = 3
+			read = False
+		}
+		MESSAGE
+		{
+			title = Contract Complete
+			message = <b>Gather scientific data from Kerbin.</b>~n~nWhen we got to page nine of your report we thought you might be stalling! We are starting the launch countdown now.~n~n<b><color=#8BED8B>Completion Rewards:</color></b> ~n<color=#B4D455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  4,160   </color>~n<color=#6DCFF6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1   </color>~n<color=#E0D503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2   </color>~n~n
+			color = 2
+			icon = 3
+			read = False
+		}
+		MESSAGE
+		{
+			title = Contract Parameter Complete
+			message = <b>Gather scientific data from Kerbin.</b>~n~n'Achieve goal' complete!~n~n<color=#B4D455><sprite="CurrencySpriteAsset" name="Funds" tint=1> 6,400   </color><color=#6DCFF6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1   </color><color=#E0D503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2   </color>
+			color = 2
+			icon = 3
+			read = False
+		}
+		MESSAGE
+		{
+			title = Contract Complete
+			message = <b>Launch our first vessel!</b>~n~nA very nominal launch! We couldn't have asked for more! Well, we could've, and we will at some point.~n~n<b><color=#8BED8B>Completion Rewards:</color></b> ~n<color=#B4D455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  2,080   </color>~n<color=#6DCFF6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1   </color>~n<color=#E0D503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 1   </color>~n~n
+			color = 2
+			icon = 3
+			read = False
+		}
+		MESSAGE
+		{
+			title = Contract Parameter Complete
+			message = <b>Launch our first vessel!</b>~n~n'Achieve goal' complete!~n~n<color=#B4D455><sprite="CurrencySpriteAsset" name="Funds" tint=1> 3,200   </color><color=#6DCFF6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1   </color><color=#E0D503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 1   </color>
+			color = 2
+			icon = 3
+			read = False
+		}
+		MESSAGE
+		{
+			title = World First Milestones
+			message = The recent accomplishments of our space program have attracted contributions from numerous organizations!~n~nWe have broken a speed record of 25m/s.~n<color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1> 9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken a speed record of 80m/s.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have launched our first vessel.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  1,600 </color>~n~n We have broken a speed record of 250m/s.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken an altitude record of 500m.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken an altitude record of 2,000m.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have recovered our first crew from a mission.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  1,600 </color>~n~n We have performed the first one of our experiments at home.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  3,200 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 1 </color>~n~n We have broken a land distance record of 1,000m.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken an altitude record of 7,000m.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken a speed record of 790m/s.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken an altitude record of 22km.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken a land distance record of 3,000m.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken an altitude record of 70km.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have reached space.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  16,000 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 2 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 3 </color>~n~n We have broken a land distance record of 10km.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken a land distance record of 32km.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n~n We have broken a land distance record of 100km.~n <color=#b4d455><sprite="CurrencySpriteAsset" name="Funds" tint=1>  9,600 </color><color=#6dcff6><sprite="CurrencySpriteAsset" name="Science" tint=1> 1 </color><color=#e0d503><sprite="CurrencySpriteAsset" name="Reputation" tint=1> 2 </color>~n
+			color = 3
+			icon = 6
+			read = False
+		}
+	}
+}
