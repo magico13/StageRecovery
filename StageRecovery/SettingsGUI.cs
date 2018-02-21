@@ -1,8 +1,5 @@
 ﻿using KSP.UI.Screens;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace StageRecovery
@@ -327,7 +324,7 @@ namespace StageRecovery
             //The rest are just toggles and are put one after the other
             recoverSci = GUILayout.Toggle(recoverSci, "Recover Science");
             recoverKerb = GUILayout.Toggle(recoverKerb, "Recover Kerbals");
-            preRecover = GUILayout.Toggle(preRecover, "Pre-Recover Kerbals");
+            preRecover = GUILayout.Toggle(preRecover, "Pre-Recover Vessels");
             showFail = GUILayout.Toggle(showFail, "Failure Messages");
             showSuccess = GUILayout.Toggle(showSuccess, "Success Messages");
             poweredRecovery = GUILayout.Toggle(poweredRecovery, "Try Powered Recovery");

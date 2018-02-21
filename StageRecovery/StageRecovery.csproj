@@ -67,7 +67,6 @@
     <Compile Include="FlightGUI.cs" />
     <Compile Include="RecoveryControllerWrapper.cs" />
     <Compile Include="RecoveryItem.cs" />
-    <Compile Include="ScrapYardWrapper.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SettingsGUI.cs" />
     <Compile Include="StageRecovery.cs" />
@@ -77,10 +76,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"C:\Users\magico13\Desktop\KSP_Modding\Tools\pdb2mdb\pdb2mdb.exe" "$(TargetFileName)"
-xcopy /Y "$(TargetPath)" "D:\SteamLibrary\SteamApps\common\Kerbal Space Program\GameData\$(TargetName)\"
-xcopy /Y "$(TargetDir)$(TargetName).pdb" "D:\SteamLibrary\SteamApps\common\Kerbal Space Program\GameData\$(TargetName)\"
-xcopy /Y "$(TargetDir)$(TargetName).dll.mdb" "D:\SteamLibrary\SteamApps\common\Kerbal Space Program\GameData\$(TargetName)\"</PostBuildEvent>
+    <PostBuildEvent>::"C:\Users\magico13\Desktop\KSP_Modding\Tools\pdb2mdb\pdb2mdb.exe" "$(TargetFileName)"
+::xcopy /Y "$(TargetPath)" "D:\SteamLibrary\SteamApps\common\Kerbal Space Program\GameData\$(TargetName)\"
+::xcopy /Y "$(TargetDir)$(TargetName).pdb" "D:\SteamLibrary\SteamApps\common\Kerbal Space Program\GameData\$(TargetName)\"
+::xcopy /Y "$(TargetDir)$(TargetName).dll.mdb" "D:\SteamLibrary\SteamApps\common\Kerbal Space Program\GameData\$(TargetName)\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
