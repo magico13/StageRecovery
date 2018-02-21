@@ -987,13 +987,15 @@ namespace StageRecovery
         //This posts either a success or failure message to the Stock Message system
         public void PostStockMessage()
         {
+            string fundSymbol = "<sprite=\"CurrencySpriteAsset\" name=\"Funds\" tint=1>";
+
             StringBuilder msg = new StringBuilder();
             if (Recovered && Settings.Instance.ShowSuccessMessages)
             {
                 //Start adding some in-game display messages about the return
                 msg.AppendLine("<color=#8BED8B>Stage '" + StageName + "' recovered " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
 
-                
+
                 //msg.AppendLine("\n");
                 //List the percent returned and break it down into distance and speed percentages
                 msg.AppendLine("Recovery percentage: <color=#8BED8B>" + Math.Round(100 * RecoveryPercent, 1) + "%</color>");
@@ -1005,10 +1007,10 @@ namespace StageRecovery
                 }
                 msg.AppendLine("");
                 //List the total refunds for parts, fuel, and the combined total
-                msg.AppendLine("Total refunds: <color=#B4D455>£" + Math.Round(FundsReturned, 1) + "</color>");
-                msg.AppendLine("Total refunded for parts: <color=#B4D455>£" + Math.Round(DryReturns, 1) + "</color>");
-                msg.AppendLine("Total refunded for fuel: <color=#B4D455>£" + Math.Round(FuelReturns, 1) + "</color>");
-                msg.AppendLine("Stage value: <color=#B4D455>£" + Math.Round(FundsOriginal, 1) + "</color>");
+                msg.AppendLine($"Total refunds: <color=#B4D455>{fundSymbol}{Math.Round(FundsReturned, 1)}</color>");
+                msg.AppendLine($"Total refunded for parts: <color=#B4D455>{fundSymbol}{Math.Round(DryReturns, 1)}</color>");
+                msg.AppendLine($"Total refunded for fuel: <color=#B4D455>{fundSymbol}{Math.Round(FuelReturns, 1)}</ color > ");
+                msg.AppendLine($"Stage value: <color=#B4D455>{fundSymbol}{Math.Round(FundsOriginal, 1)}</color>");
 
                 if (KerbalsOnboard.Count > 0)
                 {
@@ -1049,7 +1051,7 @@ namespace StageRecovery
                 msg.AppendLine("\nStage contained the following parts:");
                 for (int i = 0; i < PartsRecovered.Count; i++)
                 {
-                    msg.AppendLine(PartsRecovered.Values.ElementAt(i) + " x " + PartsRecovered.Keys.ElementAt(i) + ": <color=#B4D455>£" + Math.Round(PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent, 2) + "</color>");
+                    msg.AppendLine($"{PartsRecovered.Values.ElementAt(i)} x {PartsRecovered.Keys.ElementAt(i)}: <color=#B4D455>{fundSymbol}{Math.Round(PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent, 2)}</color>");
                 }
 
                 //Setup and then post the message
@@ -1072,7 +1074,7 @@ namespace StageRecovery
                         totalCost += Math.Max(ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet), 0);
                     }
                     //Alert the user to what the total value was (without modifiers)
-                    msg.AppendLine("It was valued at <color=#FF9900>" + Math.Round(totalCost, 1) + "</color> Funds."); //ED0B0B
+                    msg.AppendLine($"It was valued at <color=#FF9900>{fundSymbol}{Math.Round(totalCost, 1)}</color>"); //ED0B0B
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
@@ -1085,12 +1087,12 @@ namespace StageRecovery
                 //If it failed because of burning up (can be in addition to speed) then we'll let you know
                 if (burnedUp)
                 {
-                    msg.AppendLine("The stage burned up in the atmosphere! It was travelling at " + vessel.srfSpeed + " m/s.");
+                    msg.AppendLine("The stage burned up in the atmosphere! It was traveling at " + vessel.srfSpeed + " m/s.");
                 }
 
                 if (poweredRecovery && !burnedUp)
                 {
-                    msg.AppendLine("Attempted propulsive landing but could not reduce velocity enough for safe touchdown. Check the SR Flight GUI for additonal info.");
+                    msg.AppendLine("Attempted propulsive landing but could not reduce velocity enough for safe touchdown. Check the SR Flight GUI for additional info.");
                 }
 
                 if (noControl)
