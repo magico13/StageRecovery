@@ -988,29 +988,30 @@ namespace StageRecovery
         public void PostStockMessage()
         {
             string fundSymbol = "<sprite=\"CurrencySpriteAsset\" name=\"Funds\" tint=1>";
+            string green = "<color=#B4D455>";
 
             StringBuilder msg = new StringBuilder();
             if (Recovered && Settings.Instance.ShowSuccessMessages)
             {
                 //Start adding some in-game display messages about the return
-                msg.AppendLine("<color=#8BED8B>Stage '" + StageName + "' recovered " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
+                msg.AppendLine("<color=#8BED8B>Stage '" + StageName + "' recovered " + (KSCDistance / 1000).ToString("N2") + " km from KSC</color>");
 
 
                 //msg.AppendLine("\n");
                 //List the percent returned and break it down into distance and speed percentages
-                msg.AppendLine("Recovery percentage: <color=#8BED8B>" + Math.Round(100 * RecoveryPercent, 1) + "%</color>");
-                msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * DistancePercent, 1) + "%</color> distance");
-                msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * SpeedPercent, 1) + "%</color> speed");
+                msg.AppendLine("Recovery percentage: <color=#8BED8B>" + (100 * RecoveryPercent).ToString("N1") + "%</color>");
+                msg.AppendLine("<color=#8BED8B>" + (100 * DistancePercent).ToString("N1") + "%</color> distance");
+                msg.AppendLine("<color=#8BED8B>" + (100 * SpeedPercent).ToString("N1") + "%</color> speed");
                 if (Settings.Instance.GlobalModifier != 1.0f)
                 {
                     msg.AppendLine("<color=#8BED8B>" + Math.Round(100 * Settings.Instance.GlobalModifier, 1) + "%</color> global modifier");
                 }
                 msg.AppendLine("");
                 //List the total refunds for parts, fuel, and the combined total
-                msg.AppendLine($"Total refunds: <color=#B4D455>{fundSymbol}{Math.Round(FundsReturned, 1)}</color>");
-                msg.AppendLine($"Total refunded for parts: <color=#B4D455>{fundSymbol}{Math.Round(DryReturns, 1)}</color>");
-                msg.AppendLine($"Total refunded for fuel: <color=#B4D455>{fundSymbol}{Math.Round(FuelReturns, 1)}</ color > ");
-                msg.AppendLine($"Stage value: <color=#B4D455>{fundSymbol}{Math.Round(FundsOriginal, 1)}</color>");
+                msg.AppendLine($"Total refunds: {fundSymbol} {green}{(FundsReturned).ToString("N0")}</color>");
+                msg.AppendLine($"Total refunded for parts: {fundSymbol} {green}{(DryReturns).ToString("N0")}</color>");
+                msg.AppendLine($"Total refunded for fuel: {fundSymbol} {green}{(FuelReturns).ToString("N0")}</color>");
+                msg.AppendLine($"Stage value: {fundSymbol} {green}{(FundsOriginal).ToString("N0")}</color>");
 
                 if (KerbalsOnboard.Count > 0)
                 {
@@ -1051,7 +1052,7 @@ namespace StageRecovery
                 msg.AppendLine("\nStage contained the following parts:");
                 for (int i = 0; i < PartsRecovered.Count; i++)
                 {
-                    msg.AppendLine($"{PartsRecovered.Values.ElementAt(i)} x {PartsRecovered.Keys.ElementAt(i)}: <color=#B4D455>{fundSymbol}{Math.Round(PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent, 2)}</color>");
+                    msg.AppendLine($"{PartsRecovered.Values.ElementAt(i)} x {PartsRecovered.Keys.ElementAt(i)}: {fundSymbol} {green}{Math.Round(PartsRecovered.Values.ElementAt(i) * Costs.Values.ElementAt(i) * RecoveryPercent, 2)}</color>");
                 }
 
                 //Setup and then post the message
@@ -1060,7 +1061,7 @@ namespace StageRecovery
             }
             else if (!Recovered && Settings.Instance.ShowFailureMessages)
             {
-                msg.AppendLine("<color=#FF9900>Stage '" + StageName + "' destroyed " + Math.Round(KSCDistance / 1000, 2) + " km from KSC</color>");
+                msg.AppendLine("<color=#FF9900>Stage '" + StageName + "' destroyed " + (KSCDistance / 1000).ToString("N2") + " km from KSC</color>");
                 
                 //If we're career mode (MONEY!) then we also let you know the (why do I say 'we'? It's only me working on this) total cost of the parts
                 if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
@@ -1074,7 +1075,7 @@ namespace StageRecovery
                         totalCost += Math.Max(ShipConstruction.GetPartCosts(pps, pps.partInfo, out dry, out wet), 0);
                     }
                     //Alert the user to what the total value was (without modifiers)
-                    msg.AppendLine($"It was valued at <color=#FF9900>{fundSymbol}{Math.Round(totalCost, 1)}</color>"); //ED0B0B
+                    msg.AppendLine($"It was valued at <color=#FF9900>{fundSymbol} {(totalCost).ToString("N0")}</color>"); //ED0B0B
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
