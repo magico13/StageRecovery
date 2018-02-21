@@ -698,10 +698,6 @@ namespace StageRecovery
             }
             //Combine the modifier from the velocity and the modifier from distance together
             RecoveryPercent = SpeedPercent * DistancePercent * Settings.Instance.GlobalModifier;
-
-            //Debug.Log("[SR] Vessel Lat/Lon: " + vessel.latitude + "/" + vessel.longitude);
-            //Debug.Log("[SR] KSC Lat/Lon: " + SpaceCenter.Instance.Latitude + "/" + SpaceCenter.Instance.Longitude);
-            //Debug.Log("[SR] Distance: "+KSCDistance);
         }
 
         //This populates the dictionary of Recovered Parts and the dictionary of Costs, along with total funds returns (original, modified, fuel, and dry)
@@ -809,17 +805,6 @@ namespace StageRecovery
                 //Recover the kerbals and get their names
                 foreach (ProtoCrewMember pcm in vessel.protoVessel.GetVesselCrew())
                 {
-                    //Yeah, that's all it takes to recover a kerbal. Set them to Available from Assigned
-                    /*  if (recovered && Settings.Instance.RecoverKerbals)
-                        {
-                            pcm.rosterStatus = ProtoCrewMember.RosterStatus.Available;
-                            //remove the Kerbal from the vessel
-                            ProtoPartSnapshot crewedPart = vessel.protoVessel.protoPartSnapshots.Find(p => p.HasCrew(pcm.name));
-                            if (crewedPart != null)
-                                crewedPart.RemoveCrew(pcm.name);
-                            else
-                                Debug.Log("[SR] Can't find the part housing " + pcm.name);
-                        }*/
                     kerbals.Add(new CrewWithSeat(pcm));
                 }
             }

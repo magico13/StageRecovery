@@ -43,13 +43,6 @@ namespace StageRecovery
             {
                 return;
             }
-
-            //Create a new Settings instance if one doesn't exist
-            //if (Settings.Instance == null)
-            //    Settings.Instance = new Settings();
-
-            //Needed to start doing things with GUIs
-            //RenderingManager.AddToPostDrawQueue(0, OnDraw);
         }
 
         private void OnGUI()
@@ -171,11 +164,6 @@ namespace StageRecovery
             sceneChangeComplete = true;
         }
 
-        public void DecoupleEvent(EventReport s)
-        {
-            Debug.Log("[SR] Decoupled and made vessel " + s.origin.vessel.vesselName);
-        }
-
         public void GameSceneLoadEvent(GameScenes newScene)
         {
             sceneChangeComplete = false;
@@ -288,29 +276,13 @@ namespace StageRecovery
                     StageWatchList.Remove(id);
                 }
             }
-
-            //foreach (RecoveryItem recItem in new List<RecoveryItem>(RecoveryQueue)) //Assignment validation is failing :(
-            //{
-            //    if (Planetarium.GetUniversalTime() - recItem.PreRecoveredTime > 10) //must be destroyed within 10 seconds?
-            //    {
-            //        recItem.ResetPreRecoveredKerbals();
-            //        RecoveryQueue.Remove(recItem);
-            //    }
-            //}
         }
 
         public static float ComputeCutoffAlt(CelestialBody body, float stepSize=100)
         {
-            //This unfortunately doesn't seem to be coming up with the right altitude for Kerbin (~23km, it finds ~27km)
             float alt = (float)body.atmosphereDepth;
             while (alt > 0)
             {
-                //dens = body.GetDensity(FlightGlobals.getStaticPressure(alt, body), body.atmosphereTemperatureCurve.Evaluate(alt)); //body.atmospherePressureCurve.Evaluate(alt)
-                ////Debug.Log("[SR] Alt: " + alt + " Pres: " + dens);
-                //if (dens < cutoffDensity)
-                //    alt -= stepSize;
-                //else
-                //    break;
                 double pres = body.GetPressure(alt);
                 if (pres < 1.0)
                 {
@@ -370,11 +342,10 @@ namespace StageRecovery
             int lvl = 0;
             if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Settings.Instance.UseUpgrades)
             {
-                lvl = (int)(ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility) * ScenarioUpgradeableFacilities.GetFacilityLevel(facility));
+                lvl = (int)Math.Round((ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility) * ScenarioUpgradeableFacilities.GetFacilityLevel(facility)));
             }
             else
             {
-                //lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility);
                 lvl = ScenarioUpgradeableFacilities.GetFacilityLevelCount(facility); //returns 2 for VAB in Sandbox
             }
             return lvl;
@@ -549,8 +520,6 @@ namespace StageRecovery
             Stage.AddToList();
             //Post a message to the stock message system, if people are still using that.
             Stage.PostStockMessage();
-            //Add to ScrapYard if it's installed (not needed if we fire the Recovery event)
-            //AddToScrapYard(Stage);
             //Remove all crew on the vessel
             Stage.RemoveCrew();
 
