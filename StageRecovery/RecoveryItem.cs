@@ -1022,7 +1022,7 @@ namespace StageRecovery
                 {
                     foreach (string science in ScienceExperiments)
                     {
-                        msg.AppendLine($"{sciSymbol} {blue}{science}{endC}");
+                        msg.AppendLine($"{blue}{science}{endC}");
                     }
                 }
 

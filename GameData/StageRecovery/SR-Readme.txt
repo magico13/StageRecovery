@@ -11,6 +11,16 @@ Please include the output_log.txt file from the KSP_Data folder if using 32 bit 
 
 
 Changelog:
+1.8.0 (2018-03-11)
+- Built against KSP 1.4.0. Might be backward compatible.
+- Pre-recovery now fully recovers vessels and not just kerbals
+- Add distance restriction to pre-recovery to prevent it from firing at the wrong time
+- Recovery now fires the OnVesselRecovered event but forcibly removes the funds handling and scene changes associated with it
+	- The above changes make contracts that require recovering vessels/crew work much better, but keep your timewarp down to 10x or so
+- Removed explicit ScrapYard support due to the above changes not requiring it anymore
+- Kerbals and Science are now recovered by default and cannot be turned off
+- Use funds symbol in stock recovery messages (thanks Starwaster)
+
 1.7.2 (06/01/2017)
 - Built against KSP 1.3, but should still support KSP 1.2.2
 - Added support for ScrapYard mod. Adds parts to inventory upon recovery.
