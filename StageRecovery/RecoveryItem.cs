@@ -145,10 +145,7 @@ namespace StageRecovery
             //Set the parts, costs, and refunds
             SetPartsAndFunds();
             //Recover Science if we're allowed
-            if (Recovered && Settings.Instance.RecoverScience)
-            {
-                ScienceRecovered = RecoverScience();
-            }
+            ScienceRecovered = RecoverScience();
             //Recover Kerbals if we're allowed
             //if (recovered && Settings.Instance.RecoverKerbals)
             KerbalsOnboard = RecoverKerbals();
@@ -773,13 +770,9 @@ namespace StageRecovery
                             //Get the amount of data saved
                             float amt = float.Parse(subjectNode.GetValue("data"));
                             string title = subject.title;
-                            //And submit that data with the subjectID to the R&D center, getting the amount earned back
-                            float science = ResearchAndDevelopment.Instance.SubmitScienceData(amt, subject, 1f);
-                            //Add the amount earned to the total earned
-                            totalScience += science;
                             //For display we'll keep the title, amt, and science earned in one string
-                            //ie: 5 Data from Crew Report at LaunchPad: 8 Science
-                            string display = "<#6DCFF6>©" + amt + "</> Data from " + title + ": <#6DCFF6>" + science + "</> science";
+                            //ie: 5 Data from Crew Report at LaunchPad
+                            string display = "<#6DCFF6>©" + amt + "</> Data from " + title;
                             ScienceExperiments.Add(display);
                         }
                     }
@@ -809,7 +802,7 @@ namespace StageRecovery
                 }
             }
 
-            if (kerbals.Count > 0 && Settings.Instance.RecoverKerbals && Recovered)
+            if (kerbals.Count > 0 && Recovered)
             {
                 foreach (CrewWithSeat pcmWS in kerbals)
                 {
@@ -874,7 +867,7 @@ namespace StageRecovery
                     }
                 }
             }
-            else if (KerbalsOnboard.Count > 0 && (!Settings.Instance.RecoverKerbals || !Recovered))
+            else if (KerbalsOnboard.Count > 0 && !Recovered)
             {
                 //kill the kerbals instead //Don't kill them twice
                 foreach (CrewWithSeat pcmWS in kerbals)

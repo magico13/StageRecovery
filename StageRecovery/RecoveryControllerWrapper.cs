@@ -70,7 +70,10 @@ namespace StageRecovery
         static object CallRecoveryController(string func, object modName)
         {
             if (!RecoveryControllerAvailable)
+            {
                 return null;
+            }
+
             try
             {
                  
@@ -85,9 +88,14 @@ namespace StageRecovery
                         {
                             object magicValue;
                             if (modName != null)
+                            {
                                 magicValue = myMethod.Invoke(rcRef, new object[] { modName });
+                            }
                             else
+                            {
                                 magicValue = myMethod.Invoke(rcRef, null);
+                            }
+
                             return magicValue;
                         }
                         else
@@ -115,7 +123,10 @@ namespace StageRecovery
         {
             var s = CallRecoveryController("RegisterMod", modName);
             if (s == null)
+            {
                 return false;
+            }
+
             return (bool)s;
         }
 
@@ -123,7 +134,10 @@ namespace StageRecovery
         {
             var s = CallRecoveryController("UnRegisterMod", modName);
             if (s == null)
+            {
                 return false;
+            }
+
             return (bool)s;
         }
 

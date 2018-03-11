@@ -27,7 +27,7 @@ namespace StageRecovery
         //The exception is for sliders
         private float recMod, cutoff, lowCut, highCut, globMod;
         //Booleans are cool though. In fact, they are prefered (since they work well with toggles)
-        private bool enabled, recoverSci, recoverKerb, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades, preRecover, useToolbar;
+        private bool enabled, showFail, showSuccess, flatRate, poweredRecovery, recoverClamps, useUpgrades, preRecover, useToolbar;
 
         private Vector2 scrollPos;
 
@@ -83,7 +83,9 @@ namespace StageRecovery
                 hideAll();
             }
             else
+            {
                 ShowWindow();
+            }
         }
 
         //When the button is hovered over, show the flight GUI if in flight
@@ -243,8 +245,6 @@ namespace StageRecovery
             recMod = Settings.Instance.RecoveryModifier;
             cutoff = Settings.Instance.CutoffVelocity;
             DRMaxVel = Settings.Instance.DeadlyReentryMaxVelocity.ToString();
-            recoverSci = Settings.Instance.RecoverScience;
-            recoverKerb = Settings.Instance.RecoverKerbals;
             preRecover = Settings.Instance.PreRecover;
             showFail = Settings.Instance.ShowFailureMessages;
             showSuccess = Settings.Instance.ShowSuccessMessages;
@@ -322,8 +322,6 @@ namespace StageRecovery
             GUILayout.EndHorizontal();
 
             //The rest are just toggles and are put one after the other
-            recoverSci = GUILayout.Toggle(recoverSci, "Recover Science");
-            recoverKerb = GUILayout.Toggle(recoverKerb, "Recover Kerbals");
             preRecover = GUILayout.Toggle(preRecover, "Pre-Recover Vessels");
             showFail = GUILayout.Toggle(showFail, "Failure Messages");
             showSuccess = GUILayout.Toggle(showSuccess, "Success Messages");
@@ -355,8 +353,6 @@ namespace StageRecovery
                     Settings.Instance.DeadlyReentryMaxVelocity = 2000f;
                 }
 
-                Settings.Instance.RecoverScience = recoverSci;
-                Settings.Instance.RecoverKerbals = recoverKerb;
                 Settings.Instance.ShowFailureMessages = showFail;
                 Settings.Instance.ShowSuccessMessages = showSuccess;
                 Settings.Instance.PoweredRecovery = poweredRecovery;

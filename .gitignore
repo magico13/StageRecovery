@@ -158,3 +158,5 @@ $RECYCLE.BIN/
 /.vs/StageRecovery/v15/Server/sqlite3
 *.exe
 /.vs/slnx.sqlite
+/.vs/VSWorkspaceState.json
+/.vs/config/applicationhost.config

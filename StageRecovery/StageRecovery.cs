@@ -228,7 +228,7 @@ namespace StageRecovery
             }
             
             //If it's a stage that will be destroyed, we need to manually recover the Kerbals
-            if (Settings.Instance.RecoverKerbals && Settings.Instance.PreRecover && pv.GetVesselCrew().Count > 0)
+            if (Settings.Instance.PreRecover && pv.GetVesselCrew().Count > 0)
             {
                 //Check if the conditions for vessel destruction are met
                 if (vessel != FlightGlobals.ActiveVessel && !vessel.isEVA && vessel.mainBody == Planetarium.fetch.Home 
