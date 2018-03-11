@@ -772,7 +772,7 @@ namespace StageRecovery
                             string title = subject.title;
                             //For display we'll keep the title, amt, and science earned in one string
                             //ie: 5 Data from Crew Report at LaunchPad
-                            string display = "<#6DCFF6>©" + amt + "</> Data from " + title;
+                            string display = $"{amt} Data from {title}";
                             ScienceExperiments.Add(display);
                         }
                     }
@@ -981,7 +981,11 @@ namespace StageRecovery
         public void PostStockMessage()
         {
             string fundSymbol = "<sprite=\"CurrencySpriteAsset\" name=\"Funds\" tint=1>";
+            string sciSymbol = "<sprite=\"CurrencySpriteAsset\" name=\"Science\" tint=0>";
             string green = "<color=#B4D455>";
+            string blue = "<color=#6DCFF6>";
+            string endC = "</color>";
+
 
             StringBuilder msg = new StringBuilder();
             if (Recovered && Settings.Instance.ShowSuccessMessages)
@@ -1001,10 +1005,10 @@ namespace StageRecovery
                 }
                 msg.AppendLine("");
                 //List the total refunds for parts, fuel, and the combined total
-                msg.AppendLine($"Total refunds: {fundSymbol} {green}{(FundsReturned).ToString("N0")}</color>");
-                msg.AppendLine($"Total refunded for parts: {fundSymbol} {green}{(DryReturns).ToString("N0")}</color>");
-                msg.AppendLine($"Total refunded for fuel: {fundSymbol} {green}{(FuelReturns).ToString("N0")}</color>");
-                msg.AppendLine($"Stage value: {fundSymbol} {green}{(FundsOriginal).ToString("N0")}</color>");
+                msg.AppendLine($"Total refunds: {fundSymbol} {green}{(FundsReturned).ToString("N0")}{endC}");
+                msg.AppendLine($"Total refunded for parts: {fundSymbol} {green}{(DryReturns).ToString("N0")}{endC}");
+                msg.AppendLine($"Total refunded for fuel: {fundSymbol} {green}{(FuelReturns).ToString("N0")}{endC}");
+                msg.AppendLine($"Stage value: {fundSymbol} {green}{(FundsOriginal).ToString("N0")}{endC}");
 
                 if (KerbalsOnboard.Count > 0)
                 {
@@ -1016,17 +1020,16 @@ namespace StageRecovery
                 }
                 if (ScienceExperiments.Count > 0)
                 {
-                    msg.AppendLine("\nScience recovered: "+ScienceRecovered);
                     foreach (string science in ScienceExperiments)
                     {
-                        msg.AppendLine(science);
+                        msg.AppendLine($"{sciSymbol} {blue}{science}{endC}");
                     }
                 }
 
                 //By this point all the real work is done. Now we just display a bit of information
                 msg.AppendLine("\nAdditional Information:");
                 //Display which module was used for recovery
-                    msg.AppendLine(ParachuteModule + " Module used.");
+                msg.AppendLine(ParachuteModule + " Module used.");
                 //Display the terminal velocity (Vt) and what is needed to have any recovery
                 if (Settings.Instance.FlatRateModel)
                 {

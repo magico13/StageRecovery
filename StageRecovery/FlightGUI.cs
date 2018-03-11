@@ -273,11 +273,11 @@ namespace StageRecovery
         private void DrawScienceInfo()
         {
             //List the total number of science points recovered
-            GUILayout.Label("Total Science Recovered: " + (selectedStage.ScienceExperiments.Count == 0 ? "None" : selectedStage.ScienceRecovered.ToString()));
+            //GUILayout.Label("Total Science Recovered: " + (selectedStage.ScienceExperiments.Count == 0 ? "None" : selectedStage.ScienceRecovered.ToString()));
             if (selectedStage.ScienceExperiments.Count != 0)
             {
                 //List all of the experiments recovered (including data amounts and titles)
-                GUILayout.Label("\nExperiments:");
+                GUILayout.Label("Experiments:");
                 foreach (string experiment in selectedStage.ScienceExperiments)
                 {
                     GUILayout.Label(experiment);
