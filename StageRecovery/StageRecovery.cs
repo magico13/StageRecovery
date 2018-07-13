@@ -472,7 +472,7 @@ namespace StageRecovery
             //Our criteria for even attempting recovery. Broken down: vessel exists, hasn't had recovery attempted, isn't the active vessel, is around Kerbin, is either unloaded or packed, altitude is within atmosphere,
             //is flying or sub orbital, and is not an EVA (aka, Kerbals by themselves)
             if (v != null && !RecoverAttemptLog.ContainsKey(v.id) && !(HighLogic.LoadedSceneIsFlight && v.isActiveVessel) && (v.mainBody == Planetarium.fetch.Home) && (!v.loaded || v.packed) && (v.altitude < v.mainBody.atmosphereDepth) &&
-               (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL || v.situation == Vessel.Situations.ORBITING) && !v.isEVA && v.altitude > 100)
+               (v.situation == Vessel.Situations.FLYING || v.situation == Vessel.Situations.SUB_ORBITAL || v.situation == Vessel.Situations.ORBITING) && !v.isEVA)
             {
                 RecoverVessel(v, false);
             }
